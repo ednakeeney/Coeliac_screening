@@ -1,7 +1,7 @@
 # Coeliac screening decision tree
 
 # Number of PSA samples
-n.samples<-1000 
+n.samples<-100
 
 # Number and names of strategies
 n.treat<-3
@@ -31,22 +31,22 @@ Sens_doubletest <- 1
 Spec_doubletest <- 1
 
 # Probabilities for test 
-tp[,1]<- n.samples*p.cd*rbeta(n=n.samples, shape1 = SensAlpha, shape2 = SensBeta)
-fn[,1]<- (n.samples*p.cd) - tp[,1]  
-tn[,1] <- n.samples*p.cd*rbeta(n=n.samples, shape1 = SpecAlpha, shape2 = SpecBeta)
-fp[,1] <- (n.samples*p.cd) - tn[,1]  
+tp[,1]<- (n.samples*p.cd*rbeta(n=n.samples, shape1 = SensAlpha, shape2 = SensBeta))/n.samples
+fn[,1]<- ((n.samples*p.cd) - tp[,1])/n.samples  
+tn[,1] <- (n.samples*p.cd*rbeta(n=n.samples, shape1 = SpecAlpha, shape2 = SpecBeta))/n.samples
+fp[,1] <- ((n.samples*p.cd) - tn[,1])/n.samples
 
 # Probabilities for test + biopsy
-tp[,2] <- n.samples*p.cd*Sens_testbiopsy
-fn[,2]<- (n.samples*p.cd) - tp[,2]  
-tn[,2] <- n.samples*p.cd*Spec_testbiopsy
-fp[,2] <- (n.samples*p.cd) - tn[,2] 
+tp[,2] <- (n.samples*p.cd*Sens_testbiopsy)/n.samples
+fn[,2]<- ((n.samples*p.cd) - tp[,2])/n.samples
+tn[,2] <- (n.samples*p.cd*Spec_testbiopsy)/n.samples
+fp[,2] <- ((n.samples*p.cd) - tn[,2])/n.samples
 
 # Probabilities for Double test
-tp[,3] <- n.samples*p.cd*Sens_doubletest
-fn[,3]<- (n.samples*p.cd) - tp[,3]  
-tn[,3] <- n.samples*p.cd*Spec_doubletest
-fp[,3] <- (n.samples*p.cd) - tn[,3] 
+tp[,3] <- (n.samples*p.cd*Sens_doubletest)/n.samples
+fn[,3]<- ((n.samples*p.cd) - tp[,3])/n.samples
+tn[,3] <- (n.samples*p.cd*Spec_doubletest)/n.samples
+fp[,3] <- ((n.samples*p.cd) - tn[,3])/n.samples
 
 # probability start on gfd when diagnosed (adherence)
 p.gfd <- 0.5
