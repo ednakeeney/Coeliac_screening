@@ -442,7 +442,7 @@ transition.matrices[, 11:n.cycles,"CD no GFD NHL", "CD no GFD NHL"]<- 1- Death_p
     for(i.sample in 1:n.samples)
     {
       
-      
+      transition.matrices_sample <- transition.matrices[i.sample,,,]
       # Loop over the cycles
       # Cycle 1 is already defined so only need to update cycles 2:n.cycles
       for(i.cycle in 2:n.cycles)
@@ -452,7 +452,7 @@ transition.matrices[, 11:n.cycles,"CD no GFD NHL", "CD no GFD NHL"]<- 1- Death_p
         # i.e. pi_j = pi_(j-1)*P
         cohort.vectors[i.treatment, i.sample,i.cycle,]<-
           cohort.vectors[i.treatment, i.sample,i.cycle-1,] %*%
-          transition.matrices_tr_sample
+          transition.matrices_sample
       }
       
       cohort.vectors_tr_sample <- cohort.vectors[i.treatment,i.sample,,]
