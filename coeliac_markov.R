@@ -160,7 +160,7 @@ markov_expanded <- function() {
     transition.matrices[, , "CD GFD osteoporosis", "Death"]<- Death_probability_osteoporosis
       transition.matrices[ , , "CD GFD osteoporosis", "CD GFD osteoporosis"]<- 1- 
         NHL_probability_GFD - Death_probability_osteoporosis
-    }
+    
     
    
     for (i.cycle in 1:10){
