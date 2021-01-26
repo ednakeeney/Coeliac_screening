@@ -1,6 +1,6 @@
 # Coeliac disease Markov model
 # Edna Keeney
-setwd("C:/Users/ek14588/OneDrive - University of Bristol/Coeliac screening")
+#setwd("C:/Users/ek14588/OneDrive - University of Bristol/Coeliac screening")
 #'
 #' @return Output
 #' @export
