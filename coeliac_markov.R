@@ -438,6 +438,9 @@ transition.matrices[, 11:n.cycles,"CD no GFD NHL", "CD no GFD NHL"]<- 1- Death_p
   
 
     
+  # Loop over treatments
+  for(i.treatment in 1:n.treatments)
+  {
     # Loop over the PSA samples
     for(i.sample in 1:n.samples)
     {
@@ -452,7 +455,7 @@ transition.matrices[, 11:n.cycles,"CD no GFD NHL", "CD no GFD NHL"]<- 1- Death_p
         # i.e. pi_j = pi_(j-1)*P
         cohort.vectors[i.treatment, i.sample,i.cycle,]<-
           cohort.vectors[i.treatment, i.sample,i.cycle-1,] %*%
-          transition.matrices_sample
+          transition.matrices_sample[i.cycle,,]
       }
       
       cohort.vectors_tr_sample <- cohort.vectors[i.treatment,i.sample,,]
@@ -480,7 +483,7 @@ transition.matrices[, 11:n.cycles,"CD no GFD NHL", "CD no GFD NHL"]<- 1- Death_p
       total.qalys[i.treatment,i.sample]<-cycle.qalys[i.treatment,i.sample,]%*%
         disc_vec
     }
-  
+  }
   
   #############################################################################
   ## Analysis of results ######################################################
