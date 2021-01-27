@@ -1,6 +1,6 @@
 # Coeliac disease Markov model
 # Edna Keeney
-setwd("C:/Users/ek14588/OneDrive - University of Bristol/Coeliac screening")
+
 #'
 #' @return Output
 #' @export
@@ -436,7 +436,8 @@ transition_matrices[, 11:n_cycles,"CD no GFD NHL", "CD no GFD NHL"] <- 1- death_
   # Loop over the treatment options
   
 
-    
+    for (i_treatment in 1:n_treatments)
+    {
     # Loop over the PSA samples
     for(i_sample in 1:n_samples)
     {
@@ -451,7 +452,7 @@ transition_matrices[, 11:n_cycles,"CD no GFD NHL", "CD no GFD NHL"] <- 1- death_
         # i.e. pi_j = pi_(j-1)*P
         cohort_vectors[i_treatment, i_sample, i_cycle, ] <-
           cohort_vectors[i_treatment, i_sample, i_cycle-1, ] %*%
-          transition_matrices_sample
+          transition_matrices_sample[i_cycle, , ]
       }
       
       cohort_vectors_tr_sample <- cohort_vectors[i_treatment, i_sample, , ]
@@ -480,7 +481,7 @@ transition_matrices[, 11:n_cycles,"CD no GFD NHL", "CD no GFD NHL"] <- 1- death_
         disc_vec
     }
   
-  
+    }
   #############################################################################
   ## Analysis of results ######################################################
   #############################################################################
