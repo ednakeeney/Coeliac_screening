@@ -1,10 +1,6 @@
 # Coeliac disease Markov model
 # Edna Keeney
 
-#'
-#' @return Output
-#' @export
-#markov_expanded <- function() {
   set.seed(14143)
   
   # Define the number and names of treatments
@@ -44,9 +40,10 @@
   
   adherence	<- 0.75
   probability_late_diagnosis <- 0.132
+  prevalence <- read.csv(CPRD_prevalence.csv)
   
   #Initial cohort at diagnosis - will depend on age at diagnosis
-  probability_subfertility <- 0.0517
+  probability_subfertility <- if (starting_age <- 30) 0.0517 else if (starting_age <- 40) 0.06  else if (starting_age <- 50) 0.07
   probability_osteoporosis <- 0.0125
   probability_NHL <- 0.0008
   probability_nocomplications <- 1 - (probability_subfertility + probability_osteoporosis + probability_NHL)
@@ -83,13 +80,13 @@
  
   mortality_NHL <- read.csv("NHL mortality.csv")
   
-   death_probability_NHL <-	mortality_NHL$Mortality
+   death_probability_NHL <-	0.006 #will relate to table above
   death_probability_osteoporosis <-	0.0003
   
  
   # There is one transition matrix for each cycle and each PSA sample
   # Store them in an array with (before filling in below) NA entries
-  transition_matrices <- array(dim=c(n_samples, n_cycles, n_states, n_states), #should n_cycles or n_samples come first?
+  transition_matrices <- array(dim=c(n_samples, n_cycles, n_states, n_states),
                              dimnames=list(NULL, NULL, state_names, state_names))
   #change to list of arrays
   #different array for each cycle
@@ -120,18 +117,21 @@
     transition_matrices[, c(41:50), "CD GFD no complications", "CD GFD osteoporosis"] <- osteoporosis_probability_GFD_70
     transition_matrices[, ,"CD GFD no complications", "CD GFD NHL"] <- NHL_probability_GFD
     for (i_age in 1:50){
-    transition_matrices[, i_age, "CD GFD no complications", "Death"] <- Death_probability_nocomplications[i_age]
-    transition_matrices[, c(1:10), "CD GFD no complications", "CD GFD no complications"] <- 1 - subfertility_probability_GFD_30 - 
-      osteoporosis_probability_GFD_30 - NHL_probability_GFD - death_probability_nocomplications[i_age]
-    transition_matrices[, c(11:20), "CD GFD no complications", "CD GFD no complications"] <- 1 - subfertility_probability_GFD_40 - 
-      osteoporosis_probability_GFD_40 - NHL_probability_GFD - death_probability_nocomplications[i_age]
-    transition_matrices[, c(21:30), "CD GFD no complications", "CD GFD no complications"] <- 1 - 
-      osteoporosis_probability_GFD_50 - NHL_probability_GFD - death_probability_nocomplications[i_age]
-    transition_matrices[, c(31:40), "CD GFD no complications", "CD GFD no complications"] <- 1 - 
-      osteoporosis_probability_GFD_60 - NHL_probability_GFD - death_probability_nocomplications[i_age]
-    transition_matrices[, c(41:50), "CD GFD no complications", "CD GFD no complications"] <- 1 - 
-      osteoporosis_probability_GFD_70 - NHL_probability_GFD - death_probability_nocomplications[i_age]
+    transition_matrices[, i_age, "CD GFD no complications", "Death"] <- death_probability_nocomplications[i_age]
     }
+    for (i_age in 1:10){
+    transition_matrices[, c(1:10), "CD GFD no complications", "CD GFD no complications"] <- 1 - subfertility_probability_GFD_30 - 
+      osteoporosis_probability_GFD_30 - NHL_probability_GFD - death_probability_nocomplications[i_age[1:10]]
+    }
+    transition_matrices[, c(11:20), "CD GFD no complications", "CD GFD no complications"] <- 1 - subfertility_probability_GFD_40 - 
+      osteoporosis_probability_GFD_40 - NHL_probability_GFD - death_probability_nocomplications[11:20]
+    transition_matrices[, c(21:30), "CD GFD no complications", "CD GFD no complications"] <- 1 - 
+      osteoporosis_probability_GFD_50 - NHL_probability_GFD - death_probability_nocomplications[21:30]
+    transition_matrices[, c(31:40), "CD GFD no complications", "CD GFD no complications"] <- 1 - 
+      osteoporosis_probability_GFD_60 - NHL_probability_GFD - death_probability_nocomplications[31:40]
+    transition_matrices[, c(41:50), "CD GFD no complications", "CD GFD no complications"] <- 1 - 
+      osteoporosis_probability_GFD_70 - NHL_probability_GFD - death_probability_nocomplications[41:50]
+  
    
 
     transition_matrices[, c(1:10),"CD GFD subfertility", "CD GFD osteoporosis"] <- osteoporosis_probability_GFD_30
@@ -141,33 +141,30 @@
     transition_matrices[, c(41:50), "CD GFD subfertility", "CD GFD osteoporosis"] <- osteoporosis_probability_GFD_70
     transition_matrices[, ,"CD GFD subfertility", "CD GFD NHL"] <- NHL_probability_GFD
     for (i_age in 1:50){
-      transition_matrices[, i_age, "CD GFD subfertility", "Death"] <- death_probability_nocomplications[i_age]
-      transition_matrices[, c(1:10), "CD GFD subfertility", "CD GFD subfertility"] <- 1 - 
-        osteoporosis_probability_GFD_30 - NHL_probability_GFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(11:20), "CD GFD subfertility", "CD GFD subfertility"] <- 1 - 
-        osteoporosis_probability_GFD_40 - NHL_probability_GFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(21:30), "CD GFD subfertility", "CD GFD subfertility"] <- 1 - 
-        osteoporosis_probability_GFD_50 - NHL_probability_GFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(31:40), "CD GFD subfertility", "CD GFD subfertility"] <- 1 - 
-        osteoporosis_probability_GFD_60 - NHL_probability_GFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(41:50), "CD GFD subfertility", "CD GFD subfertility"] <- 1 - 
-        osteoporosis_probability_GFD_70 - NHL_probability_GFD - death_probability_nocomplications[i_age]
+      transition_matrices[, i_age, "CD GFD subfertility", "Death"] <- death_probability_nocomplications[1:50]
     }
+      transition_matrices[, c(1:10), "CD GFD subfertility", "CD GFD subfertility"] <- 1 - 
+        osteoporosis_probability_GFD_30 - NHL_probability_GFD - death_probability_nocomplications[1:10]
+      transition_matrices[, c(11:20), "CD GFD subfertility", "CD GFD subfertility"] <- 1 - 
+        osteoporosis_probability_GFD_40 - NHL_probability_GFD - death_probability_nocomplications[11:20]
+      transition_matrices[, c(21:30), "CD GFD subfertility", "CD GFD subfertility"] <- 1 - 
+        osteoporosis_probability_GFD_50 - NHL_probability_GFD - death_probability_nocomplications[21:30]
+      transition_matrices[, c(31:40), "CD GFD subfertility", "CD GFD subfertility"] <- 1 - 
+        osteoporosis_probability_GFD_60 - NHL_probability_GFD - death_probability_nocomplications[31:40]
+      transition_matrices[, c(41:50), "CD GFD subfertility", "CD GFD subfertility"] <- 1 - 
+        osteoporosis_probability_GFD_70 - NHL_probability_GFD - death_probability_nocomplications[41:50]
+    
   
     
     transition_matrices[, ,"CD GFD osteoporosis", "CD GFD NHL"] <- NHL_probability_GFD
     transition_matrices[, , "CD GFD osteoporosis", "Death"] <- death_probability_osteoporosis
       transition_matrices[, , "CD GFD osteoporosis", "CD GFD osteoporosis"] <- 1 - 
         NHL_probability_GFD - death_probability_osteoporosis
-    
-    
    
-    for (i_cycle in 1:10){
-    transition_matrices[, i_cycle, "CD GFD NHL", "Death"] <- death_probability_NHL[i_cycle]
-    transition_matrices[, i_cycle,"CD GFD NHL", "CD GFD NHL"] <- 1 - death_probability_NHL[i_cycle]
-    }
-    transition_matrices[, 11:n_cycles, "CD GFD NHL", "Death"] <- death_probability_NHL[10]
-    transition_matrices[, 11:n_cycles,"CD GFD NHL", "CD GFD NHL"] <- 1 - death_probability_NHL[10]
+    
+    transition_matrices[, , "CD GFD NHL", "Death"] <- death_probability_NHL
+    transition_matrices[, ,"CD GFD NHL", "CD GFD NHL"] <- 1 - death_probability_NHL
+   
     
 
 #CD no GFD    
@@ -182,17 +179,18 @@
     transition_matrices[, ,"CD no GFD no complications", "CD no GFD NHL"] <- NHL_probability_noGFD
     for (i_age in 1:50){
       transition_matrices[, i_age, "CD no GFD no complications", "Death"] <- death_probability_nocomplications[i_age]
-      transition_matrices[, c(1:10), "CD no GFD no complications", "CD no GFD no complications"] <- 1 - subfertility_probability_noGFD_30 - 
-        osteoporosis_probability_noGFD_30 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(11:20), "CD no GFD no complications", "CD no GFD no complications"] <- 1 - subfertility_probability_noGFD_40 - 
-        osteoporosis_probability_noGFD_40 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(21:30), "CD no GFD no complications", "CD no GFD no complications"] <- 1 - 
-        osteoporosis_probability_noGFD_50 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(31:40), "CD no GFD no complications", "CD no GFD no complications"] <- 1 - 
-        osteoporosis_probability_noGFD_60 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(41:50), "CD no GFD no complications", "CD no GFD no complications"] <- 1 - 
-        osteoporosis_probability_noGFD_70 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
     }
+        transition_matrices[, c(1:10), "CD no GFD no complications", "CD no GFD no complications"] <- 1 - subfertility_probability_noGFD_30 - 
+        osteoporosis_probability_noGFD_30 - NHL_probability_noGFD - death_probability_nocomplications[1:10]
+      transition_matrices[, c(11:20), "CD no GFD no complications", "CD no GFD no complications"] <- 1 - subfertility_probability_noGFD_40 - 
+        osteoporosis_probability_noGFD_40 - NHL_probability_noGFD - death_probability_nocomplications[11:20]
+      transition_matrices[, c(21:30), "CD no GFD no complications", "CD no GFD no complications"] <- 1 - 
+        osteoporosis_probability_noGFD_50 - NHL_probability_noGFD - death_probability_nocomplications[21:30]
+      transition_matrices[, c(31:40), "CD no GFD no complications", "CD no GFD no complications"] <- 1 - 
+        osteoporosis_probability_noGFD_60 - NHL_probability_noGFD - death_probability_nocomplications[31:40]
+      transition_matrices[, c(41:50), "CD no GFD no complications", "CD no GFD no complications"] <- 1 - 
+        osteoporosis_probability_noGFD_70 - NHL_probability_noGFD - death_probability_nocomplications[41:50]
+    
     
     
     transition_matrices[, c(1:10),"CD no GFD subfertility", "CD no GFD osteoporosis"] <- osteoporosis_probability_noGFD_30
@@ -203,17 +201,18 @@
     transition_matrices[, ,"CD no GFD subfertility", "CD no GFD NHL"] <- NHL_probability_noGFD
     for (i_age in 1:50){
       transition_matrices[, i_age, "CD no GFD subfertility", "Death"] <- death_probability_nocomplications[i_age]
-      transition_matrices[, c(1:10), "CD no GFD subfertility", "CD no GFD subfertility"] <- 1- 
-        osteoporosis_probability_noGFD_30 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(11:20), "CD no GFD subfertility", "CD no GFD subfertility"] <- 1- 
-        osteoporosis_probability_noGFD_40 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(21:30), "CD no GFD subfertility", "CD no GFD subfertility"] <- 1- 
-        osteoporosis_probability_noGFD_50 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(31:40), "CD no GFD subfertility", "CD no GFD subfertility"] <- 1- 
-        osteoporosis_probability_noGFD_60 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
-      transition_matrices[, c(41:50), "CD no GFD subfertility", "CD no GFD subfertility"] <- 1- 
-        osteoporosis_probability_noGFD_70 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
     }
+      transition_matrices[, c(1:10), "CD no GFD subfertility", "CD no GFD subfertility"] <- 1- 
+        osteoporosis_probability_noGFD_30 - NHL_probability_noGFD - death_probability_nocomplications[1:10]
+      transition_matrices[, c(11:20), "CD no GFD subfertility", "CD no GFD subfertility"] <- 1- 
+        osteoporosis_probability_noGFD_40 - NHL_probability_noGFD - death_probability_nocomplications[11:20]
+      transition_matrices[, c(21:30), "CD no GFD subfertility", "CD no GFD subfertility"] <- 1- 
+        osteoporosis_probability_noGFD_50 - NHL_probability_noGFD - death_probability_nocomplications[21:30]
+      transition_matrices[, c(31:40), "CD no GFD subfertility", "CD no GFD subfertility"] <- 1- 
+        osteoporosis_probability_noGFD_60 - NHL_probability_noGFD - death_probability_nocomplications[31:40]
+      transition_matrices[, c(41:50), "CD no GFD subfertility", "CD no GFD subfertility"] <- 1- 
+        osteoporosis_probability_noGFD_70 - NHL_probability_noGFD - death_probability_nocomplications[41:50]
+    
     
     
     transition_matrices[, ,"CD no GFD osteoporosis", "CD no GFD NHL"] <- NHL_probability_noGFD
@@ -222,12 +221,9 @@
       NHL_probability_noGFD - death_probability_osteoporosis
     
 
-for (i_cycle in 1:10){
-  transition_matrices[, i_cycle, "CD no GFD NHL", "Death"] <-death_probability_NHL[i_cycle]
-  transition_matrices[, i_cycle,"CD no GFD NHL", "CD no GFD NHL"] <- 1- death_probability_NHL[i_cycle]
-}
-transition_matrices[, 11:n_cycles, "CD no GFD NHL", "Death"] <-death_probability_NHL[10]
-transition_matrices[, 11:n_cycles,"CD no GFD NHL", "CD no GFD NHL"] <- 1- death_probability_NHL[10]
+  transition_matrices[, , "CD no GFD NHL", "Death"] <-death_probability_NHL
+  transition_matrices[, ,"CD no GFD NHL", "CD no GFD NHL"] <- 1- death_probability_NHL
+
 
 
 #Undiagnosed CD  
@@ -245,22 +241,23 @@ transition_matrices[, 11:n_cycles,"CD no GFD NHL", "CD no GFD NHL"] <- 1- death_
     transition_matrices[, ,"Undiagnosed CD no complications", "Undiagnosed CD NHL"] <- NHL_probability_noGFD
     for (i_age in 1:50){
       transition_matrices[, i_age, "Undiagnosed CD no complications", "Death"] <- death_probability_nocomplications[i_age]
-      transition_matrices[, c(1:10), "Undiagnosed CD no complications", "Undiagnosed CD no complications"] <- 1- (adherence * probability_late_diagnosis) - 
+    }
+       transition_matrices[, c(1:10), "Undiagnosed CD no complications", "Undiagnosed CD no complications"] <- 1- (adherence * probability_late_diagnosis) - 
         ((1-adherence) * probability_late_diagnosis) - subfertility_probability_noGFD_30 - 
-        osteoporosis_probability_noGFD_30 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
+        osteoporosis_probability_noGFD_30 - NHL_probability_noGFD - death_probability_nocomplications[1:10]
       transition_matrices[, c(11:20), "Undiagnosed CD no complications", "Undiagnosed CD no complications"] <- 1- (adherence * probability_late_diagnosis) - 
         ((1-adherence) * probability_late_diagnosis) - subfertility_probability_noGFD_40 - 
-        osteoporosis_probability_noGFD_40 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
+        osteoporosis_probability_noGFD_40 - NHL_probability_noGFD - death_probability_nocomplications[11:20]
       transition_matrices[, c(21:30), "Undiagnosed CD no complications", "Undiagnosed CD no complications"] <- 1- (adherence * probability_late_diagnosis) - 
         ((1-adherence) * probability_late_diagnosis) - 
-        osteoporosis_probability_noGFD_50 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
+        osteoporosis_probability_noGFD_50 - NHL_probability_noGFD - death_probability_nocomplications[21:30]
       transition_matrices[, c(31:40), "Undiagnosed CD no complications", "Undiagnosed CD no complications"] <- 1- (adherence * probability_late_diagnosis) - 
         ((1-adherence) * probability_late_diagnosis) -
-        osteoporosis_probability_noGFD_60 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
+        osteoporosis_probability_noGFD_60 - NHL_probability_noGFD - death_probability_nocomplications[31:40]
       transition_matrices[, c(41:50), "Undiagnosed CD no complications", "Undiagnosed CD no complications"] <- 1- (adherence * probability_late_diagnosis) - 
         ((1-adherence) * probability_late_diagnosis) -
-        osteoporosis_probability_noGFD_70 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
-    }
+        osteoporosis_probability_noGFD_70 - NHL_probability_noGFD - death_probability_nocomplications[41:50]
+  
     
     transition_matrices[, ,"Undiagnosed CD subfertility", "CD GFD subfertility"] <- adherence * probability_late_diagnosis
     transition_matrices[, ,"Undiagnosed CD subfertility", "CD no GFD subfertility"] <- (1-adherence) * probability_late_diagnosis
@@ -272,22 +269,23 @@ transition_matrices[, 11:n_cycles,"CD no GFD NHL", "CD no GFD NHL"] <- 1- death_
     transition_matrices[, ,"Undiagnosed CD subfertility", "Undiagnosed CD NHL"] <- NHL_probability_noGFD
     for (i_age in 1:50){
       transition_matrices[, i_age, "Undiagnosed CD subfertility", "Death"] <- death_probability_nocomplications[i_age]
+    }
       transition_matrices[, c(1:10), "Undiagnosed CD subfertility", "Undiagnosed CD subfertility"] <- 1- (adherence * probability_late_diagnosis) - 
         ((1-adherence) * probability_late_diagnosis)  - 
-        osteoporosis_probability_noGFD_30 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
+        osteoporosis_probability_noGFD_30 - NHL_probability_noGFD - death_probability_nocomplications[1:10]
       transition_matrices[, c(11:20), "Undiagnosed CD subfertility", "Undiagnosed CD subfertility"] <- 1- (adherence * probability_late_diagnosis) - 
         ((1-adherence) * probability_late_diagnosis) -
-        osteoporosis_probability_noGFD_40 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
+        osteoporosis_probability_noGFD_40 - NHL_probability_noGFD - death_probability_nocomplications[11:20]
       transition_matrices[, c(21:30), "Undiagnosed CD subfertility", "Undiagnosed CD subfertility"] <- 1- (adherence * probability_late_diagnosis) - 
         ((1-adherence) * probability_late_diagnosis) -
-        osteoporosis_probability_noGFD_50 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
+        osteoporosis_probability_noGFD_50 - NHL_probability_noGFD - death_probability_nocomplications[21:30]
       transition_matrices[, c(31:40), "Undiagnosed CD subfertility", "Undiagnosed CD subfertility"] <- 1- (adherence * probability_late_diagnosis) - 
         ((1-adherence) * probability_late_diagnosis) -
-        osteoporosis_probability_noGFD_60 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
+        osteoporosis_probability_noGFD_60 - NHL_probability_noGFD - death_probability_nocomplications[31:40]
       transition_matrices[, c(41:50), "Undiagnosed CD subfertility", "Undiagnosed CD subfertility"] <- 1- (adherence * probability_late_diagnosis) - 
         ((1-adherence) * probability_late_diagnosis) -
-        osteoporosis_probability_noGFD_70 - NHL_probability_noGFD - death_probability_nocomplications[i_age]
-    }
+        osteoporosis_probability_noGFD_70 - NHL_probability_noGFD - death_probability_nocomplications[41:50]
+    
     
     
     transition_matrices[, ,"Undiagnosed CD osteoporosis", "CD GFD osteoporosis"] <- adherence * probability_late_diagnosis
@@ -299,14 +297,16 @@ transition_matrices[, 11:n_cycles,"CD no GFD NHL", "CD no GFD NHL"] <- 1- death_
     
     transition_matrices[, ,"Undiagnosed CD NHL", "CD GFD NHL"] <- adherence * probability_late_diagnosis
     transition_matrices[, ,"Undiagnosed CD NHL", "CD no GFD NHL"] <- (1-adherence) * probability_late_diagnosis
-    for (i_cycle in 1:10){
-      transition_matrices[, i_cycle, "Undiagnosed CD NHL", "Death"] <-death_probability_NHL[i_cycle]
-      transition_matrices[, i_cycle,"Undiagnosed CD NHL", "Undiagnosed CD NHL"] <- 1- (adherence * probability_late_diagnosis) - 
-        ((1-adherence) * probability_late_diagnosis) - death_probability_NHL[i_cycle]
-    }
-    transition_matrices[, 11:n_cycles, "Undiagnosed CD NHL", "Death"] <-death_probability_NHL[10]
-    transition_matrices[, 11:n_cycles,"Undiagnosed CD NHL", "Undiagnosed CD NHL"] <- 1- death_probability_NHL[10]
+      transition_matrices[, , "Undiagnosed CD NHL", "Death"] <-death_probability_NHL
+      transition_matrices[, ,"Undiagnosed CD NHL", "Undiagnosed CD NHL"] <- 1- (adherence * probability_late_diagnosis) - 
+        ((1-adherence) * probability_late_diagnosis) - death_probability_NHL
+
     
+    transition_matrices[, ,"Death", "Death"] <- 1
+    
+    transition_matrices[, , , ] [is.na(transition_matrices[, , , ] )] <- 0
+    
+    rowSums (transition_matrices[1, 2, , ], na.rm = FALSE, dims = 1)
     # State utilities
     # Anything between 0 and 1
 
@@ -364,7 +364,7 @@ transition_matrices[, 11:n_cycles,"CD no GFD NHL", "CD no GFD NHL"] <- 1- death_
   # Each cohort vector has n_states elements: probability of being in each state,
   # There is one cohort vector for each treatment, for each PSA sample, for each cycle.
   cohort_vectors<-array(dim=c(n_treatments,n_samples,n_cycles,n_states),  #do I need to add another n_states?
-                        dimnames=list(t_names,NULL,NULL,state_names, state_names))
+                        dimnames=list(t_names,NULL,NULL, state_names))
   
   # This will be related to decision tree accuracy
   cohort_vectors[1, , 1,"CD GFD no complications"] <- tp[, 1] * probability_nocomplications * adherence
@@ -524,5 +524,5 @@ transition_matrices[, 11:n_cycles,"CD no GFD NHL", "CD no GFD NHL"] <- 1- death_
   
   # Now use the BCEA package to analyse the results___
   output
-}
+
 
