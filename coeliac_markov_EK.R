@@ -165,7 +165,7 @@
   # And finally define the state costs
   # There is one for each PSA sample and each state
   # Store in an NA array and then fill in below
-  state_costs <- array(dim=c(n_samples, n_states), dimnames = list(NULL, state_names))
+  state_costs <- array(dim=c(n_samples, n_cycles, n_states), dimnames = list(NULL, NULL , state_names))
   
   
   # Define transition matrices, state utilities and costs 
@@ -326,41 +326,124 @@
     # Anything between 0 and 1
     
     eq5dGFD <- 0.85
-    eq5dGFdse <- (0.86-0.84/3.92)
+    eq5dGFdse <- ((0.86-0.84)/3.92)
     eq5dGFDalpha <- (eq5dGFD ^ 2 * (1 - eq5dGFD)/eq5dGFdse ^ 2) - eq5dGFD
     eq5dGFDbeta <- (eq5dGFDalpha / eq5dGFD) - eq5dGFDalpha
     state_qalys[, "CD GFD no complications"] <- rbeta(n = n_samples, shape1 = eq5dGFDalpha, shape2 = eq5dGFDbeta)
-    state_qalys[, "CD GFD subfertility"] <- 0.85 - 0.07
-    state_qalys[,"CD GFD osteoporosis"] <- 0.7
-    state_qalys[,"CD GFD NHL"] <- 0.618
-    state_qalys[,"CD no GFD no complications"] <- 0.71
-    state_qalys[,"CD no GFD subfertility"] <- 0.71 - 0.07
-    state_qalys[, "CD no GFD osteoporosis"] <- 0.5 
-    state_qalys[,"CD no GFD NHL"] <- 0.618
-    state_qalys[,"Undiagnosed CD no complications"] <- 0.65
-    state_qalys[,"Undiagnosed CD subfertility"] <- 0.65 - 0.07
-    state_qalys[,"Undiagnosed CD osteoporosis"] <- 0.5 
-    state_qalys[,"Undiagnosed CD NHL"] <- 0.618
+    
+    disutility_subfertility <-  0.158 
+    disutility_subfertility_se <- (0.173 - 0.143)/3.92
+    disutility_subfertility_alpha <- (disutility_subfertility ^ 2 * (1 - disutility_subfertility)/disutility_subfertility_se ^ 2) - disutility_subfertility
+    disutility_subfertility_beta <- (disutility_subfertility_alpha/disutility_subfertility) - disutility_subfertility_alpha
+    disutility_subfertility <- rbeta(n = n_samples, shape1 = disutility_subfertility_alpha, shape2 = disutility_subfertility_beta)
+    state_qalys[, "CD GFD subfertility"] <- state_qalys[, "CD GFD no complications"] - disutility_subfertility
+   
+    probability_hipfracture <- 0.00196
+    probability_vertebralfracture <- 0.00071
+    probability_wristfracture <- 0.00125
+    disutility_hipfracture <- 0.817 - 0.59
+    disutility_hipfractureSE <- (((0.817 - 0.65) - (0.817 - 0.54))/3.92)
+    disutility_hipfracture_alpha <- (disutility_hipfracture ^ 2 * (1 - disutility_hipfracture)/disutility_hipfractureSE ^ 2) - disutility_hipfracture
+    disutility_hipfracture_beta <- (disutility_hipfracture_alpha/disutility_hipfracture) - disutility_hipfracture_alpha
+    disutility_hipfracture <- rbeta(n = n_samples, shape1 = disutility_hipfracture_alpha, shape2 = disutility_hipfracture_beta)
+    disutility_wristfracture <- 0.817 - 0.55
+    disutility_wristfractureSE <- (((0.817 - 0.60) - (0.817 - 0.50))/3.92)
+    disutility_wristfracture_alpha <- (disutility_wristfracture ^ 2 * (1 - disutility_wristfracture)/disutility_wristfractureSE ^ 2) - disutility_wristfracture
+    disutility_wristfracture_beta <- (disutility_wristfracture_alpha/disutility_wristfracture) - disutility_wristfracture_alpha
+    disutility_wristfracture <- rbeta(n = n_samples, shape1 = disutility_wristfracture_alpha, shape2 = disutility_wristfracture_beta)
+    disutility_vertebralfracture <- 0.817 - 0.78
+    disutility_vertebralfractureSE <- (((0.817 - 0.84) - (0.817 - 0.72))/3.92)
+    disutility_vertebralfracture_alpha <- (disutility_vertebralfracture ^ 2 * (1 - disutility_vertebralfracture)/disutility_vertebralfractureSE ^ 2) - disutility_vertebralfracture
+    disutility_vertebralfracture_beta <- (disutility_vertebralfracture_alpha/disutility_vertebralfracture) - disutility_vertebralfracture_alpha
+    disutility_vertebralfracture <- rbeta(n = n_samples, shape1 = disutility_vertebralfracture_alpha, shape2 = disutility_vertebralfracture_beta)
+    disutility_osteoporosis <- (probability_hipfracture * disutility_hipfracture) + (probability_wristfracture * disutility_wristfracture) + (probability_vertebralfracture * disutility_vertebralfracture)
+    state_qalys[,"CD GFD osteoporosis"] <- state_qalys[, "CD GFD no complications"] - disutility_osteoporosis
+    
+    disutility_NHL <- runif(n = n_samples, min = 0.036, max = 0.136)
+    state_qalys[,"CD GFD NHL"] <- state_qalys[, "CD GFD no complications"] - disutility_NHL
+    
+    disutility_noGFD <-  0.14 
+    disutility_noGFD_se <- (0.31 - (-0.03))/3.92
+    disutility_noGFD_alpha <- (disutility_noGFD ^ 2 * (1 - disutility_noGFD)/disutility_noGFD_se ^ 2) - disutility_noGFD
+    disutility_noGFD_beta <- (disutility_noGFD_alpha/disutility_noGFD) - disutility_noGFD_alpha
+    disutility_noGFD <- rbeta(n = n_samples, shape1 = disutility_noGFD_alpha, shape2 = disutility_noGFD_beta)
+    state_qalys[,"CD no GFD no complications"] <- state_qalys[, "CD GFD no complications"] - disutility_noGFD
+    
+    state_qalys[,"CD no GFD subfertility"] <-  state_qalys[,"CD no GFD no complications"] - disutility_subfertility
+    
+    state_qalys[, "CD no GFD osteoporosis"] <- state_qalys[,"CD no GFD no complications"] - disutility_osteoporosis
+    
+    state_qalys[,"CD no GFD NHL"] <- state_qalys[,"CD no GFD no complications"] - disutility_NHL
+    
+    disutility_undiagnosedCD <-  0.65 
+    disutility_undiagnosedCD_se <- (0.67 - 0.63)/3.92
+    disutility_undiagnosedCD_alpha <- (disutility_undiagnosedCD ^ 2 * (1 - disutility_undiagnosedCD)/disutility_undiagnosedCD_se ^ 2) - disutility_undiagnosedCD
+    disutility_undiagnosedCD_beta <- (disutility_undiagnosedCD_alpha/disutility_undiagnosedCD) - disutility_undiagnosedCD_alpha
+    disutility_undiagnosedCD <- rbeta(n = n_samples, shape1 = disutility_undiagnosedCD_alpha, shape2 = disutility_undiagnosedCD_beta)
+    state_qalys[,"Undiagnosed CD no complications"] <- disutility_undiagnosedCD
+    
+    state_qalys[,"Undiagnosed CD subfertility"] <-  state_qalys[,"Undiagnosed CD no complications"] - disutility_subfertility
+    
+    state_qalys[,"Undiagnosed CD osteoporosis"] <- state_qalys[,"Undiagnosed CD no complications"] - disutility_osteoporosis
+    
+    state_qalys[,"Undiagnosed CD NHL"] <- state_qalys[,"Undiagnosed CD no complications"] - disutility_NHL
+    
     state_qalys[,"Death"] <- 0
     
     
     # State costs
     # Assumed normal with sd small enough to avoid negative values
-    state_costs[, "CD GFD no complications"] <- 50
-    state_costs[, "CD GFD subfertility"] <- 60
-    state_costs[,"CD GFD osteoporosis"] <- 10
-      state_costs[,"CD GFD NHL"] <- 30
-    state_costs[,"CD no GFD no complications"] <- 40
-    state_costs[,"CD no GFD subfertility"] <- 70
-    state_costs[, "CD no GFD osteoporosis"] <-80
-      state_costs[,"CD no GFD NHL"] <- 90
-    state_costs[,"Undiagnosed CD no complications"] <- 100
-    state_costs[,"Undiagnosed CD subfertility"] <- 110
-    state_costs[,"Undiagnosed CD osteoporosis"] <- 120
-      state_costs[,"Undiagnosed CD NHL"] <- 30
-    state_costs[,"Death"] <- 0
+    cost_CDGFD <- 650
+    cost_CDGFD_se <- 4.68
+    cost_CDGFD_alpha <- (cost_CDGFD/cost_CDGFD_se)^2
+    cost_CDGFD_beta <- (cost_CDGFD_se^2)/cost_CDGFD
+    state_costs[, , "CD GFD no complications"] <- state_costs[, , "CD no GFD no complications"] <- rgamma(n = n_samples, shape = cost_CDGFD_alpha, scale = cost_CDGFD_beta)
+   
+    cost_subfertility <- 8079.75 
+    cost_subfertility_se <- (8742.96 - 7432.11)/3.92
+    cost_subfertility_alpha <- (cost_subfertility/cost_subfertility_se)^2
+    cost_subfertility_beta <- (cost_subfertility_se^2)/cost_subfertility
+    state_costs[, 1, "CD GFD subfertility"] <-  state_costs[, , "CD no GFD subfertility"] <- (rgamma(n = n_samples, shape = cost_subfertility_alpha, scale = cost_subfertility_beta)) +  rgamma(n = n_samples, shape = cost_CDGFD_alpha, scale = cost_CDGFD_beta)
+    state_costs[, 2:n_cycles, "CD GFD subfertility"] <- state_costs[, 2:n_cycles, "CD GFD no complications"]
     
-  #How to add costs and disutilities for anemia?
+    cost_hipfracture <- 19073
+    cost_hipfractureSE <- ((16515 * 1.17) - (16097 * 1.17)) / 3.92
+    cost_hipfracture_alpha <- (cost_hipfracture / cost_hipfractureSE) ^ 2
+    cost_hipfracture_beta <- (cost_hipfractureSE ^ 2) / cost_hipfracture
+    cost_hipfracture <- rgamma(n = n_samples, shape = cost_hipfracture_alpha, scale = cost_hipfracture_beta)
+    cost_wristfracture <- 842.40
+    cost_wristfractureSE <- cost_wristfracture/10
+    cost_wristfracture_alpha <- (cost_wristfracture / cost_wristfractureSE) ^ 2
+    cost_wristfracture_beta <- (cost_wristfractureSE ^ 2) / cost_wristfracture
+    cost_wristfracture <- rgamma(n = n_samples, shape = cost_wristfracture_alpha, scale = cost_wristfracture_beta)
+    cost_vertebralfracture <- 862.20
+    cost_vertebralfractureSE <- cost_vertebralfracture/10
+    cost_vertebralfracture_alpha <- (cost_vertebralfracture / cost_vertebralfractureSE) ^ 2
+    cost_vertebralfracture_beta <- (cost_vertebralfractureSE ^ 2) / cost_vertebralfracture
+    cost_vertebralfracture <- rgamma(n = n_samples, shape = cost_vertebralfracture_alpha, scale = cost_vertebralfracture_beta)
+    cost_osteoporosis <- (probability_hipfracture * cost_hipfracture) + (probability_wristfracture * cost_wristfracture) + (probability_vertebralfracture * cost_vertebralfracture)
+    state_costs[, , "CD GFD osteoporosis"] <- state_costs[, , "CD no GFD osteoporosis"] <- cost_osteoporosis + rgamma(n = n_samples, shape = cost_CDGFD_alpha, scale = cost_CDGFD_beta)
+    
+    cost_NHL <- 18396
+    cost_NHL_sd <- sqrt(271) * ((18415 - 18377)/3.92)
+    cost_NHL_location <- log(cost_NHL^2 / sqrt(cost_NHL_sd^2 + cost_NHL^2))
+    cost_NHL_shape <- sqrt(log(1 + (cost_NHL_sd^2 / cost_NHL^2)))
+    state_costs[, 1, "CD GFD NHL"] <-  state_costs[, 1, "CD no GFD NHL"] <- rlnorm(n = n_samples, cost_NHL_location,  cost_NHL_shape) + rgamma(n = n_samples, shape = cost_CDGFD_alpha, scale = cost_CDGFD_beta)
+    state_costs[, 2:n_cycles, "CD GFD NHL"] <-  state_costs[, 2:n_cycles, "CD no GFD NHL"] <- rlnorm(n = n_samples, cost_NHL_location,  cost_NHL_shape) + rgamma(n = n_samples, shape = cost_CDGFD_alpha, scale = cost_CDGFD_beta)
+    
+    
+    cost_undiagnosedCD <- 340
+    cost_undiagnosedCD_se <- 2.96
+    cost_undiagnosedCD_alpha <- (cost_undiagnosedCD/cost_undiagnosedCD_se)^2
+    cost_undiagnosedCD_beta <- (cost_undiagnosedCD_se^2)/cost_undiagnosedCD
+    state_costs[, , "Undiagnosed CD no complications"] <- rgamma(n = n_samples, shape = cost_undiagnosedCD_alpha, scale = cost_undiagnosedCD_beta)
+    
+    state_costs[, , "Undiagnosed CD subfertility"] <- state_costs[, , "Undiagnosed CD no complications"] +  state_costs[, 1, "CD GFD subfertility"]
+    state_costs[, , "Undiagnosed CD osteoporosis"] <- state_costs[, , "Undiagnosed CD no complications"] + state_costs[, , "CD GFD osteoporosis"]
+    state_costs[, , "Undiagnosed CD NHL"] <- state_costs[, , "Undiagnosed CD no complications"] + state_costs[, 1, "CD GFD NHL"]
+    state_costs[, , "Death"] <- 0
+    
+  #How to add costs and disutilities for anemia and biopsy?
   
   
   # Define the treatment costs
@@ -369,11 +452,10 @@
   # want to include uncertainty/randomness in the cost
   treatment_costs<-array(dim=c(n_treatments,n_samples),dimnames=list(t_names,NULL))
   
-  # Cost of the smoking cessation website is a one-off subscription fee of ?50
-  treatment_costs["Test", ] <-50
-  # Zero cost for standard of care
-  treatment_costs["Test + biopsy", ] <-1000
-  treatment_costs["Double test", ] <-500
+  treatment_costs["Test", ] <- 10
+  probability_biopsy <- runif(n = n_samples, min = 0.6, max = 0.8)
+  treatment_costs["Test + biopsy", ] <- 10 + (probability_biopsy * 530)
+  treatment_costs["Double test", ] <- 20
   
   #############################################################################
   ## Accuracy of tests ########################################################
@@ -520,10 +602,13 @@
       
       cohort_vectors_tr_sample <- cohort_vectors[i_treatment, i_sample, , ]
       
+      for (i_cycle in 1:n_cycles)
+      {
       # Now use the cohort vectors to calculate the 
       # total costs for each cycle
       cycle_costs[i_treatment, i_sample, ] <-
-        cohort_vectors_tr_sample %*% state_costs[i_sample, ]
+        cohort_vectors_tr_sample %*% state_costs[i_sample, i_cycle, ]
+      }
       # And total QALYs for each cycle
       cycle_qalys[i_treatment, i_sample, ] <-
         cohort_vectors_tr_sample %*% state_qalys[i_sample, ]
@@ -558,32 +643,31 @@
   # quitting smoking
   output$average_effects <- rowMeans(total_qalys)
   
-  # Incremental costs and effects relative to standard of care
-  # No uncertainty in the costs as the website cost is fixed at ?50
-  output$incremental_costs <- total_costs["Test + biopsy", ] - total_costs["Test", ]
-  # In some samples the website leads to higher QALYs but in others it is negative
-  # There is uncertainty as to whether the website is an improvement over SoC
-  output$incremental_effects <- total_qalys["Test + biopsy", ] - total_qalys["Test", ]
+ 
+  output$incremental_costs_testbiopsy_test <- total_costs["Test + biopsy", ] - total_costs["Test", ]
+  output$incremental_effects_testbiopsy_test <- total_qalys["Test + biopsy", ] - total_qalys["Test", ]
   
-  # The ICER comparing Standard of care with website to standard of care
-  # This is much lower than the ?20,000 willingness-to-pay threshold indicating
-  # good value for money
-  output$ICER <- mean(output$incremental_costs)/mean(output$incremental_effects)
+  output$incremental_costs_doubletest_test <- total_costs["Double test", ] - total_costs["Test", ]
+  output$incremental_effects_doubletest_test <- total_qalys["Double test", ] - total_qalys["Test", ]
+  
+
+  output$ICER_testbiopsy_test <- mean(output$incremental_costs_testbiopsy_test)/mean(output$incremental_effects_testbiopsy_test)
+  output$ICER_doubletest_test <- mean(output$incremental_costs_doubletest_test)/mean(output$incremental_effects_doubletest_test)
   
   # Incremental net benefit at the ?20,000 willingness-to-pay
-  # Sometimes positive (website more cost-effective) and sometimes negative (SoC more cost-effective)
-  # Need to look at averages and consider probabilities of cost-effectiveness
-  output$incremental_net_benefit <- 20000*output$incremental_effects - output$incremental_costs
-  
-  # Average incremental net benefit
-  # This is positive indicating cost-effectiveness at the ?20,000 threshold
-  output$average_inb <- mean(output$incremental_net_benefit)
-  
+ 
+  output$incremental_net_benefit_testbiopsy_test <- 20000*output$incremental_effects_testbiopsy_test - output$incremental_costs_testbiopsy_test
+  output$incremental_net_benefit_doubletest_test <- 20000*output$incremental_effects_doubletest_test - output$incremental_costs_doubletest_test
+ 
+   # Average incremental net benefit
+  output$average_inb_testbiopsy_test <- mean(output$incremental_net_benefit_testbiopsy_test)
+  output$average_inb_doubletest_test <- mean(output$incremental_net_benefit_doubletest_test)
+
   # Probability cost-effective
   # This is the proportion of samples for which the incremental net benefit is positive
-  # It is clost to 72%, representing good degree of certainty
-  # in recommendation to adopt the smoking cessation website
-  output$probability_cost_effective <- sum(output$incremental_net_benefit>0)/n_samples
+ 
+  output$probability_cost_effective_testbiopsy_test <- sum(output$incremental_net_benefit_testbiopsy_test > 0)/n_samples
+  output$probability_cost_effective_doubletest_test <- sum(output$incremental_net_benefit_doubletest_test > 0)/n_samples
   
   # Now use the BCEA package to analyse the results___
   output
