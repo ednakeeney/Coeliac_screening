@@ -19,7 +19,7 @@ t_names <- c("Test", "Test + biopsy", "Double test")
 p_cd <- 0.5 
 
 # Accuracy of test or test + biopsy
-tp <- fn <- fp <- tn <- matrix(nrow=n_samples, ncol=n_treat)
+tp <- fn <- fp <- tn <- matrix(nrow = n_samples, ncol = n_treat)
 
 #IgA EMA sensitivity in adults: 88.0 (75.2, 94.7)
 sens_test <- 0.88
