@@ -52,7 +52,7 @@ set.seed(14143)
   duration_of_symptoms_sd <- 13.10
   duration_of_symptoms_location <- log(duration_of_symptoms ^ 2 / sqrt(duration_of_symptoms_sd ^ 2 + duration_of_symptoms ^ 2))
   duration_of_symptoms_shape <- sqrt(log(1 + (duration_of_symptoms_sd ^ 2 / duration_of_symptoms ^ 2)))
-  duration_of_symptoms <- rlnorm(n = n_samples, duration_of_symptoms_location,  duration_of_symptoms_shape)     #calculated from Violato, what about SD? Should some of these be negative?
+  duration_of_symptoms <- rlnorm(n = n_samples, duration_of_symptoms_location,  duration_of_symptoms_shape)     #calculated from Violato et al 2019
   rate_of_symptoms <- 1 / duration_of_symptoms
   probability_late_diagnosis <- 1 - exp(-rate_of_symptoms)
   
@@ -61,6 +61,7 @@ set.seed(14143)
   
   #Initial cohort at diagnosis - depends on age at diagnosis
     # HT: When accessing named matrices, try to use the column names to avoid errors and improve readability (like you do for osteoporosis_probability)
+    # EK: I'm not sure how to do this and still choose the row relating to the starting age
  probability_subfertility <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, 5], shape2 = prevalence[prevalence$Age.categories == starting_age, 2] - prevalence[prevalence$Age.categories == starting_age, 5])
  probability_osteoporosis <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, 4], shape2 = prevalence[prevalence$Age.categories == starting_age, 2] - prevalence[prevalence$Age.categories == starting_age, 4])
  probability_NHL <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, 3], shape2 = prevalence[prevalence$Age.categories == starting_age, 2] - prevalence[prevalence$Age.categories == starting_age, 3])
@@ -144,6 +145,7 @@ set.seed(14143)
   # HT: I had an error trying to read the above file
   # Error in read.table(file = file, header = header, sep = sep, quote = quote,  : 
   # more columns than column names
+  # ek: Not sure why this is happening 
   
   # Just to check the rest of the code I inserted placeholder values but please delete these two lines
  lifetables <- as.data.frame(matrix(c(1:100, rep(seq(0.0001, 0.38, (0.38-0.0001)/99), 2)), ncol = 3))
@@ -155,6 +157,8 @@ set.seed(14143)
   # HT: This gave the error
   # Error in read.table(file = file, header = header, sep = sep, quote = quote,  : 
   # more columns than column names
+  #EK: Also not sure what the problem is here but still need to somehow use the following info to calculate annual mortality probability:
+  #one-year survival is 79.4% (79 – 79.7), five-year survival is 65.6% (65 – 66.3), and ten-year survival is 54.7% (53.2 – 56.3)(ONS)
   #mortality_NHL <- read.csv("NHL mortality.csv")
   
    death_probability_NHL <-	0.006 #will relate to table above
@@ -185,6 +189,7 @@ set.seed(14143)
   # HT: Are we going to use QALY norms so that the QALYs decrease with age? You'd multiple all
   # state QALYs by their norms to reduce with age.
   # HT: If yes, we'll need state_qalys to be cycle specific and include it in the protocol.
+  # EK: Have now included QALY norms
   # Now define the QALYS associated with the states per cycle
   # There is one for each PSA sample and each state
   # Store in an NA array and then fill in below
@@ -254,18 +259,17 @@ set.seed(14143)
      # HT: This is setting the probability of staying in the same state to be 1 minus the probability
     # of going to any other state. It would be better practice if this were done at the end for every state.
     # At the end (when every probability has been defined) you also wouldn't need to write out the probabilities one by one. 
+    #EK: Can we talk through how to make the following neater?
     transition_matrices[, , "CD GFD no complications", "CD GFD no complications"] <- 1 - transition_matrices[, , "CD GFD no complications", "CD GFD subfertility"] - 
       transition_matrices[, , "CD GFD no complications", "CD GFD osteoporosis"] - transition_matrices[, , "CD GFD no complications", "CD GFD NHL"] -  transition_matrices[ , , "CD GFD no complications", "Death"]
-
-    # HT: Again put all these at the end and rewrite as sum of other transition probabilies
+    
     transition_matrices[, , "CD GFD subfertility", "CD GFD subfertility"] <- 1 -  transition_matrices[, ,"CD GFD subfertility", "CD GFD osteoporosis"] - 
       transition_matrices[, ,"CD GFD subfertility", "CD GFD NHL"] - transition_matrices[, , "CD GFD subfertility", "Death"]
-    # HT: Move to end and rewrite
+   
     transition_matrices[, , "CD GFD osteoporosis", "CD GFD osteoporosis"] <- 1 - 
       transition_matrices[, ,"CD GFD osteoporosis", "CD GFD NHL"] - transition_matrices[, , "CD GFD osteoporosis", "Death"]
     transition_matrices[, ,"CD GFD NHL", "CD GFD NHL"] <- 1 - death_probability_NHL
   
-    # HT: Again at end after all transitions defined
     transition_matrices[, , "CD no GFD no complications", "CD no GFD no complications"] <- 1 - transition_matrices[, , "CD no GFD no complications", "CD no GFD subfertility"] - 
       transition_matrices[, , "CD no GFD no complications", "CD no GFD osteoporosis"] - transition_matrices[, , "CD no GFD no complications", "CD no GFD NHL"] -  transition_matrices[ , , "CD no GFD no complications", "Death"]
 
@@ -277,7 +281,6 @@ set.seed(14143)
     
     transition_matrices[, ,"CD no GFD NHL", "CD no GFD NHL"] <- 1 - death_probability_NHL
   
-
     transition_matrices[, , "Undiagnosed CD no complications", "Undiagnosed CD no complications"] <- 1-  transition_matrices[, ,"Undiagnosed CD no complications", "CD GFD no complications"] - 
       transition_matrices[, ,"Undiagnosed CD no complications", "CD no GFD no complications"] - transition_matrices[, , "Undiagnosed CD no complications", "Undiagnosed CD subfertility"] -
       transition_matrices[, , "Undiagnosed CD no complications", "Undiagnosed CD osteoporosis"] -  transition_matrices[, , "Undiagnosed CD no complications", "Undiagnosed CD NHL"] -  transition_matrices[, , "Undiagnosed CD no complications", "Death"] 
@@ -296,6 +299,7 @@ set.seed(14143)
     
     # HT: This is a little dangerous as you may have missed something by accident.
     # Please look at one matrix (e.g. transition_matrices[1, 1, , ]) and check that each NA really should be NA. We could perhaps do this together on our next call.
+    # EK: Yes, let's talk through it
     transition_matrices[, , , ] [is.na(transition_matrices[, , , ] )] <- 0
     
     # HT: Obviously remove this check, or include it in the generate_transition_matrices() function
@@ -311,9 +315,9 @@ set.seed(14143)
    
     utility_GFD <- 0.85
     utility_GFdse <- ((0.86-0.84)/3.92)
-    utility_GFDalpha <- (eq5dGFD ^ 2 * (1 - eq5dGFD)/eq5dGFdse ^ 2) - eq5dGFD
-    utility_GFDbeta <- (eq5dGFDalpha / eq5dGFD) - eq5dGFDalpha
-    utility_GFD <- rbeta(n = n_samples, shape1 = eq5dGFDalpha, shape2 = eq5dGFDbeta)
+    utility_GFDalpha <- (utility_GFD ^ 2 * (1 - utility_GFD)/utility_GFdse ^ 2) - utility_GFD
+    utility_GFDbeta <- (utility_GFDalpha / utility_GFD) - utility_GFDalpha
+    utility_GFD <- rbeta(n = n_samples, shape1 = utility_GFDalpha, shape2 = utility_GFDbeta)
     
     utility_undiagnosedCD <-  0.65 
     utility_undiagnosedCD_se <- (0.67 - 0.63)/3.92
