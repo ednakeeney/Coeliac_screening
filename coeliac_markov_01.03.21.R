@@ -203,7 +203,28 @@ set.seed(14143)
 
   
   # Now use the BCEA package to analyse the results___
-  output <- generate_net_benefit(transition_matrices, state_costs, state_qalys)
+  output <- generate_net_benefit(transition_matrices, state_costs, state_qalys, cohort_vectors)
+  output
+  
+  pkgs <- c("MASS","Rtools","devtools")
+  repos <- c("https://cran.rstudio.com", "https://www.math.ntnu.no/inla/R/stable") 
+  install.packages(pkgs,repos=repos,dependencies = "Depends")
+  devtools::install_github("giabaio/BCEA")
+   library(BCEA)
+  m <- bcea(e = t(total_qalys), c = t(total_costs), ref = 1, interventions = t_names)
+summary(m)
+eib.plot(m, comparison = NULL, pos =
+           c(1, 0), size = NULL, plot.cri = NULL, graph
+         = c("base", "ggplot2", "plotly"))
+evi.plot(m, graph = c("base", "ggplot2",
+                       "plotly"))
+ceac_plot(m, comparison = NULL,
+          pos = c(1, 0), graph = c("base",
+                                   "ggplot2", "plotly"))
 
+ceplane_plot(m, comparison =
+               NULL, pos = c(1, 0), graph = c("base",
+                                              "ggplot2", "plotly"))
+sim.table(m)
 toc()
 
