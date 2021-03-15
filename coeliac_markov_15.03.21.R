@@ -38,8 +38,8 @@ set.seed(14143)
   # This is the number of PSA samples to use
   n_samples <- 100
   
-  #pre-test probabilities of coeliac disease to compare
-  p_cd <- c(0.05, 0.15, 0.25, 0.35, 0.45) 
+  #pre-test probability of coeliac disease 
+  p_cd <- c(0.45) 
   
   starting_age <- 30 #Max is 50 with 50 cycles
   starting_age_columnandrow <- read.csv("starting_age_column.csv")
@@ -55,6 +55,7 @@ set.seed(14143)
   source("generate_model_parameters.R")
   source("generate_transition_matrices.R")
   source("generate_net_benefit.R")
+  
   #############################################################################
   ## Input parameters #########################################################
   #############################################################################
@@ -97,13 +98,7 @@ set.seed(14143)
    #the issue here is that 'subfertility_probability_GFD_all' is it's own dataframe that is used when generating the transition matrices. When I generate the 
   # data frame of input parameters however it's columns are just merged with the larger dataframe when it needs to stay as it's own dataframe. Same issue with osteoporosis and death
 
-    # HT: Obviously remove this check, or include it in the generate_transition_matrices() function
-    # and have it output a warning() if the sums are not 1.
-    rowSums (transition_matrices[1, 43, , ], na.rm = FALSE, dims = 1)
-    
    
-    # HT: What follows will go in a generate_state_qalys() function
-    # which takes input_parameters as input and is called from within generate_net_benefit()
     eq5d_norms <- read.csv("eq5d_norms.csv")
     eq5d_norms$age <- c(0, 10, 20, 30, 40, 50, 60, 70, 80)
     
@@ -129,6 +124,7 @@ set.seed(14143)
   treatment_costs["Double test", ] <- 20
   
   #where to add other cost associated with diagnosis, costs associated with FP?
+  
   #############################################################################
   ## Accuracy of tests ########################################################
   #############################################################################
@@ -155,24 +151,22 @@ set.seed(14143)
   #need to add something in here for the different pre-test probabilities 
   
   # Probabilities for test 
-  for (i_pretest in 1:5) {
-  tp[,1] <- (n_samples * p_cd[i_pretest] * rbeta(n=n_samples, shape1 = sens_alpha, shape2 = sens_beta))/n_samples
+  tp[,1] <- (n_samples * p_cd * rbeta(n=n_samples, shape1 = sens_alpha, shape2 = sens_beta))/n_samples
   fn[,1] <- 1 - tp[,1]  
-  tn[,1] <- (n_samples * p_cd[i_pretest] * rbeta(n=n_samples, shape1 = spec_alpha, shape2 = spec_beta))/n_samples
+  tn[,1] <- (n_samples * p_cd * rbeta(n=n_samples, shape1 = spec_alpha, shape2 = spec_beta))/n_samples
   fp[,1] <- 1 - tn[,1]
   
   # Probabilities for test + biopsy
-  tp[,2] <- (n_samples * p_cd[i_pretest] * sens_testbiopsy)/n_samples
+  tp[,2] <- (n_samples * p_cd * sens_testbiopsy)/n_samples
   fn[,2] <- 1 - tp[,2] 
-  tn[,2] <- (n_samples * p_cd[i_pretest] * spec_testbiopsy)/n_samples
+  tn[,2] <- (n_samples * p_cd * spec_testbiopsy)/n_samples
   fp[,2] <- 1 - tn[,2]
   
   # Probabilities for Double test
-  tp[,3] <- (n_samples * p_cd[i_pretest] * sens_doubletest)/n_samples
+  tp[,3] <- (n_samples * p_cd * sens_doubletest)/n_samples
   fn[,3] <- 1 - tp[,3] 
-  tn[,3] <- (n_samples * p_cd[i_pretest] * spec_doubletest)/n_samples
+  tn[,3] <- (n_samples * p_cd * spec_doubletest)/n_samples
   fp[,3] <- 1 - tn[,3]
-  }
   
   
   #############################################################################
@@ -208,12 +202,12 @@ set.seed(14143)
   output <- generate_net_benefit(transition_matrices, state_costs, state_qalys, cohort_vectors)
   output
   
-  #pkgs <- c("MASS","Rtools","devtools")
+ # pkgs <- c("MASS","Rtools","devtools")
   #repos <- c("https://cran.rstudio.com", "https://www.math.ntnu.no/inla/R/stable") 
   #install.packages(pkgs,repos=repos,dependencies = "Depends")
   #devtools::install_github("giabaio/BCEA")
   
-  m <- bcea(e = t(total_qalys), c = t(total_costs), ref = 1, interventions = t_names)
+  m <- bcea(e = t(output$total_qalys), c = t(output$total_costs), ref = 1, interventions = t_names)
 summary(m)
 eib.plot(m, comparison = NULL, pos =
            c(1, 0), size = NULL, plot.cri = NULL, graph
