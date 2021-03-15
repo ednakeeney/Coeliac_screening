@@ -8,15 +8,15 @@ generate_cohort_vectors <- function(input_parameters) {
   
   
   for (i_treatment in c(1:3)) { 
-    cohort_vectors[i_treatment, , 1, "CD GFD no complications"] <- tp[, i_treatment] * probability_nocomplications * adherence
-    cohort_vectors[i_treatment, , 1, "CD GFD subfertility"] <- tp[, i_treatment] * probability_subfertility * adherence
-    cohort_vectors[i_treatment, , 1, "CD GFD osteoporosis"] <- tp[, i_treatment] * probability_osteoporosis * adherence
-    cohort_vectors[i_treatment, , 1,"CD GFD NHL"] <- tp[, i_treatment] * probability_NHL * adherence
+    cohort_vectors[i_treatment, , 1, "CD GFD no complications"] <- tp[, i_treatment] * probability_nocomplications 
+    cohort_vectors[i_treatment, , 1, "CD GFD subfertility"] <- tp[, i_treatment] * probability_subfertility
+    cohort_vectors[i_treatment, , 1, "CD GFD osteoporosis"] <- tp[, i_treatment] * probability_osteoporosis 
+    cohort_vectors[i_treatment, , 1,"CD GFD NHL"] <- tp[, i_treatment] * probability_NHL
     
-    cohort_vectors[i_treatment, , 1,"CD no GFD no complications"] <- tp[, i_treatment] * probability_nocomplications * (1-adherence)
-    cohort_vectors[i_treatment, , 1,"CD no GFD subfertility"] <- tp[, i_treatment] * probability_subfertility * (1-adherence)
-    cohort_vectors[i_treatment, , 1,"CD no GFD osteoporosis"] <- tp[, i_treatment] * probability_osteoporosis * (1-adherence)
-    cohort_vectors[i_treatment, , 1,"CD no GFD NHL"] <- tp[, i_treatment] * probability_NHL * (1-adherence)
+   # cohort_vectors[i_treatment, , 1,"CD no GFD no complications"] <- tp[, i_treatment] * probability_nocomplications * (1-adherence)
+  #  cohort_vectors[i_treatment, , 1,"CD no GFD subfertility"] <- tp[, i_treatment] * probability_subfertility * (1-adherence)
+  #  cohort_vectors[i_treatment, , 1,"CD no GFD osteoporosis"] <- tp[, i_treatment] * probability_osteoporosis * (1-adherence)
+  #  cohort_vectors[i_treatment, , 1,"CD no GFD NHL"] <- tp[, i_treatment] * probability_NHL * (1-adherence)
     
     cohort_vectors[i_treatment, , 1,"Undiagnosed CD no complications"] <- fn[, i_treatment] * probability_nocomplications 
     cohort_vectors[i_treatment, , 1,"Undiagnosed CD subfertility"] <- fn[, i_treatment] * probability_subfertility 

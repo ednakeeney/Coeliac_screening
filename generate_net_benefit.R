@@ -1,4 +1,4 @@
-generate_net_benefit <- function(transition_matrices, state_costs, state_qalys) {
+generate_net_benefit <- function(transition_matrices, state_costs, state_qalys, cohort_vectors) {
   
   
   # Main model code
@@ -62,6 +62,9 @@ generate_net_benefit <- function(transition_matrices, state_costs, state_qalys) 
   ## Analysis of results ######################################################
   #############################################################################
   output <- list()
+  
+  output$total_costs <- total_costs
+  output$total_qalys <- total_qalys
   # Average costs
   output$average_costs <- rowMeans(total_costs)
   # Average effects (in QALY units)

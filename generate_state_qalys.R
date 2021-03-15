@@ -17,10 +17,10 @@ generate_state_qalys <- function(input_parameters) {
   state_qalys[, , "CD GFD subfertility"] <- state_qalys[, , "CD GFD no complications"] - disutility_subfertility
   state_qalys[, , "CD GFD osteoporosis"] <- state_qalys[, , "CD GFD no complications"] - disutility_osteoporosis 
   state_qalys[, , "CD GFD NHL"] <- state_qalys[, , "CD GFD no complications"] - disutility_NHL
-  state_qalys[, , "CD no GFD no complications"] <- state_qalys[, , "CD GFD no complications"] - disutility_noGFD
-  state_qalys[, , "CD no GFD subfertility"] <-  state_qalys[, , "CD no GFD no complications"] - disutility_subfertility
-  state_qalys[, , "CD no GFD osteoporosis"] <- state_qalys[, , "CD no GFD no complications"] - disutility_osteoporosis
-  state_qalys[, , "CD no GFD NHL"] <- state_qalys[, , "CD no GFD no complications"] - disutility_NHL
+ # state_qalys[, , "CD no GFD no complications"] <- state_qalys[, , "CD GFD no complications"] - disutility_noGFD
+#  state_qalys[, , "CD no GFD subfertility"] <-  state_qalys[, , "CD no GFD no complications"] - disutility_subfertility
+ # state_qalys[, , "CD no GFD osteoporosis"] <- state_qalys[, , "CD no GFD no complications"] - disutility_osteoporosis
+  #state_qalys[, , "CD no GFD NHL"] <- state_qalys[, , "CD no GFD no complications"] - disutility_NHL
   state_qalys[, , "Undiagnosed CD subfertility"] <-  state_qalys[, , "Undiagnosed CD no complications"] - disutility_subfertility
   state_qalys[, , "Undiagnosed CD osteoporosis"] <- state_qalys[, , "Undiagnosed CD no complications"] - disutility_osteoporosis
   state_qalys[, , "Undiagnosed CD NHL"] <- state_qalys[, , "Undiagnosed CD no complications"] - disutility_NHL

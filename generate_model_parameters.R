@@ -2,7 +2,7 @@ generate_model_parameters <- function(starting_age) {
   
  
   
-   adherence	<- rbeta(n = n_samples, shape1 = 75, shape2 = 100)       #will come from targeted review
+   #adherence	<- rbeta(n = n_samples, shape1 = 75, shape2 = 100)       #will come from targeted review
   
   duration_of_symptoms <- 10.93
   duration_of_symptoms_sd <- 13.10
@@ -72,6 +72,8 @@ generate_model_parameters <- function(starting_age) {
   NHL_probability_GFD_18plus	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_GFD_alpha[2]), shape2 = as.numeric(NHL_probability$NHL_GFD_beta[2]))
   NHL_probability_GFD <- NHL_probability_GFD_18plus
   
+  
+  
   # Corresponding probabilities not on GFD
   osteoporosis_probability_noGFD_0	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[1]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[1]))
   osteoporosis_probability_noGFD_10	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[2]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[2]))
@@ -108,10 +110,11 @@ generate_model_parameters <- function(starting_age) {
   NHL_probability_noGFD_18plus	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_noGFD_alpha[2]), shape2 = as.numeric(NHL_probability$NHL_noGFD_beta[2]))
   NHL_probability_noGFD <- NHL_probability_noGFD_18plus
   
-  lifetables <- read.csv("lifetables.csv")
-  percentage_male <- 0.5
-  lifetables$Overall <- (percentage_male * lifetables$Males) + ((1-percentage_male) * lifetables$Females)
-  death_probability_nocomplications	<- data.frame(lifetables$Age, lifetables$Overall)
+ 
+  #lifetables <- read.csv("lifetables.csv")
+  #percentage_male <- 0.5
+  #lifetables$Overall <- (percentage_male * lifetables$Males) + ((1-percentage_male) * lifetables$Females)
+  #death_probability_nocomplications	<- data.frame(lifetables$Age, lifetables$Overall)
   
   death_hazard_NHL <- rnorm(n = n_samples, mean = exp(-2.092), sd = 0.006378) #do I exponentiate the sd?
   death_probability_NHL <-	1-exp(-death_hazard_NHL) #will relate to table above
@@ -119,11 +122,11 @@ generate_model_parameters <- function(starting_age) {
   #During the total study period, the hazard ratio for one-year all-cause mortality was 3.5 times (95% CI: 3.28–3.74) 
   #greater for male hip fracture patients than control subjects and 2.4 times (95% CI: 2.31–2.50) greater than 
   #controls for females. 
-  death_probability_osteoporosis <-	lifetables
-  death_probability_osteoporosis$Males <- death_probability_osteoporosis$Males*3.5   #Currently  not probabilistic as lifetables are not probabilistic
-  death_probability_osteoporosis$Females <- death_probability_osteoporosis$Females*2.4
-  death_probability_osteoporosis$Overall <- (percentage_male * death_probability_osteoporosis$Males) + ((1-percentage_male) * death_probability_osteoporosis$Females)
-  death_probability_osteoporosis	<- data.frame(death_probability_osteoporosis$Age, death_probability_osteoporosis$Overall)
+  #death_probability_osteoporosis <-	lifetables
+  #death_probability_osteoporosis$Males <- death_probability_osteoporosis$Males*3.5   #Currently  not probabilistic as lifetables are not probabilistic
+  #death_probability_osteoporosis$Females <- death_probability_osteoporosis$Females*2.4
+  #death_probability_osteoporosis$Overall <- (percentage_male * death_probability_osteoporosis$Males) + ((1-percentage_male) * death_probability_osteoporosis$Females)
+  #death_probability_osteoporosis	<- data.frame(death_probability_osteoporosis$Age, death_probability_osteoporosis$Overall)
   
   
   
@@ -168,11 +171,11 @@ generate_model_parameters <- function(starting_age) {
   
   disutility_NHL <- runif(n = n_samples, min = 0.036, max = 0.136)
   
-  disutility_noGFD <-  0.14 
-  disutility_noGFD_se <- (0.31 - (-0.03))/3.92
-  disutility_noGFD_alpha <- (disutility_noGFD ^ 2 * (1 - disutility_noGFD)/disutility_noGFD_se ^ 2) - disutility_noGFD
-  disutility_noGFD_beta <- (disutility_noGFD_alpha/disutility_noGFD) - disutility_noGFD_alpha
-  disutility_noGFD <- rbeta(n = n_samples, shape1 = disutility_noGFD_alpha, shape2 = disutility_noGFD_beta)
+  #disutility_noGFD <-  0.14 
+  #disutility_noGFD_se <- (0.31 - (-0.03))/3.92
+  #disutility_noGFD_alpha <- (disutility_noGFD ^ 2 * (1 - disutility_noGFD)/disutility_noGFD_se ^ 2) - disutility_noGFD
+  #disutility_noGFD_beta <- (disutility_noGFD_alpha/disutility_noGFD) - disutility_noGFD_alpha
+  #disutility_noGFD <- rbeta(n = n_samples, shape1 = disutility_noGFD_alpha, shape2 = disutility_noGFD_beta)
   
   
   cost_hipfracture <- 19073
@@ -221,14 +224,19 @@ generate_model_parameters <- function(starting_age) {
   cost_NHL_shape <- sqrt(log(1 + (cost_NHL_sd^2 / cost_NHL^2)))
   cost_NHL <- rlnorm(n = n_samples, cost_NHL_location,  cost_NHL_shape)
   
+  cost_diagnosis <- 379.27
+  cost_diagnosis_sd <- cost_diagnosis/10
+  cost_diagnosis_location <- log(cost_diagnosis^2 / sqrt(cost_diagnosis_sd^2 + cost_diagnosis^2))
+  cost_diagnosis_shape <- sqrt(log(1 + (cost_diagnosis_sd^2 / cost_diagnosis^2)))
+  cost_diagnosis <- rlnorm(n = n_samples, cost_diagnosis_location,  cost_diagnosis_shape)
   
   
-  return(data.frame(adherence, probability_late_diagnosis, probability_subfertility, probability_osteoporosis, probability_NHL, probability_nocomplications,
+  return(data.frame(probability_late_diagnosis, probability_subfertility, probability_osteoporosis, probability_NHL, probability_nocomplications,
                     osteoporosis_probability_GFD_all, subfertility_probability_GFD_all, NHL_probability_GFD, osteoporosis_probability_noGFD_all, subfertility_probability_noGFD_all,
-                    NHL_probability_noGFD, death_probability_nocomplications, death_probability_NHL, death_probability_osteoporosis, 
+                    NHL_probability_noGFD, death_probability_NHL, 
                     utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL,
-                    disutility_noGFD, cost_CDGFD, cost_osteoporosis, cost_undiagnosedCD, cost_IDA, cost_biopsy, probability_biopsy,
-                    cost_subfertility, cost_NHL, probability_IDA))
+                    cost_CDGFD, cost_osteoporosis, cost_undiagnosedCD, cost_IDA, cost_biopsy, probability_biopsy,
+                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis))
 }
 
 generate_model_parameters(starting_age)
