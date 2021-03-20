@@ -86,4 +86,3 @@ generate_transition_matrices <- function(input_parameters) {
 }
   
 
-View(transition_matrices[1, 20, , ])
