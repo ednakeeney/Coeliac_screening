@@ -38,7 +38,7 @@ set.seed(14143)
   n_samples <- 100
   
   #pre-test probability of coeliac disease 
-  p_cd <- c(0.45) 
+  p_cd <- 0.15 
   
   starting_age <- 30 #Max is 50 with 50 cycles
   starting_age_columnandrow <- read.csv("starting_age_column.csv")
