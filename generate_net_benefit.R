@@ -1,5 +1,86 @@
 generate_net_benefit <- function(transition_matrices, state_costs, state_qalys, cohort_vectors) {
   
+  state_qalys <- generate_state_qalys(input_parameters)
+  
+  state_costs <- generate_state_costs(input_parameters)
+  
+  treatment_costs<-array(dim=c(n_treatments,n_samples),dimnames=list(t_names,NULL))
+  
+  treatment_costs["IgAEMA", ] <- input_parameters$treatment_cost_IgAEMA 
+  treatment_costs["IgATTGplusIgAEMA", ] <- input_parameters$treatment_cost_IgATTG
+  treatment_costs["Double test", ] <- input_parameters$treatment_cost_doubletest
+  
+  
+  tp <- fn <- fp <- tn <- matrix(n=n_samples, ncol=n_treatments)
+  
+  # Probabilities for test 
+  tp[,1] <- (n_samples * p_cd * input_parameters$sens_IgAEMA_adults)/n_samples
+  fn[,1] <- 1 - tp[,1]  
+  tn[,1] <- (n_samples * p_cd * input_parameters$spec_IgAEMA_adults)/n_samples
+  fp[,1] <- 1 - tn[,1]
+  
+  # Probabilities for test + biopsy
+  tp[,2] <- (n_samples * p_cd * input_parameters$sens_IgATTG)/n_samples
+  fn[,2] <- 1 - tp[,2] 
+  tn[,2] <- (n_samples * p_cd * input_parameters$spec_IgATTG)/n_samples
+  fp[,2] <- 1 - tn[,2]
+  
+  # Probabilities for Double test
+  tp[,3] <- (n_samples * p_cd * input_parameters$sens_doubletest)/n_samples
+  fn[,3] <- 1 - tp[,3] 
+  tn[,3] <- (n_samples * p_cd * input_parameters$spec_doubletest)/n_samples
+  fp[,3] <- 1 - tn[,3]
+  
+  # Build an array to store the cohort vector at each cycle
+  # Each cohort vector has n_states elements: probability of being in each state,
+  # There is one cohort vector for each treatment, for each PSA sample, for each cycle.
+  cohort_vectors<-array(dim=c(n_treatments,n_samples,n_cycles,n_states),  
+                        dimnames=list(t_names,NULL,NULL, state_names))
+  
+  for (i_treatment in c(1:3)) { 
+    cohort_vectors[i_treatment, , 1, "CD GFD no complications"] <- tp[, i_treatment] * input_parameters$probability_nocomplications 
+    cohort_vectors[i_treatment, , 1, "CD GFD subfertility"] <- tp[, i_treatment] * input_parameters$probability_subfertility
+    cohort_vectors[i_treatment, , 1, "CD GFD osteoporosis"] <- tp[, i_treatment] * input_parameters$probability_osteoporosis 
+    cohort_vectors[i_treatment, , 1,"CD GFD NHL"] <- tp[, i_treatment] * input_parameters$probability_NHL
+    
+    # cohort_vectors[i_treatment, , 1,"CD no GFD no complications"] <- tp[, i_treatment] * probability_nocomplications * (1-adherence)
+    #  cohort_vectors[i_treatment, , 1,"CD no GFD subfertility"] <- tp[, i_treatment] * probability_subfertility * (1-adherence)
+    #  cohort_vectors[i_treatment, , 1,"CD no GFD osteoporosis"] <- tp[, i_treatment] * probability_osteoporosis * (1-adherence)
+    #  cohort_vectors[i_treatment, , 1,"CD no GFD NHL"] <- tp[, i_treatment] * probability_NHL * (1-adherence)
+    
+    cohort_vectors[i_treatment, , 1,"Undiagnosed CD no complications"] <- fn[, i_treatment] * input_parameters$probability_nocomplications 
+    cohort_vectors[i_treatment, , 1,"Undiagnosed CD subfertility"] <- fn[, i_treatment] * input_parameters$probability_subfertility 
+    cohort_vectors[i_treatment, , 1,"Undiagnosed CD osteoporosis"] <- fn[, i_treatment] * input_parameters$probability_osteoporosis 
+    cohort_vectors[i_treatment, , 1,"Undiagnosed CD NHL"] <- fn[, i_treatment] * input_parameters$probability_NHL 
+  }
+  
+  cohort_vectors[, , , ] [is.na(cohort_vectors[, , , ] )] <- 0
+  rowSums (cohort_vectors[, 2, , ], na.rm = FALSE, dims = 1)
+  
+  # Build an array to store the costs and QALYs accrued per cycle
+  # One for each treatment, for each PSA sample, for each cycle
+  # These will be filled in below in the main model code
+  # Then discounted and summed to contribute to total costs and total QALYs
+  cycle_costs <- array(dim = c(n_treatments, n_samples, n_cycles),
+                       dimnames = list(t_names, NULL, NULL))
+  cycle_qalys <- array(dim = c(n_treatments, n_samples, n_cycles),
+                       dimnames = list(t_names, NULL, NULL))
+  
+  # Build arrays to store the total costs and total QALYs
+  # There is one for each treatment and each PSA sample
+  # These are filled in below using cycle_costs, 
+  # treatment_costs, and cycle_qalys
+  total_costs <- array(dim = c(n_treatments, n_samples),
+                       dimnames = list(t_names, NULL))
+  total_qalys <- array(dim = c(n_treatments, n_samples),
+                       dimnames = list(t_names, NULL))
+  
+  fp_costs <- array(dim = c(n_treatments, n_samples),
+                    dimnames = list(t_names, NULL))
+  
+  fp_costs[ , ] <- (fp[ , ] * input_parameters$cost_gfp) 
+  
+  disc_vec <- (1/1.035) ^ rep(c(0:(n_cycles/2-1)), each = 2)
   
   # Main model code
   # Loop over the treatment options
@@ -40,9 +121,8 @@ generate_net_benefit <- function(transition_matrices, state_costs, state_qalys, 
       # Apply the discount factor 
       # (1 in first year, 1.035 in second, 1.035^2 in third, and so on)
       # Each year acounts for two cycles so need to repeat the discount values
-      total_costs[i_treatment, i_sample] <- treatment_costs[i_treatment, i_sample] +
-        cycle_costs[i_treatment, i_sample, ] %*%
-        disc_vec
+      total_costs[i_treatment, i_sample] <- treatment_costs[i_treatment, i_sample] + fp_costs[i_treatment, i_sample] 
+      + cycle_costs[i_treatment, i_sample, ] %*% disc_vec
       
       # Combine the cycle_qalys to get total qalys
       # Apply the discount factor 
@@ -71,30 +151,30 @@ generate_net_benefit <- function(transition_matrices, state_costs, state_qalys, 
   output$average_effects <- rowMeans(total_qalys)
   
   
-  output$incremental_costs_testbiopsy_test <- total_costs["Test + biopsy", ] - total_costs["Test", ]
-  output$incremental_effects_testbiopsy_test <- total_qalys["Test + biopsy", ] - total_qalys["Test", ]
+  output$incremental_costs_IgATTGplusIgAEMA_IgAEMA <- total_costs["IgATTGplusIgAEMA", ] - total_costs["IgAEMA", ]
+  output$incremental_effects_IgATTGplusIgAEMA_IgAEMA <- total_qalys["IgATTGplusIgAEMA", ] - total_qalys["IgAEMA", ]
   
-  output$incremental_costs_doubletest_test <- total_costs["Double test", ] - total_costs["Test", ]
-  output$incremental_effects_doubletest_test <- total_qalys["Double test", ] - total_qalys["Test", ]
+  output$incremental_costs_doubletest_IgAEMA <- total_costs["Double test", ] - total_costs["IgAEMA", ]
+  output$incremental_effects_doubletest_IgAEMA <- total_qalys["Double test", ] - total_qalys["IgAEMA", ]
   
   
-  output$ICER_testbiopsy_test <- mean(output$incremental_costs_testbiopsy_test)/mean(output$incremental_effects_testbiopsy_test)
-  output$ICER_doubletest_test <- mean(output$incremental_costs_doubletest_test)/mean(output$incremental_effects_doubletest_test)
+  output$ICER_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_costs_IgATTGplusIgAEMA_IgAEMA)/mean(output$incremental_effects_IgATTGplusIgAEMA_IgAEMA)
+  output$ICER_doubletest_IgAEMA <- mean(output$incremental_costs_doubletest_IgAEMA)/mean(output$incremental_effects_doubletest_IgAEMA)
   
   # Incremental net benefit at the ?20,000 willingness-to-pay
   
-  output$incremental_net_benefit_testbiopsy_test <- 20000*output$incremental_effects_testbiopsy_test - output$incremental_costs_testbiopsy_test
-  output$incremental_net_benefit_doubletest_test <- 20000*output$incremental_effects_doubletest_test - output$incremental_costs_doubletest_test
+  output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA <- 20000*output$incremental_effects_IgATTGplusIgAEMA_IgAEMA - output$incremental_costs_IgATTGplusIgAEMA_IgAEMA
+  output$incremental_net_benefit_doubletest_IgAEMA <- 20000*output$incremental_effects_doubletest_IgAEMA - output$incremental_costs_doubletest_IgAEMA
   
   # Average incremental net benefit
-  output$average_inb_testbiopsy_test <- mean(output$incremental_net_benefit_testbiopsy_test)
-  output$average_inb_doubletest_test <- mean(output$incremental_net_benefit_doubletest_test)
+  output$average_inb_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA)
+  output$average_inb_doubletest_IgAEMA <- mean(output$incremental_net_benefit_doubletest_IgAEMA)
   
   # Probability cost-effective
   # This is the proportion of samples for which the incremental net benefit is positive
   
-  output$probability_cost_effective_testbiopsy_test <- sum(output$incremental_net_benefit_testbiopsy_test > 0)/n_samples
-  output$probability_cost_effective_doubletest_test <- sum(output$incremental_net_benefit_doubletest_test > 0)/n_samples
+  output$probability_cost_effective_IgATTGplusIgAEMA_IgAEMA <- sum(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA > 0)/n_samples
+  output$probability_cost_effective_doubletest_IgAEMA <- sum(output$incremental_net_benefit_doubletest_IgAEMA > 0)/n_samples
   return(output)
 }
   
