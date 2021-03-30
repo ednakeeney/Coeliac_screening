@@ -8,6 +8,10 @@ generate_state_qalys <- function(input_parameters) {
   
   state_qalys <- array(dim=c(n_samples, n_cycles, n_states), dimnames = list(NULL, NULL, state_names))
   
+  starting_age_columnandrow <- read.csv("starting_age_column.csv")
+  starting_age_columnandrow$starting_age_row <- c(1:11)
+  starting_age_row <- starting_age_columnandrow[starting_age_columnandrow$Starting.age == starting_age, 2]
+  
   eq5d_norms <- read.csv("eq5d_norms.csv")
   eq5d_norms$age <- c(0, 10, 20, 30, 40, 50, 60, 70, 80)
   

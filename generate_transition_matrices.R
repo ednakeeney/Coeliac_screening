@@ -7,6 +7,10 @@ generate_transition_matrices <- function(input_parameters) {
   # Store them in an array with (before filling in below) NA entries
   # Define transition matrices
   
+  starting_age_columnandrow <- read.csv("starting_age_column.csv")
+  starting_age_columnandrow$starting_age_row <- c(1:11)
+  starting_age_column <- starting_age_columnandrow[starting_age_columnandrow$Starting.age == starting_age, 2]
+  
   # Osteoporosis probabilities On GFD
   osteoporosis_probability_GFD_all <- data.frame(input_parameters$osteoporosis_probability_GFD_0, input_parameters$osteoporosis_probability_GFD_10, input_parameters$osteoporosis_probability_GFD_20, input_parameters$osteoporosis_probability_GFD_30,
                                                  input_parameters$osteoporosis_probability_GFD_40, input_parameters$osteoporosis_probability_GFD_50, input_parameters$osteoporosis_probability_GFD_60,

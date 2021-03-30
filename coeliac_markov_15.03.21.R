@@ -41,14 +41,10 @@ set.seed(14143)
   p_cd <- 0.15 
   
   starting_age <- 30 #Max is 50 with 50 cycles
-  starting_age_columnandrow <- read.csv("starting_age_column.csv")
-  starting_age_columnandrow$starting_age_row <- c(1:11)
-  starting_age_column <- starting_age_columnandrow[starting_age_columnandrow$Starting.age == starting_age, 2]
-  starting_age_row <- starting_age_columnandrow[starting_age_columnandrow$Starting.age == starting_age, 2]
+ 
   
-  perspective <- "NHS+OOP" #Other option is "NHS+OOP" for when out-of-pocket costs for iron supplements and gluten free products are included
+  perspective <- "NHS+OOP" #Options are "NHS" or "NHS+OOP" if out-of-pocket costs for iron supplements and gluten free products are to be included
   
-#  source("generate_cohort_vectors.R")
   source("generate_state_costs.R")
   source("generate_state_qalys.R")
   source("generate_model_parameters.R")
@@ -61,8 +57,6 @@ set.seed(14143)
   
   #generate transition matrices
   transition_matrices <- generate_transition_matrices(input_parameters)
-  
-  #where to add cost associated with diagnosis?
   
   #generate results
   output <- generate_net_benefit(transition_matrices)

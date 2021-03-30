@@ -1,6 +1,5 @@
 generate_model_parameters <- function(starting_age) {
   
- 
 
   duration_of_symptoms <- 10.93
   duration_of_symptoms_sd <- 13.10
@@ -210,7 +209,6 @@ generate_model_parameters <- function(starting_age) {
   
 
   #Need to include cost of GFD - Penny contacting Coeliac UK
-  
 
   treatment_cost_IgAEMA <- 10 
   treatment_cost_IgATTG <- 10 
@@ -219,8 +217,8 @@ generate_model_parameters <- function(starting_age) {
   #############################################################################
   ## Accuracy of tests ########################################################
   #############################################################################
-  
-  
+  sens_biopsy <- 1
+  spec_biopsy <- 1
   sens_IgATTG <- 1
   spec_IgATTG <- 1
   sens_doubletest <- 1
@@ -240,7 +238,12 @@ generate_model_parameters <- function(starting_age) {
   sens_IgAEMA_adults <- SensSpec_IgAEMA_adults[,1]
   spec_IgAEMA_adults <- SensSpec_IgAEMA_adults[,2]
   
-  #need to add something in here for the different pre-test probabilities and post-test probabilities for biopsy
+  pre_test_probability <- p_cd
+  pre_test_odds <- pre_test_probability/(1 - pre_test_probability)
+  LR <- SensSpec_IgAEMA_adults[,1]/ (1 - SensSpec_IgAEMA_adults[,2])
+  post_test_odds <- pre_test_odds * LR
+  post_test_probability <- post_test_odds/(1 + post_test_odds)
+  sum(post_test_probability > 0.9)  #558/1000
   
 
   
@@ -251,7 +254,7 @@ generate_model_parameters <- function(starting_age) {
                     utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL,
                     cost_CDGFD, cost_osteoporosis, cost_undiagnosedCD, cost_IDA, cost_biopsy, probability_biopsy,
                     cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, treatment_cost_IgAEMA, treatment_cost_IgATTG, treatment_cost_doubletest,
-                    sens_IgATTG, spec_IgATTG, sens_doubletest, spec_doubletest, sens_IgAEMA_adults, spec_IgAEMA_adults, cost_gfp))
+                    sens_IgATTG, spec_IgATTG, sens_doubletest, spec_doubletest, sens_IgAEMA_adults, spec_IgAEMA_adults, cost_gfp, sens_biopsy, spec_biopsy, post_test_probability))
 }
 
 generate_model_parameters(starting_age)
