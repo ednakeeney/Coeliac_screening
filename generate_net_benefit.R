@@ -1,4 +1,8 @@
-generate_net_benefit <- function(transition_matrices) {
+generate_net_benefit <- function(input_parameters) {
+  
+  #generate transition matrices
+  transition_matrices <- generate_transition_matrices(input_parameters)
+  
   
   state_qalys <- generate_state_qalys(input_parameters)
   
