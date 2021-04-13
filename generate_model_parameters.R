@@ -264,6 +264,7 @@ generate_model_parameters <- function(starting_age) {
   
   #IgATTGplusEMA
   SensSpec_IgATTGplusEMA <- read.csv("SensSpec_IgATTGplusEMA.csv")
+  SensSpec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[sample(nrow(SensSpec_IgATTGplusEMA), n_samples), ]
   sens_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,3]
   spec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,5]
   LR_IgATTGplusEMA <- sens_IgATTGplusEMA/ (1 - spec_IgATTGplusEMA)
