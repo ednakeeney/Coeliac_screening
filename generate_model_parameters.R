@@ -109,10 +109,8 @@ generate_model_parameters <- function(starting_age) {
   
   
   death_hazard_NHL <- rnorm(n = n_samples, mean = exp(-2.092), sd = 0.006378) #do I exponentiate the sd?
-  death_probability_NHL <-	1-exp(-death_hazard_NHL) #will relate to table above
+  death_probability_NHL <-	1-exp(-death_hazard_NHL) 
 
-  
-  
   utility_GFD <- 0.85
   utility_GFdse <- ((0.86-0.84)/3.92)
   utility_GFDalpha <- (utility_GFD ^ 2 * (1 - utility_GFD)/utility_GFdse ^ 2) - utility_GFD
@@ -221,8 +219,8 @@ generate_model_parameters <- function(starting_age) {
   spec_biopsy <- 1
   #sens_IgATTGplusEMA <- 1
   #spec_IgATTGplusEMA <- 0.98
-  sens_doubletest <- 1
-  spec_doubletest <- 1
+  sens_doubletest <- 0.99999
+  spec_doubletest <- 0.99999
   
   pre_test_odds <- c(0,0,0,0,0)
   
@@ -267,6 +265,7 @@ generate_model_parameters <- function(starting_age) {
   SensSpec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[sample(nrow(SensSpec_IgATTGplusEMA), n_samples), ]
   sens_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,3]
   spec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,5]
+  spec_IgATTGplusEMA[spec_IgATTGplusEMA == 1] <- 0.99999
   LR_IgATTGplusEMA <- sens_IgATTGplusEMA/ (1 - spec_IgATTGplusEMA)
   
   post_test_odds_IgATTGplusEMA <- array(dim=c(n_samples, 5),dimnames=list(NULL, pre_test_probability))
@@ -293,11 +292,11 @@ generate_model_parameters <- function(starting_age) {
     post_test_odds_doubletest[,i] <- pre_test_odds[i] * LR_doubletest
     post_test_probability_doubletest[,i] <- post_test_odds_doubletest[,i]/(1 + post_test_odds_doubletest[,i])
   }
-  sum(post_test_probability_doubletest[,1] > 0.9)  #0
-  sum(post_test_probability_IgATTGplusEMA[,2] > 0.9)  #0
-  sum(post_test_probability_IgATTGplusEMA[,3] > 0.9)  #100
-  sum(post_test_probability_IgATTGplusEMA[,4] > 0.9)  #100
-  sum(post_test_probability_IgATTGplusEMA[,5] > 0.9)  #100
+  sum(post_test_probability_doubletest[,1] > 0.9)  #100
+  sum(post_test_probability_doubletest[,2] > 0.9)  #100
+  sum(post_test_probability_doubletest[,3] > 0.9)  #100
+  sum(post_test_probability_doubletest[,4] > 0.9)  #100
+  sum(post_test_probability_doubletest[,5] > 0.9)  #100
   
   return(data.frame(probability_late_diagnosis, probability_subfertility, probability_osteoporosis, probability_NHL, probability_nocomplications,
                     osteoporosis_probability_GFD_all, subfertility_probability_GFD_all, NHL_probability_GFD, osteoporosis_probability_noGFD_all, subfertility_probability_noGFD_all,

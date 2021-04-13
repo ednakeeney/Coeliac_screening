@@ -17,8 +17,8 @@ generate_net_benefit <- function(input_parameters) {
   }
 
   for (i in 1:5) {
-  treatment_costs[i+5, ] <-  ifelse(post_test_probability_IgATTGplusEMA[i] >= 0.9, input_parameters$treatment_cost_IgATTG, 
-                                              input_parameters$treatment_cost_IgATTG +  input_parameters$cost_biopsy)
+  treatment_costs[i+5, ] <-  ifelse(post_test_probability_IgATTGplusEMA[i] >= 0.9, (input_parameters$treatment_cost_IgATTG + input_parameters$treatment_cost_IgAEMA), 
+                                              (input_parameters$treatment_cost_IgATTG + input_parameters$treatment_cost_IgAEMA + input_parameters$cost_biopsy))
   } 
 
   treatment_costs[11:15, ] <- input_parameters$treatment_cost_doubletest
@@ -50,10 +50,12 @@ generate_net_benefit <- function(input_parameters) {
   # Probabilities for Double test
  
     for (i in 1:5) {
-      tp[,i+10] <- (n_samples * pre_test_probability[i] * input_parameters$sens_doubletest)/n_samples
+      tp[,i+10] <- ifelse(post_test_probability_doubletest[i] >= 0.9, (n_samples * pre_test_probability[i] * input_parameters$sens_doubletest)/n_samples,
+                          (n_samples * pre_test_probability[i] * input_parameters$sens_biopsy)/n_samples)   
       fn[,i+10] <- pre_test_probability[i] - tp[,i+10] 
-      tn[,i+10] <- (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_doubletest)/n_samples
-      fp[,i+10] <- (1 - pre_test_probability[i]) - tn[,i+10]
+      tn[,i+10] <- ifelse(post_test_probability_doubletest[i] >= 0.9, (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_doubletest)/n_samples,
+                          (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_biopsy)/n_samples)
+                          fp[,i+10] <- (1 - pre_test_probability[i]) - tn[,i+10]
     }
   
   fp_costs <- array(dim = c(n_treatments, n_samples),
