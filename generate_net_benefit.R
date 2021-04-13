@@ -1,44 +1,60 @@
 generate_net_benefit <- function(input_parameters) {
   
-  #generate transition matrices
   transition_matrices <- generate_transition_matrices(input_parameters)
-  
   
   state_qalys <- generate_state_qalys(input_parameters)
   
   state_costs <- generate_state_costs(input_parameters)
   
-  treatment_costs<-array(dim=c(n_treatments,n_samples),dimnames=list(t_names,NULL))
+  treatment_costs <- array(dim=c(n_treatments,n_samples),dimnames=list(t_names,NULL))
   
-  treatment_costs["IgAEMA", ] <- input_parameters$treatment_cost_IgAEMA 
-  treatment_costs["IgATTGplusIgAEMA", ] <- input_parameters$treatment_cost_IgATTG
-  treatment_costs["Double test", ] <- input_parameters$treatment_cost_doubletest
+  post_test_probability_IgAEMA_adults <- data.frame(input_parameters$X0.05, input_parameters$X0.15, input_parameters$X0.25, input_parameters$X0.35, input_parameters$X0.45)
+  post_test_probability_IgATTGplusEMA <- data.frame(input_parameters$X0.05.1, input_parameters$X0.15.1, input_parameters$X0.25.1, input_parameters$X0.35.1, input_parameters$X0.45.1)
   
+  for (i in 1:5) {
+  treatment_costs[i, ] <-  ifelse(post_test_probability_IgAEMA_adults[i] >= 0.9, input_parameters$treatment_cost_IgAEMA, 
+                                             input_parameters$treatment_cost_IgAEMA +  input_parameters$cost_biopsy)
+  }
+
+  for (i in 1:5) {
+  treatment_costs[i+5, ] <-  ifelse(post_test_probability_IgATTGplusEMA[i] >= 0.9, input_parameters$treatment_cost_IgATTG, 
+                                              input_parameters$treatment_cost_IgATTG +  input_parameters$cost_biopsy)
+  } 
+
+  treatment_costs[11:15, ] <- input_parameters$treatment_cost_doubletest
+ 
   
   tp <- fn <- fp <- tn <- matrix(n=n_samples, ncol=n_treatments)
   
-  # Probabilities for IgAEMA plus biopsy if post test prbability is less than 90% 
-  tp[,1] <- ifelse(input_parameters$post_test_probability >= 0.9, (n_samples * p_cd * input_parameters$sens_IgAEMA_adults)/n_samples, 
-                   (n_samples * p_cd * input_parameters$sens_biopsy)/n_samples
-  )
-  fn[,1] <- p_cd - tp[,1]  
-  tn[,1] <- ifelse(input_parameters$post_test_probability >= 0.9,(n_samples * (1 - p_cd) * input_parameters$spec_IgAEMA_adults)/n_samples,
-                   (n_samples * (1 - p_cd) * input_parameters$spec_biopsy)/n_samples
-  )
-  fp[,1] <- (1 - p_cd) - tn[,1]
+  # Probabilities for IgAEMA plus biopsy 
+  for (i in 1:5) {
+  tp[,i] <- ifelse(post_test_probability_IgAEMA_adults[i] >= 0.9, (n_samples * pre_test_probability[i] * input_parameters$sens_IgAEMA_adults)/n_samples, 
+                   (n_samples * pre_test_probability[i] * input_parameters$sens_biopsy)/n_samples)
+  fn[,i] <- pre_test_probability[i] - tp[,i]  
+  tn[,i] <- ifelse(post_test_probability_IgAEMA_adults[i] >= 0.9, (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_IgAEMA_adults)/n_samples,
+                   (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_biopsy)/n_samples)
+  fp[,i] <- (1 - pre_test_probability[i]) - tn[,i]
+  }
   
   # Probabilities for IgATTG + IgAEMA
-  tp[,2] <- (n_samples * p_cd * input_parameters$sens_IgATTG)/n_samples
-  fn[,2] <- p_cd - tp[,2] 
-  tn[,2] <- (n_samples * (1 - p_cd) * input_parameters$spec_IgATTG)/n_samples
-  fp[,2] <- (1 - p_cd) - tn[,2]
+
+    for (i in 1:5) {
+  tp[,i+5] <- ifelse(post_test_probability_IgATTGplusEMA[i] >= 0.9, (n_samples * pre_test_probability[i] * input_parameters$sens_IgATTGplusEMA)/n_samples,
+                   (n_samples * pre_test_probability[i] * input_parameters$sens_biopsy)/n_samples)
+  fn[,i+5] <- pre_test_probability[i] - tp[,i+5] 
+  tn[,i+5] <- ifelse(post_test_probability_IgATTGplusEMA[i] >= 0.9, (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_IgATTGplusEMA)/n_samples,
+                   (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_biopsy)/n_samples)
+  fp[,i+5] <- (1 - pre_test_probability[i]) - tn[,i+5]
+    }
   
   # Probabilities for Double test
-  tp[,3] <- (n_samples * p_cd * input_parameters$sens_doubletest)/n_samples
-  fn[,3] <- p_cd - tp[,3] 
-  tn[,3] <- (n_samples * (1 - p_cd) * input_parameters$spec_doubletest)/n_samples
-  fp[,3] <- (1 - p_cd) - tn[,3]
-  
+ 
+    for (i in 1:5) {
+      tp[,i+10] <- (n_samples * pre_test_probability[i] * input_parameters$sens_doubletest)/n_samples
+      fn[,i+10] <- pre_test_probability[i] - tp[,i+10] 
+      tn[,i+10] <- (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_doubletest)/n_samples
+      fp[,i+10] <- (1 - pre_test_probability[i]) - tn[,i+10]
+    }
   
   fp_costs <- array(dim = c(n_treatments, n_samples),
                     dimnames = list(t_names, NULL))
@@ -58,11 +74,11 @@ generate_net_benefit <- function(input_parameters) {
   cohort_vectors<-array(dim=c(n_treatments,n_samples,n_cycles,n_states),  
                         dimnames=list(t_names,NULL,NULL, state_names))
   
-  #scaling up true postivies and false negatives 
+  #scaling up true positives and false negatives 
   tp <- tp/(tp+fn)
   fn <- 1 - tp
   
-  for (i_treatment in c(1:3)) { 
+  for (i_treatment in c(1:n_treatments)) { 
     cohort_vectors[i_treatment, , 1, "CD GFD no complications"] <- tp[, i_treatment] * input_parameters$probability_nocomplications 
     cohort_vectors[i_treatment, , 1, "CD GFD subfertility"] <- tp[, i_treatment] * input_parameters$probability_subfertility
     cohort_vectors[i_treatment, , 1, "CD GFD osteoporosis"] <- tp[, i_treatment] * input_parameters$probability_osteoporosis 
@@ -150,12 +166,7 @@ generate_net_benefit <- function(input_parameters) {
     
   }
   
-  # HT: Weird error that cohort_vectors for final cycle don't sum to 1
-  # e.g. sum(cohort_vectors[1,20,50,]) is less than one but sum(cohort_vectors[1,20,49,]) is one
-  # It's caused by the transition_matrices for 50th cycle not summing to one
-  # In particule the row for "CD no GFD no complications"
-  #EK: I think this is now resolved
-  
+
   #############################################################################
   ## Analysis of results ######################################################
   #############################################################################
@@ -169,30 +180,30 @@ generate_net_benefit <- function(input_parameters) {
   output$average_effects <- rowMeans(total_qalys)
   
   
-  output$incremental_costs_IgATTGplusIgAEMA_IgAEMA <- total_costs["IgATTGplusIgAEMA", ] - total_costs["IgAEMA", ]
-  output$incremental_effects_IgATTGplusIgAEMA_IgAEMA <- total_qalys["IgATTGplusIgAEMA", ] - total_qalys["IgAEMA", ]
+  #output$incremental_costs_IgATTGplusIgAEMA_IgAEMA <- total_costs["IgATTGplusIgAEMA", ] - total_costs["IgAEMA", ]
+  #output$incremental_effects_IgATTGplusIgAEMA_IgAEMA <- total_qalys["IgATTGplusIgAEMA", ] - total_qalys["IgAEMA", ]
   
-  output$incremental_costs_doubletest_IgAEMA <- total_costs["Double test", ] - total_costs["IgAEMA", ]
-  output$incremental_effects_doubletest_IgAEMA <- total_qalys["Double test", ] - total_qalys["IgAEMA", ]
+  #output$incremental_costs_doubletest_IgAEMA <- total_costs["Double test", ] - total_costs["IgAEMA", ]
+  #output$incremental_effects_doubletest_IgAEMA <- total_qalys["Double test", ] - total_qalys["IgAEMA", ]
   
   
-  output$ICER_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_costs_IgATTGplusIgAEMA_IgAEMA)/mean(output$incremental_effects_IgATTGplusIgAEMA_IgAEMA)
-  output$ICER_doubletest_IgAEMA <- mean(output$incremental_costs_doubletest_IgAEMA)/mean(output$incremental_effects_doubletest_IgAEMA)
+  #output$ICER_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_costs_IgATTGplusIgAEMA_IgAEMA)/mean(output$incremental_effects_IgATTGplusIgAEMA_IgAEMA)
+  #output$ICER_doubletest_IgAEMA <- mean(output$incremental_costs_doubletest_IgAEMA)/mean(output$incremental_effects_doubletest_IgAEMA)
   
   # Incremental net benefit at the ?20,000 willingness-to-pay
   
-  output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA <- 20000*output$incremental_effects_IgATTGplusIgAEMA_IgAEMA - output$incremental_costs_IgATTGplusIgAEMA_IgAEMA
-  output$incremental_net_benefit_doubletest_IgAEMA <- 20000*output$incremental_effects_doubletest_IgAEMA - output$incremental_costs_doubletest_IgAEMA
+  #output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA <- 20000*output$incremental_effects_IgATTGplusIgAEMA_IgAEMA - output$incremental_costs_IgATTGplusIgAEMA_IgAEMA
+  #output$incremental_net_benefit_doubletest_IgAEMA <- 20000*output$incremental_effects_doubletest_IgAEMA - output$incremental_costs_doubletest_IgAEMA
   
   # Average incremental net benefit
-  output$average_inb_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA)
-  output$average_inb_doubletest_IgAEMA <- mean(output$incremental_net_benefit_doubletest_IgAEMA)
+  #output$average_inb_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA)
+  #output$average_inb_doubletest_IgAEMA <- mean(output$incremental_net_benefit_doubletest_IgAEMA)
   
   # Probability cost-effective
   # This is the proportion of samples for which the incremental net benefit is positive
   
-  output$probability_cost_effective_IgATTGplusIgAEMA_IgAEMA <- sum(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA > 0)/n_samples
-  output$probability_cost_effective_doubletest_IgAEMA <- sum(output$incremental_net_benefit_doubletest_IgAEMA > 0)/n_samples
+  #output$probability_cost_effective_IgATTGplusIgAEMA_IgAEMA <- sum(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA > 0)/n_samples
+  #output$probability_cost_effective_doubletest_IgAEMA <- sum(output$incremental_net_benefit_doubletest_IgAEMA > 0)/n_samples
   return(output)
 }
   

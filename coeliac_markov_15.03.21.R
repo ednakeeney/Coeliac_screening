@@ -13,8 +13,15 @@ set.seed(14143)
   
   # Define the number and names of treatments
 
-  n_treatments <- 3
-  t_names <- c("IgAEMA", "IgATTGplusIgAEMA", "Double test")
+  n_treatments <- 15
+  
+  treatments <- c("IgAEMA", "IgATTGplusEMA", "Double test")
+  
+  #pre-test probabilities of coeliac disease 
+  pre_test_probability <- c(0.05, 0.15, 0.25, 0.35, 0.45)
+  
+  t_names <-  outer(pre_test_probability, treatments, FUN = "paste")[1:15]
+
   
   # Define the number and names of states of the model
   n_states <- 9
@@ -37,13 +44,12 @@ set.seed(14143)
   # This is the number of PSA samples to use
   n_samples <- 100
   
-  #pre-test probability of coeliac disease 
-  p_cd <- 0.15 
+ 
   
   starting_age <- 30 #Max is 50 with 50 cycles
  
   
-  perspective <- "NHS+OOP" #Options are "NHS" or "NHS+OOP" if out-of-pocket costs for iron supplements and gluten free products are to be included
+  perspective <- "NHS" #Options are "NHS" or "NHS+OOP" if out-of-pocket costs for iron supplements and gluten free products are to be included
   
   source("generate_state_costs.R")
   source("generate_state_qalys.R")
@@ -59,7 +65,7 @@ set.seed(14143)
   transition_matrices <- generate_transition_matrices(input_parameters)
   
   #generate results
-  output <- generate_net_benefit(transition_matrices)
+  output <- generate_net_benefit(input_parameters)
   output
   
   
@@ -76,11 +82,11 @@ eib.plot(m, comparison = NULL, pos =
          = c("base", "ggplot2", "plotly"))
 evi.plot(m, graph = c("base", "ggplot2",
                        "plotly"))
-ceac_plot(m, comparison = NULL,
+ceac.plot(m, comparison = NULL,
           pos = c(1, 0), graph = c("base",
                                    "ggplot2", "plotly"))
 
-ceplane_plot(m, comparison =
+ceplane.plot(m, comparison =
                NULL, pos = c(1, 0), graph = c("base",
                                               "ggplot2", "plotly"))
 sim.table(m)
