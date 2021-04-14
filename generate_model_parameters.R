@@ -222,9 +222,9 @@ generate_model_parameters <- function(starting_age) {
   sens_IgAEMAantihTTG <- 1
   spec_IgAEMAantihTTG <- 0.99999
   
-  pre_test_odds <- c(0,0,0,0,0)
+  pre_test_odds <- c(0,0,0,0,0,0)
   
-  for (i in 1:5){
+  for (i in 1:6){
   pre_test_odds[i] <- pre_test_probability[i]/(1 - pre_test_probability[i])
   }
 
@@ -244,10 +244,10 @@ generate_model_parameters <- function(starting_age) {
   spec_IgAEMA_adults <- SensSpec_IgAEMA_adults[,2]
   LR_IgAEMA_adults <- SensSpec_IgAEMA_adults[,1]/ (1 - SensSpec_IgAEMA_adults[,2])
   
-  post_test_odds_IgAEMA_adults <- array(dim=c(n_samples, 5),dimnames=list(NULL, pre_test_probability))
-  post_test_probability_IgAEMA_adults <- array(dim=c(n_samples,5),dimnames=list(NULL, pre_test_probability))
+  post_test_odds_IgAEMA_adults <- array(dim=c(n_samples, 6),dimnames=list(NULL, pre_test_probability))
+  post_test_probability_IgAEMA_adults <- array(dim=c(n_samples,6),dimnames=list(NULL, pre_test_probability))
   
-  for (i in 1:5){
+  for (i in 1:6){
   post_test_odds_IgAEMA_adults[,i] <- pre_test_odds[i] * LR_IgAEMA_adults
   post_test_probability_IgAEMA_adults[,i] <- post_test_odds_IgAEMA_adults[,i]/(1 + post_test_odds_IgAEMA_adults[,i])
   }
@@ -268,10 +268,10 @@ generate_model_parameters <- function(starting_age) {
   spec_IgATTGplusEMA[spec_IgATTGplusEMA == 1] <- 0.99999
   LR_IgATTGplusEMA <- sens_IgATTGplusEMA/ (1 - spec_IgATTGplusEMA)
   
-  post_test_odds_IgATTGplusEMA <- array(dim=c(n_samples, 5),dimnames=list(NULL, pre_test_probability))
-  post_test_probability_IgATTGplusEMA <- array(dim=c(n_samples,5),dimnames=list(NULL, pre_test_probability))
+  post_test_odds_IgATTGplusEMA <- array(dim=c(n_samples, 6),dimnames=list(NULL, pre_test_probability))
+  post_test_probability_IgATTGplusEMA <- array(dim=c(n_samples,6),dimnames=list(NULL, pre_test_probability))
   
-  for (i in 1:5){
+  for (i in 1:6){
     post_test_odds_IgATTGplusEMA[,i] <- pre_test_odds[i] * LR_IgATTGplusEMA[1:n_samples]
     post_test_probability_IgATTGplusEMA[,i] <- post_test_odds_IgATTGplusEMA[,i]/(1 + post_test_odds_IgATTGplusEMA[,i])
   }
@@ -285,10 +285,10 @@ generate_model_parameters <- function(starting_age) {
   ######################################################################################################################
   #IgAEMAplusantihTTG
   LR_IgAEMAantihTTG <- sens_IgAEMAantihTTG/ (1 - spec_IgAEMAantihTTG)
-  post_test_odds_IgAEMAantihTTG <- array(dim=c(n_samples, 5),dimnames=list(NULL, pre_test_probability))
-  post_test_probability_IgAEMAantihTTG <- array(dim=c(n_samples,5),dimnames=list(NULL, pre_test_probability))
+  post_test_odds_IgAEMAantihTTG <- array(dim=c(n_samples, 6),dimnames=list(NULL, pre_test_probability))
+  post_test_probability_IgAEMAantihTTG <- array(dim=c(n_samples,6),dimnames=list(NULL, pre_test_probability))
   
-  for (i in 1:5){
+  for (i in 1:6){
     post_test_odds_IgAEMAantihTTG[,i] <- pre_test_odds[i] * LR_IgAEMAantihTTG
     post_test_probability_IgAEMAantihTTG[,i] <- post_test_odds_IgAEMAantihTTG[,i]/(1 + post_test_odds_IgAEMAantihTTG[,i])
   }

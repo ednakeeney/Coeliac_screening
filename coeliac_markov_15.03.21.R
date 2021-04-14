@@ -13,14 +13,14 @@ set.seed(14143)
   
   # Define the number and names of treatments
 
-  n_treatments <- 15
+  n_treatments <- 18
   
   treatments <- c("IgAEMA", "IgATTGplusEMA", "IgAEMAantihTTG")
   
   #pre-test probabilities of coeliac disease 
-  pre_test_probability <- c(0.05, 0.15, 0.25, 0.35, 0.45)
+  pre_test_probability <- c(0.05, 0.15, 0.25, 0.35, 0.45, 0.99999)
   
-  t_names <-  outer(pre_test_probability, treatments, FUN = "paste")[1:15]
+  t_names <-  outer(pre_test_probability, treatments, FUN = "paste")[1:18]
 
   
   # Define the number and names of states of the model
@@ -67,7 +67,7 @@ set.seed(14143)
   output <- generate_net_benefit(input_parameters)
   output
   
-  
+
   # Now use the BCEA package to analyse the results
  # pkgs <- c("MASS","Rtools","devtools")
   #repos <- c("https://cran.rstudio.com", "https://www.math.ntnu.no/inla/R/stable") 
