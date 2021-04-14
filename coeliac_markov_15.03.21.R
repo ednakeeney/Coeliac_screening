@@ -15,7 +15,7 @@ set.seed(14143)
 
   n_treatments <- 15
   
-  treatments <- c("IgAEMA", "IgATTGplusEMA", "Double test")
+  treatments <- c("IgAEMA", "IgATTGplusEMA", "IgAEMAantihTTG")
   
   #pre-test probabilities of coeliac disease 
   pre_test_probability <- c(0.05, 0.15, 0.25, 0.35, 0.45)
@@ -42,7 +42,7 @@ set.seed(14143)
   
   # Define simulation parameters
   # This is the number of PSA samples to use
-  n_samples <- 100
+  n_samples <- 1000
   
  
   
@@ -61,7 +61,6 @@ set.seed(14143)
   #generate input parameters
   input_parameters <- generate_model_parameters(starting_age)
   
-  #generate transition matrices
   transition_matrices <- generate_transition_matrices(input_parameters)
   
   #generate results
@@ -79,16 +78,18 @@ set.seed(14143)
 summary(m)
 eib.plot(m, comparison = NULL, pos =
            c(1, 0), size = NULL, plot.cri = NULL, graph
-         = c("base", "ggplot2", "plotly"))
+         = c("ggplot2"))
 evi.plot(m, graph = c("base", "ggplot2",
                        "plotly"))
 ceac.plot(m, comparison = NULL,
-          pos = c(1, 0), graph = c("base",
-                                   "ggplot2", "plotly"))
+          pos = FALSE, graph = c("ggplot2"), line_colors = c(1:14))
+
+mce <- multi.ce(m)
+ceaf.plot(mce, graph = c("ggplot2"))
+
 
 ceplane.plot(m, comparison =
-               NULL, pos = c(1, 0), graph = c("base",
-                                              "ggplot2", "plotly"))
+               NULL, pos = c(1, 0), graph = c("ggplot2"), point_colors = c(1:14))
 sim.table(m)
 toc()
 

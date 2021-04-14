@@ -210,7 +210,7 @@ generate_model_parameters <- function(starting_age) {
 
   treatment_cost_IgAEMA <- rgamma(n = n_samples, shape = 122.57, scale = 0.08) #from NICE model
   treatment_cost_IgATTG <- rgamma(n = n_samples, shape = 26.16, scale = 0.42) #from NICE model
-  treatment_cost_doubletest <- 20
+  treatment_cost_IgAEMAantihTTG <- 20
   
   #############################################################################
   ## Accuracy of tests ########################################################
@@ -219,8 +219,8 @@ generate_model_parameters <- function(starting_age) {
   spec_biopsy <- 1
   #sens_IgATTGplusEMA <- 1
   #spec_IgATTGplusEMA <- 0.98
-  sens_doubletest <- 0.99999
-  spec_doubletest <- 0.99999
+  sens_IgAEMAantihTTG <- 1
+  spec_IgAEMAantihTTG <- 0.99999
   
   pre_test_odds <- c(0,0,0,0,0)
   
@@ -262,7 +262,7 @@ generate_model_parameters <- function(starting_age) {
   
   #IgATTGplusEMA
   SensSpec_IgATTGplusEMA <- read.csv("SensSpec_IgATTGplusEMA.csv")
-  SensSpec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[sample(nrow(SensSpec_IgATTGplusEMA), n_samples), ]
+  SensSpec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[sample(nrow(SensSpec_IgATTGplusEMA), n_samples, replace=TRUE),]
   sens_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,3]
   spec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,5]
   spec_IgATTGplusEMA[spec_IgATTGplusEMA == 1] <- 0.99999
@@ -283,29 +283,29 @@ generate_model_parameters <- function(starting_age) {
  
   
   ######################################################################################################################
-  
-  LR_doubletest <- sens_doubletest/ (1 - spec_doubletest)
-  post_test_odds_doubletest <- array(dim=c(n_samples, 5),dimnames=list(NULL, pre_test_probability))
-  post_test_probability_doubletest <- array(dim=c(n_samples,5),dimnames=list(NULL, pre_test_probability))
+  #IgAEMAplusantihTTG
+  LR_IgAEMAantihTTG <- sens_IgAEMAantihTTG/ (1 - spec_IgAEMAantihTTG)
+  post_test_odds_IgAEMAantihTTG <- array(dim=c(n_samples, 5),dimnames=list(NULL, pre_test_probability))
+  post_test_probability_IgAEMAantihTTG <- array(dim=c(n_samples,5),dimnames=list(NULL, pre_test_probability))
   
   for (i in 1:5){
-    post_test_odds_doubletest[,i] <- pre_test_odds[i] * LR_doubletest
-    post_test_probability_doubletest[,i] <- post_test_odds_doubletest[,i]/(1 + post_test_odds_doubletest[,i])
+    post_test_odds_IgAEMAantihTTG[,i] <- pre_test_odds[i] * LR_IgAEMAantihTTG
+    post_test_probability_IgAEMAantihTTG[,i] <- post_test_odds_IgAEMAantihTTG[,i]/(1 + post_test_odds_IgAEMAantihTTG[,i])
   }
-  sum(post_test_probability_doubletest[,1] > 0.9)  #100
-  sum(post_test_probability_doubletest[,2] > 0.9)  #100
-  sum(post_test_probability_doubletest[,3] > 0.9)  #100
-  sum(post_test_probability_doubletest[,4] > 0.9)  #100
-  sum(post_test_probability_doubletest[,5] > 0.9)  #100
+  sum(post_test_probability_IgAEMAantihTTG[,1] > 0.9)  #100
+  sum(post_test_probability_IgAEMAantihTTG[,2] > 0.9)  #100
+  sum(post_test_probability_IgAEMAantihTTG[,3] > 0.9)  #100
+  sum(post_test_probability_IgAEMAantihTTG[,4] > 0.9)  #100
+  sum(post_test_probability_IgAEMAantihTTG[,5] > 0.9)  #100
   
   return(data.frame(probability_late_diagnosis, probability_subfertility, probability_osteoporosis, probability_NHL, probability_nocomplications,
                     osteoporosis_probability_GFD_all, subfertility_probability_GFD_all, NHL_probability_GFD, osteoporosis_probability_noGFD_all, subfertility_probability_noGFD_all,
                     NHL_probability_noGFD, death_probability_NHL, 
                     utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL,
                     cost_CDGFD, cost_osteoporosis, cost_undiagnosedCD, cost_IDA, cost_biopsy, probability_biopsy,
-                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, treatment_cost_IgAEMA, treatment_cost_IgATTG, treatment_cost_doubletest,
-                    sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_doubletest, spec_doubletest, sens_IgAEMA_adults, spec_IgAEMA_adults, cost_gfp, sens_biopsy, spec_biopsy, 
-                    post_test_probability_IgAEMA_adults, post_test_probability_IgATTGplusEMA))
+                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, treatment_cost_IgAEMA, treatment_cost_IgATTG, treatment_cost_IgAEMAantihTTG,
+                    sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_IgAEMAantihTTG, spec_IgAEMAantihTTG, sens_IgAEMA_adults, spec_IgAEMA_adults, cost_gfp, sens_biopsy, spec_biopsy, 
+                    post_test_probability_IgAEMA_adults, post_test_probability_IgATTGplusEMA, post_test_probability_IgAEMAantihTTG))
 }
 
 generate_model_parameters(starting_age)
