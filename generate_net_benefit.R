@@ -6,58 +6,59 @@ generate_net_benefit <- function(input_parameters) {
   
   state_costs <- generate_state_costs(input_parameters)
   
+ 
+  
+  post_test_probability_IgAEMA <- input_parameters %>% select(X0.5.0.5 : X0.9999.0.9999)
+  post_test_probability_IgATTGplusEMA <- input_parameters %>% select(X0.5.0.5.1 : X0.9999.0.9999.1)
+  post_test_probability_IgATTG <- input_parameters %>% select(X0.5.0.5.2 : X0.9999.0.9999.2)
+  pre_test_probability <- input_parameters %>% select(X0.5.0.5.3 : X0.9999.0.9999.3)
+  fn_riskfactor <- input_parameters %>% select(X0.5.0.5.4 : X0.9999.0.9999.4)
+  
+  
   treatment_costs <- array(dim=c(n_treatments,n_samples),dimnames=list(t_names,NULL))
-  
-  post_test_probability_IgAEMA_adults <- data.frame(input_parameters$X0.05, input_parameters$X0.15, input_parameters$X0.25, input_parameters$X0.35, input_parameters$X0.45, input_parameters$X0.99999)
-  post_test_probability_IgATTGplusEMA <- data.frame(input_parameters$X0.05.1, input_parameters$X0.15.1, input_parameters$X0.25.1, input_parameters$X0.35.1, input_parameters$X0.45.1, input_parameters$X0.99999.1)
-  post_test_probability_IgAEMAantihTTG <- data.frame(input_parameters$X0.05.2, input_parameters$X0.15.2, input_parameters$X0.25.2, input_parameters$X0.35.2, input_parameters$X0.45.2, input_parameters$X0.99999.2)
- 
-   for (i in 1:6) {
-  treatment_costs[i, ] <-  ifelse(post_test_probability_IgAEMA_adults[i] >= 0.9, input_parameters$treatment_cost_IgAEMA, 
+   for (i in 1:n_combinations) {
+  treatment_costs[i, ] <-  ifelse(post_test_probability_IgAEMA[,i] >= 0.9, input_parameters$treatment_cost_IgAEMA, 
                                              input_parameters$treatment_cost_IgAEMA +  input_parameters$cost_biopsy)
-  }
-
-  for (i in 1:6) {
-  treatment_costs[i+6, ] <-  ifelse(post_test_probability_IgATTGplusEMA[i] >= 0.9, (input_parameters$treatment_cost_IgATTG + input_parameters$treatment_cost_IgAEMA), 
-                                              (input_parameters$treatment_cost_IgATTG + input_parameters$treatment_cost_IgAEMA + input_parameters$cost_biopsy))
-  } 
-
-  treatment_costs[13:18, ] <- input_parameters$treatment_cost_IgAEMAantihTTG
- 
+  treatment_costs[n_combinations+i, ] <-  ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9, (input_parameters$treatment_cost_IgATTG + input_parameters$treatment_cost_IgAEMA), 
+                                                 (input_parameters$treatment_cost_IgATTG + input_parameters$treatment_cost_IgAEMA + input_parameters$cost_biopsy))
+  treatment_costs[n_combinations+n_combinations+i, ] <-  ifelse(post_test_probability_IgATTG[,i] >= 0.9, input_parameters$treatment_cost_IgATTG, 
+                                                                input_parameters$treatment_cost_IgATTG + input_parameters$cost_biopsy)
+   }
   
-  tp <- fn <- fp <- tn <- matrix(n=n_samples, ncol=n_treatments)
   
-  # Probabilities for IgAEMA plus biopsy 
-  for (i in 1:6) {
-  tp[,i] <- ifelse(post_test_probability_IgAEMA_adults[i] >= 0.9, (n_samples * pre_test_probability[i] * input_parameters$sens_IgAEMA_adults)/n_samples, 
-                   (n_samples * pre_test_probability[i] * input_parameters$sens_biopsy)/n_samples)
-  fn[,i] <- pre_test_probability[i] - tp[,i]  
-  tn[,i] <- ifelse(post_test_probability_IgAEMA_adults[i] >= 0.9, (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_IgAEMA_adults)/n_samples,
-                   (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_biopsy)/n_samples)
-  fp[,i] <- (1 - pre_test_probability[i]) - tn[,i]
+   tp <- fn <- fp <- tn <- array(dim=c(n_samples, n_treatments), dimnames = list(NULL, t_names))
+  
+  # Probabilities for IgAEMA
+  for (i in 1:n_combinations) {
+  tp[,i] <- ifelse(post_test_probability_IgAEMA[i] >= 0.9, (pre_test_probability[,i] * input_parameters$sens_IgAEMA), 
+                   (pre_test_probability[,i] * input_parameters$sens_biopsy))
+  fn[,i] <- pre_test_probability[,i] - tp[,i]  
+  tn[,i] <- ifelse(post_test_probability_IgAEMA[i] >= 0.9, ((1 - pre_test_probability[,i]) * input_parameters$spec_IgAEMA),
+                   ((1 - pre_test_probability[,i]) * input_parameters$spec_biopsy))
+  fp[,i] <- (1 - pre_test_probability[,i]) - tn[,i]
   }
   
   # Probabilities for IgATTG + IgAEMA
 
-    for (i in 1:6) {
-  tp[,i+6] <- ifelse(post_test_probability_IgATTGplusEMA[i] >= 0.9, (n_samples * pre_test_probability[i] * input_parameters$sens_IgATTGplusEMA)/n_samples,
-                   (n_samples * pre_test_probability[i] * input_parameters$sens_biopsy)/n_samples)
-  fn[,i+6] <- pre_test_probability[i] - tp[,i+6] 
-  tn[,i+6] <- ifelse(post_test_probability_IgATTGplusEMA[i] >= 0.9, (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_IgATTGplusEMA)/n_samples,
-                   (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_biopsy)/n_samples)
-  fp[,i+6] <- (1 - pre_test_probability[i]) - tn[,i+6]
+    for (i in 1:n_combinations) {
+  tp[,i+n_combinations] <- ifelse(post_test_probability_IgATTGplusEMA[i] >= 0.9, (pre_test_probability[,i] * input_parameters$sens_IgATTGplusEMA),
+                   (pre_test_probability[,i] * input_parameters$sens_biopsy))
+  fn[,i+n_combinations] <- pre_test_probability[,i] - tp[,i+n_combinations] 
+  tn[,i+n_combinations] <- ifelse(post_test_probability_IgATTGplusEMA[i] >= 0.9, ((1 - pre_test_probability[,i]) * input_parameters$spec_IgATTGplusEMA),
+                   ((1 - pre_test_probability[,i]) * input_parameters$spec_biopsy))
+  fp[,i+n_combinations] <- (1 - pre_test_probability[,i]) - tn[,i+n_combinations]
     }
   
- # Probabilities for IgAEMAantihTTG
- 
-   for (i in 1:6) {
-  tp[,i+12] <- ifelse(post_test_probability_IgAEMAantihTTG[i] >= 0.9, (n_samples * pre_test_probability[i] * input_parameters$sens_IgAEMAantihTTG)/n_samples,
-                        (n_samples * pre_test_probability[i] * input_parameters$sens_biopsy)/n_samples)   
-     fn[,i+12] <- pre_test_probability[i] - tp[,i+12] 
-     tn[,i+12] <- ifelse(post_test_probability_IgAEMAantihTTG[i] >= 0.9, (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_IgAEMAantihTTG)/n_samples,
-                        (n_samples * (1 - pre_test_probability[i]) * input_parameters$spec_biopsy)/n_samples)
-                        fp[,i+12] <- (1 - pre_test_probability[i]) - tn[,i+12]
-   }
+ # Probabilities for IgATTG
+
+  for (i in 1:n_combinations) {
+    tp[,i+n_combinations+n_combinations] <- ifelse(post_test_probability_IgATTG[i] >= 0.9, (pre_test_probability[,i] * input_parameters$sens_IgATTG),
+                        (pre_test_probability[,i] * input_parameters$sens_biopsy))   
+    fn[,i+n_combinations+n_combinations] <- pre_test_probability[,i] - tp[,i+n_combinations+n_combinations] 
+    tn[,i+n_combinations+n_combinations] <- ifelse(post_test_probability_IgATTG[i] >= 0.9, ((1 - pre_test_probability[,i]) * input_parameters$spec_IgATTG),
+                        ((1 - pre_test_probability[,i]) * input_parameters$spec_biopsy))
+    fp[,i+n_combinations+n_combinations] <- (1 - pre_test_probability[,i]) - tn[,i+n_combinations+n_combinations]
+  }
   
   fp_costs <- array(dim = c(n_treatments, n_samples),
                     dimnames = list(t_names, NULL))
@@ -78,7 +79,18 @@ generate_net_benefit <- function(input_parameters) {
                         dimnames=list(t_names,NULL,NULL, state_names))
   
   #scaling up true positives and false negatives 
-  tp <- tp/(tp+fn)
+ #fn_riskfactor
+ #ncol(fn_riskfactor)
+#fn_riskfactor_table <- array(dim=c(n_samples, n_treatments), dimnames = list(NULL, t_names))
+  #ncol(fn_riskfactor_table)
+  #for (i in 1:n_combinations) {
+  #fn_riskfactor_table[,i] <- fn_riskfactor[,i]
+  #fn_riskfactor_table[,i+n_combinations] <- fn_riskfactor[,i]
+  #fn_riskfactor_table[,i+n_combinations+n_combinations] <- fn_riskfactor[,i]
+  #}
+  
+   #fn <- fn + fn_riskfactor_table
+  tp <- tp/(input_parameters$pre_test_probability_overall)  #not sure this scaling is correct
   fn <- 1 - tp
   
   for (i_treatment in c(1:n_treatments)) { 
@@ -174,6 +186,27 @@ generate_net_benefit <- function(input_parameters) {
   ## Analysis of results ######################################################
   #############################################################################
   output <- list()
+  sum_IgAEMA <- rep(0, n_combinations)
+  for (i in 1:n_combinations){
+    sum_IgAEMA[i] <- sum(post_test_probability_IgAEMA[,i] > 0.9)/n_samples  
+  }
+  names(sum_IgAEMA) <- combinations_names
+  
+  sum_IgATTGplusEMA <- rep(0, n_combinations)
+  for (i in 1:n_combinations){
+    sum_IgATTGplusEMA[i] <- sum(post_test_probability_IgATTGplusEMA[,i] > 0.9)/n_samples  
+  }
+  names(sum_IgATTGplusEMA) <- combinations_names
+  
+  sum_IgATTG <- rep(0, n_combinations)
+  for (i in 1:n_combinations){
+    sum_IgATTG[i] <- sum(post_test_probability_IgATTG[,i] > 0.9)/n_samples  
+  }
+  names(sum_IgATTG) <- combinations_names
+  
+  output$percentage_nobiopsy_IgAEMA <- sum_IgAEMA
+  output$percentage_nobiopsy_IgATTGplusEMA <- sum_IgATTGplusEMA
+  output$percentage_nobiopsy_IgATTG <- sum_IgATTG
   
   output$total_costs <- total_costs
   output$total_qalys <- total_qalys

@@ -1,13 +1,26 @@
 generate_model_parameters <- function(starting_age) {
   
 
-  duration_of_symptoms <- 10.93
-  duration_of_symptoms_sd <- 13.10
-  duration_of_symptoms_location <- log(duration_of_symptoms ^ 2 / sqrt(duration_of_symptoms_sd ^ 2 + duration_of_symptoms ^ 2))
-  duration_of_symptoms_shape <- sqrt(log(1 + (duration_of_symptoms_sd ^ 2 / duration_of_symptoms ^ 2)))
-  duration_of_symptoms <- rlnorm(n = n_samples, duration_of_symptoms_location,  duration_of_symptoms_shape)     #calculated from Violato et al 2019
-  rate_of_symptoms <- 1 / duration_of_symptoms
-  probability_late_diagnosis <- 1 - exp(-rate_of_symptoms)
+  duration_of_symptoms_adults <- 10.93
+  duration_of_symptoms_adults_sd <- 13.10
+  duration_of_symptoms_adults_location <- log(duration_of_symptoms_adults ^ 2 / sqrt(duration_of_symptoms_adults_sd ^ 2 + duration_of_symptoms_adults ^ 2))
+  duration_of_symptoms_adults_shape <- sqrt(log(1 + (duration_of_symptoms_adults_sd ^ 2 / duration_of_symptoms_adults ^ 2)))
+  duration_of_symptoms_adults <- rlnorm(n = n_samples, duration_of_symptoms_adults_location,  duration_of_symptoms_adults_shape)     #calculated from Violato et al 2019
+  rate_of_symptoms_adults <- 1 / duration_of_symptoms_adults
+  probability_late_diagnosis_adults <- 1 - exp(-rate_of_symptoms_adults)
+  
+  duration_of_symptoms_children <- 3.34
+  duration_of_symptoms_children_sd <- 3.71
+  duration_of_symptoms_children_location <- log(duration_of_symptoms_children ^ 2 / sqrt(duration_of_symptoms_children_sd ^ 2 + duration_of_symptoms_children ^ 2))
+  duration_of_symptoms_children_shape <- sqrt(log(1 + (duration_of_symptoms_children_sd ^ 2 / duration_of_symptoms_children ^ 2)))
+  duration_of_symptoms_children <- rlnorm(n = n_samples, duration_of_symptoms_children_location,  duration_of_symptoms_children_shape)     #calculated from Violato et al 2019
+  rate_of_symptoms_children <- 1 / duration_of_symptoms_children
+  probability_late_diagnosis_children <- 1 - exp(-rate_of_symptoms_children)
+  
+  probability_late_diagnosis <- rep(0, times = n_samples)
+  for (i_sample in 1:n_samples) {
+  probability_late_diagnosis[i_sample] <- ifelse(population == "adults", probability_late_diagnosis_adults[i_sample], probability_late_diagnosis_children[i_sample])
+  }
   
   
   prevalence <- read.csv("CPRD prevalence.csv")
@@ -67,9 +80,10 @@ generate_model_parameters <- function(starting_age) {
   NHL_probability <- read.csv("NHL_rate_nice.csv")
   NHL_probability_GFD_18orless	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_GFD_alpha[1]), shape2 = as.numeric(NHL_probability$NHL_GFD_beta[1]))
   NHL_probability_GFD_18plus	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_GFD_alpha[2]), shape2 = as.numeric(NHL_probability$NHL_GFD_beta[2]))
-  NHL_probability_GFD <- NHL_probability_GFD_18plus
-  
-  
+  NHL_probability_GFD <- rep(0, times = n_samples)
+  for (i_sample in 1:n_samples) {
+  NHL_probability_GFD[i_sample] <- ifelse(population == "adults", NHL_probability_GFD_18plus[i_sample], NHL_probability_GFD_18orless[i_sample])
+  }
   
   # Corresponding probabilities not on GFD
   osteoporosis_probability_noGFD_0	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[1]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[1]))
@@ -105,23 +119,52 @@ generate_model_parameters <- function(starting_age) {
   
   NHL_probability_noGFD_18orless	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_noGFD_alpha[1]), shape2 = as.numeric(NHL_probability$NHL_noGFD_beta[1]))
   NHL_probability_noGFD_18plus	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_noGFD_alpha[2]), shape2 = as.numeric(NHL_probability$NHL_noGFD_beta[2]))
-  NHL_probability_noGFD <- NHL_probability_noGFD_18plus
+  NHL_probability_noGFD <- rep(0, times = n_samples)
+  for (i_sample in 1:n_samples) {
+    NHL_probability_noGFD[i_sample] <- ifelse(population == "adults", NHL_probability_noGFD_18plus[i_sample], NHL_probability_noGFD_18orless[i_sample])
+  }
   
   
   death_hazard_NHL <- rnorm(n = n_samples, mean = exp(-2.092), sd = 0.006378) #do I exponentiate the sd?
   death_probability_NHL <-	1-exp(-death_hazard_NHL) 
 
-  utility_GFD <- 0.85
-  utility_GFdse <- ((0.86-0.84)/3.92)
-  utility_GFDalpha <- (utility_GFD ^ 2 * (1 - utility_GFD)/utility_GFdse ^ 2) - utility_GFD
-  utility_GFDbeta <- (utility_GFDalpha / utility_GFD) - utility_GFDalpha
-  utility_GFD <- rbeta(n = n_samples, shape1 = utility_GFDalpha, shape2 = utility_GFDbeta)
+  #############################################################################
+  ## Utilities ################################################################
+  #############################################################################
   
-  utility_undiagnosedCD <-  0.65 
-  utility_undiagnosedCD_se <- (0.67 - 0.63)/3.92
-  utility_undiagnosedCD_alpha <- (utility_undiagnosedCD ^ 2 * (1 - utility_undiagnosedCD)/utility_undiagnosedCD_se ^ 2) - utility_undiagnosedCD
-  utility_undiagnosedCD_beta <- (utility_undiagnosedCD_alpha/utility_undiagnosedCD) - utility_undiagnosedCD_alpha
-  utility_undiagnosedCD <- rbeta(n = n_samples, shape1 = utility_undiagnosedCD_alpha, shape2 = utility_undiagnosedCD_beta)
+  utility_GFD_adults <- 0.85
+  utility_GFdse_adults <- ((0.86-0.84)/3.92)
+  utility_GFDalpha_adults <- (utility_GFD_adults ^ 2 * (1 - utility_GFD_adults)/utility_GFdse_adults ^ 2) - utility_GFD_adults
+  utility_GFDbeta_adults <- (utility_GFDalpha_adults / utility_GFD_adults) - utility_GFDalpha_adults
+  utility_GFD_adults <- rbeta(n = n_samples, shape1 = utility_GFDalpha_adults, shape2 = utility_GFDbeta_adults)
+  
+  utility_GFD_children <- 0.88
+  utility_GFdse_children <- ((0.92-0.85)/3.92)
+  utility_GFDalpha_children <- (utility_GFD_children ^ 2 * (1 - utility_GFD_children)/utility_GFdse_children ^ 2) - utility_GFD_children
+  utility_GFDbeta_children <- (utility_GFDalpha_children / utility_GFD_children) - utility_GFDalpha_children
+  utility_GFD_children <- rbeta(n = n_samples, shape1 = utility_GFDalpha_children, shape2 = utility_GFDbeta_children)
+  
+  utility_GFD <- rep(0, times = n_samples)
+  for (i_sample in 1:n_samples) {
+    utility_GFD[i_sample] <- ifelse(population == "adults", utility_GFD_adults[i_sample], utility_GFD_children[i_sample])
+  }
+  
+  utility_undiagnosedCD_adults <-  0.65 
+  utility_undiagnosedCD_se_adults <- (0.67 - 0.63)/3.92
+  utility_undiagnosedCD_alpha_adults <- (utility_undiagnosedCD_adults ^ 2 * (1 - utility_undiagnosedCD_adults)/utility_undiagnosedCD_se_adults ^ 2) - utility_undiagnosedCD_adults
+  utility_undiagnosedCD_beta_adults <- (utility_undiagnosedCD_alpha_adults/utility_undiagnosedCD_adults) - utility_undiagnosedCD_alpha_adults
+  utility_undiagnosedCD_adults <- rbeta(n = n_samples, shape1 = utility_undiagnosedCD_alpha_adults, shape2 = utility_undiagnosedCD_beta_adults)
+  
+  utility_undiagnosedCD_children <-  0.65 
+  utility_undiagnosedCD_se_children <- (0.67 - 0.63)/3.92
+  utility_undiagnosedCD_alpha_children <- (utility_undiagnosedCD_children ^ 2 * (1 - utility_undiagnosedCD_children)/utility_undiagnosedCD_se_children ^ 2) - utility_undiagnosedCD_children
+  utility_undiagnosedCD_beta_children <- (utility_undiagnosedCD_alpha_children/utility_undiagnosedCD_children) - utility_undiagnosedCD_alpha_children
+  utility_undiagnosedCD_adults <- rbeta(n = n_samples, shape1 = utility_undiagnosedCD_alpha_children, shape2 = utility_undiagnosedCD_beta_children)
+  
+  utility_undiagnosedCD <- rep(0, times = n_samples)
+  for (i_sample in 1:n_samples) {
+    utility_undiagnosedCD[i_sample] <- ifelse(population == "adults", utility_undiagnosedCD_adults[i_sample], utility_undiagnosedCD_children[i_sample])
+  }
   
   disutility_subfertility <-  0.158 
   disutility_subfertility_se <- (0.173 - 0.143)/3.92
@@ -151,6 +194,9 @@ generate_model_parameters <- function(starting_age) {
   
   disutility_NHL <- runif(n = n_samples, min = 0.036, max = 0.136)
   
+  #############################################################################
+  ## Costs ####################################################################
+  #############################################################################
   
   cost_hipfracture <- 19073
   cost_hipfractureSE <- ((16515 * 1.17) - (16097 * 1.17)) / 3.92
@@ -172,19 +218,44 @@ generate_model_parameters <- function(starting_age) {
   cost_IDA <- if(perspective == "NHS") 0 else 17.89
   cost_gfp <- if(perspective == "NHS") 0 else 100
   
-  cost_undiagnosedCD <- 340
-  cost_undiagnosedCD_se <- 2.96
-  cost_undiagnosedCD_alpha <- (cost_undiagnosedCD/cost_undiagnosedCD_se)^2
-  cost_undiagnosedCD_beta <- (cost_undiagnosedCD_se^2)/cost_undiagnosedCD
-  cost_undiagnosedCD <- rgamma(n = n_samples, shape = cost_undiagnosedCD_alpha, scale = cost_undiagnosedCD_beta) 
+  cost_undiagnosedCD_adults <- 421
+  cost_undiagnosedCD_se_adults <- 3.39
+  cost_undiagnosedCD_alpha_adults <- (cost_undiagnosedCD_adults/cost_undiagnosedCD_se_adults)^2
+  cost_undiagnosedCD_beta_adults <- (cost_undiagnosedCD_se_adults^2)/cost_undiagnosedCD_adults
+  cost_undiagnosedCD_adults <- rgamma(n = n_samples, shape = cost_undiagnosedCD_alpha_adults, scale = cost_undiagnosedCD_beta_adults) 
   
-  cost_CDGFD <- 650
-  cost_CDGFD_se <- 4.68
-  cost_CDGFD_alpha <- (cost_CDGFD/cost_CDGFD_se)^2
-  cost_CDGFD_beta <- (cost_CDGFD_se^2)/cost_CDGFD
-  cost_CDGFD <- rgamma(n = n_samples, shape = cost_CDGFD_alpha, scale = cost_CDGFD_beta)
+  cost_undiagnosedCD_children <- 248
+  cost_undiagnosedCD_se_children <- 5.11
+  cost_undiagnosedCD_alpha_children <- (cost_undiagnosedCD_children/cost_undiagnosedCD_se_children)^2
+  cost_undiagnosedCD_beta_children <- (cost_undiagnosedCD_se_children^2)/cost_undiagnosedCD_children
+  cost_undiagnosedCD_children <- rgamma(n = n_samples, shape = cost_undiagnosedCD_alpha_children, scale = cost_undiagnosedCD_beta_children) 
   
-  cost_biopsy <- 530
+  cost_undiagnosedCD <- rep(0, times = n_samples)
+  for (i_sample in 1:n_samples) {
+    cost_undiagnosedCD[i_sample] <- ifelse(population == "adults", cost_undiagnosedCD_adults[i_sample], cost_undiagnosedCD_children[i_sample])
+  }
+  
+  cost_CDGFD_adults <- 758
+  cost_CDGFD_se_adults <- 5.4
+  cost_CDGFD_alpha_adults <- (cost_CDGFD_adults/cost_CDGFD_se_adults)^2
+  cost_CDGFD_beta_adults <- (cost_CDGFD_se_adults^2)/cost_CDGFD_adults
+  cost_CDGFD_adults <- rgamma(n = n_samples, shape = cost_CDGFD_alpha_adults, scale = cost_CDGFD_beta_adults)
+  
+  cost_CDGFD_children <- 458
+  cost_CDGFD_se_children <- 21.48
+  cost_CDGFD_alpha_children <- (cost_CDGFD_children/cost_CDGFD_se_children)^2
+  cost_CDGFD_beta_children <- (cost_CDGFD_se_children^2)/cost_CDGFD_children
+  cost_CDGFD_children <- rgamma(n = n_samples, shape = cost_CDGFD_alpha_children, scale = cost_CDGFD_beta_children)
+  
+  cost_CDGFD <- rep(0, times = n_samples)
+  for (i_sample in 1:n_samples) {
+    cost_CDGFD[i_sample] <- ifelse(population == "adults", cost_CDGFD_adults[i_sample], cost_CDGFD_children[i_sample])
+  }
+  
+  
+  cost_biopsy_adults <- 530
+  cost_biopsy_children <- 823
+  cost_biopsy <- ifelse(population == "adults", cost_biopsy_adults, cost_biopsy_children)
   probability_biopsy <- runif(n = n_samples, min = 0.6, max = 0.8)
   
   cost_subfertility <- 8079.75 
@@ -208,27 +279,45 @@ generate_model_parameters <- function(starting_age) {
 
   #Need to include cost of GFD - Penny contacting Coeliac UK
 
-  treatment_cost_IgAEMA <- rgamma(n = n_samples, shape = 122.57, scale = 0.08) #from NICE model
-  treatment_cost_IgATTG <- rgamma(n = n_samples, shape = 26.16, scale = 0.42) #from NICE model
-  treatment_cost_IgAEMAantihTTG <- 20
+  treatment_cost_IgAEMA <- 20 #based on correspondence with Liz Furie 
+  treatment_cost_IgAEMA_se <- treatment_cost_IgAEMA/10
+  treatment_cost_IgAEMA_alpha <- (treatment_cost_IgAEMA/treatment_cost_IgAEMA_se)^2
+  treatment_cost_IgAEMA_beta <- (treatment_cost_IgAEMA_se^2)/treatment_cost_IgAEMA
+  treatment_cost_IgAEMA <- rgamma(n = n_samples, shape = treatment_cost_IgAEMA_alpha, scale = treatment_cost_IgAEMA_beta)
+  #rgamma(n = n_samples, shape = 122.57, scale = 0.08) #from NICE model
+  treatment_cost_IgATTG <- 5.50 #based on correspondence with Liz Furie 
+  treatment_cost_IgATTG_se <- treatment_cost_IgATTG/10
+  treatment_cost_IgATTG_alpha <- (treatment_cost_IgATTG/treatment_cost_IgATTG_se)^2
+  treatment_cost_IgATTG_beta <- (treatment_cost_IgATTG_se^2)/treatment_cost_IgATTG
+  treatment_cost_IgATTG <- rgamma(n = n_samples, shape = treatment_cost_IgATTG_alpha, scale = treatment_cost_IgATTG_beta)
+  #rgamma(n = n_samples, shape = 26.16, scale = 0.42) #from NICE model
+  treatment_cost_HLA <- 30 #correspondence with Peter Gillett
   
   #############################################################################
   ## Accuracy of tests ########################################################
   #############################################################################
   sens_biopsy <- 1
   spec_biopsy <- 1
-  #sens_IgATTGplusEMA <- 1
-  #spec_IgATTGplusEMA <- 0.98
-  sens_IgAEMAantihTTG <- 1
-  spec_IgAEMAantihTTG <- 0.99999
   
-  pre_test_odds <- c(0,0,0,0,0,0)
+  pre_test_probability_overall <- 0.01
+  tp_riskfactor <- fn_riskfactor <- fp_riskfactor <- tn_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, combinations_names))
   
-  for (i in 1:6){
-  pre_test_odds[i] <- pre_test_probability[i]/(1 - pre_test_probability[i])
+  for (i in 1:n_combinations) {
+    tp_riskfactor[,i] <- pre_test_probability_overall * combinations$sens_riskfactor[i]
+    fn_riskfactor[,i] <- pre_test_probability_overall - tp_riskfactor[,i]  
+    tn_riskfactor[,i] <- (1 - pre_test_probability_overall) * combinations$spec_riskfactor[i]
+    fp_riskfactor[,i] <- (1 - pre_test_probability_overall) - tn_riskfactor[,i]
+  }
+  
+  pre_test_probability <- tp_riskfactor/(tp_riskfactor+fp_riskfactor)
+  
+  pre_test_odds <- array(0, dim=c(n_samples, n_combinations), dimnames = list(NULL, combinations_names))
+  
+  for (i in 1:n_combinations){
+    pre_test_odds[,i] <- pre_test_probability[,i]/(1 - pre_test_probability[,i])
   }
 
-  
+  #################################################################################################################
   #Iga EMA adults
   #E(logitSE) coef = 1.993122, SE = 0.4508497
   #E(logitSP) coef = 5.54022, 1.556019
@@ -244,20 +333,65 @@ generate_model_parameters <- function(starting_age) {
   spec_IgAEMA_adults <- SensSpec_IgAEMA_adults[,2]
   LR_IgAEMA_adults <- SensSpec_IgAEMA_adults[,1]/ (1 - SensSpec_IgAEMA_adults[,2])
   
-  post_test_odds_IgAEMA_adults <- array(dim=c(n_samples, 6),dimnames=list(NULL, pre_test_probability))
-  post_test_probability_IgAEMA_adults <- array(dim=c(n_samples,6),dimnames=list(NULL, pre_test_probability))
+  post_test_odds_IgAEMA_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  post_test_probability_IgAEMA_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
   
-  for (i in 1:6){
-  post_test_odds_IgAEMA_adults[,i] <- pre_test_odds[i] * LR_IgAEMA_adults
+  for (i in 1:n_combinations){
+  post_test_odds_IgAEMA_adults[,i] <- pre_test_odds[,i] * LR_IgAEMA_adults
   post_test_probability_IgAEMA_adults[,i] <- post_test_odds_IgAEMA_adults[,i]/(1 + post_test_odds_IgAEMA_adults[,i])
   }
-  sum(post_test_probability_IgAEMA_adults[,1] > 0.9)  #59/100
-  sum(post_test_probability_IgAEMA_adults[,2] > 0.9)  #81/100
-  sum(post_test_probability_IgAEMA_adults[,3] > 0.9)  #96/100
-  sum(post_test_probability_IgAEMA_adults[,4] > 0.9)  #98/100
-  sum(post_test_probability_IgAEMA_adults[,5] > 0.9)  #100/100
   
+  sum_IgAEMA_adults <- rep(0, n_combinations)
+  for (i in 1:n_combinations){
+  sum_IgAEMA_adults[i] <- sum(post_test_probability_IgAEMA_adults[,i] > 0.9)/n_samples  
+  }
+ names(sum_IgAEMA_adults) <- combinations_names
   
+  #Iga EMA children
+  #E(logitSE) coef = 2.839716, SE = 0.3886658
+  #E(logitSP) coef = 2.716697, SE = 0.4927015
+  #Covariance = 0.1592634
+  
+  #random normal values with mean [2.839716, 2.716697] and variances [0.3886658, 0.4927015], and covariance 0.1592634
+  sigma <- matrix(c(0.3886658,0.1592634,0.1592634,0.4927015), 2, 2)
+  mu <- c(2.839716, 2.716697)
+  x <- rmvnorm(n_samples, mu, sigma)
+  head(x)
+  SensSpec_IgAEMA_children <- exp(x)/(1+exp(x))
+  sens_IgAEMA_children <- SensSpec_IgAEMA_children[,1]
+  spec_IgAEMA_children <- SensSpec_IgAEMA_children[,2]
+  LR_IgAEMA_children <- SensSpec_IgAEMA_children[,1]/ (1 - SensSpec_IgAEMA_children[,2])
+  
+  post_test_odds_IgAEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  post_test_probability_IgAEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  
+  for (i in 1:n_combinations){
+    post_test_odds_IgAEMA_children[,i] <- pre_test_odds[,i] * LR_IgAEMA_children
+    post_test_probability_IgAEMA_children[,i] <- post_test_odds_IgAEMA_children[,i]/(1 + post_test_odds_IgAEMA_children[,i])
+  }
+  sum_IgAEMA_children <- rep(0, n_combinations)
+  for (i in 1:n_combinations){
+    sum_IgAEMA_children[i] <- sum(post_test_probability_IgAEMA_children[,i] > 0.9)/n_samples  
+  }
+  names(sum_IgAEMA_children) <- combinations_names
+  
+  post_test_probability_IgAEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  sens_IgAEMA <- rep(0, times = n_samples)
+  spec_IgAEMA <- rep(0, times = n_samples)
+  for(i_sample in 1:n_samples){
+  for (i in 1:n_combinations){
+  post_test_probability_IgAEMA[i_sample,i] <- ifelse(population == "adults", post_test_probability_IgAEMA_adults[i_sample,i], post_test_probability_IgAEMA_children[i_sample,i])
+  }}
+  sum_IgAEMA <- rep(0, n_combinations)
+  for (i in 1:n_combinations){
+    sum_IgAEMA[i] <- sum(post_test_probability_IgAEMA[,i] > 0.9)/n_samples  
+  }
+  names(sum_IgAEMA) <- combinations_names
+  
+  for(i_sample in 1:n_samples){
+  sens_IgAEMA[i_sample] <- ifelse(population == "adults", sens_IgAEMA_adults[i_sample], sens_IgAEMA_children[i_sample])
+  spec_IgAEMA[i_sample] <- ifelse(population == "adults", spec_IgAEMA_adults[i_sample], spec_IgAEMA_children[i_sample])
+  }
   ##################################################################################################
   
   #IgATTGplusEMA
@@ -268,44 +402,59 @@ generate_model_parameters <- function(starting_age) {
   spec_IgATTGplusEMA[spec_IgATTGplusEMA == 1] <- 0.99999
   LR_IgATTGplusEMA <- sens_IgATTGplusEMA/ (1 - spec_IgATTGplusEMA)
   
-  post_test_odds_IgATTGplusEMA <- array(dim=c(n_samples, 6),dimnames=list(NULL, pre_test_probability))
-  post_test_probability_IgATTGplusEMA <- array(dim=c(n_samples,6),dimnames=list(NULL, pre_test_probability))
+  post_test_odds_IgATTGplusEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  post_test_probability_IgATTGplusEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
   
-  for (i in 1:6){
-    post_test_odds_IgATTGplusEMA[,i] <- pre_test_odds[i] * LR_IgATTGplusEMA[1:n_samples]
+  for (i in 1:n_combinations){
+    post_test_odds_IgATTGplusEMA[,i] <- pre_test_odds[,i] * LR_IgATTGplusEMA[1:n_samples]
     post_test_probability_IgATTGplusEMA[,i] <- post_test_odds_IgATTGplusEMA[,i]/(1 + post_test_odds_IgATTGplusEMA[,i])
   }
-  sum(post_test_probability_IgATTGplusEMA[,1] > 0.9)  #0
-  sum(post_test_probability_IgATTGplusEMA[,2] > 0.9)  #0
-  sum(post_test_probability_IgATTGplusEMA[,3] > 0.9)  #100
-  sum(post_test_probability_IgATTGplusEMA[,4] > 0.9)  #100
-  sum(post_test_probability_IgATTGplusEMA[,5] > 0.9)  #100
- 
+  sum_IgATTGplusEMA <- rep(0, n_combinations)
+  for (i in 1:n_combinations){
+    sum_IgATTGplusEMA[i] <- sum(post_test_probability_IgATTGplusEMA[,i] > 0.9)/n_samples  
+  }
+  names(sum_IgATTGplusEMA) <- combinations_names
   
   ######################################################################################################################
-  #IgAEMAplusantihTTG
-  LR_IgAEMAantihTTG <- sens_IgAEMAantihTTG/ (1 - spec_IgAEMAantihTTG)
-  post_test_odds_IgAEMAantihTTG <- array(dim=c(n_samples, 6),dimnames=list(NULL, pre_test_probability))
-  post_test_probability_IgAEMAantihTTG <- array(dim=c(n_samples,6),dimnames=list(NULL, pre_test_probability))
   
-  for (i in 1:6){
-    post_test_odds_IgAEMAantihTTG[,i] <- pre_test_odds[i] * LR_IgAEMAantihTTG
-    post_test_probability_IgAEMAantihTTG[,i] <- post_test_odds_IgAEMAantihTTG[,i]/(1 + post_test_odds_IgAEMAantihTTG[,i])
+  #IgATTG
+  #E(logitSE) coef = 2.272053, SE = 0.173953
+  #E(logitSP) coef = 1.940514, se = 0.1290671
+  #Covariance = 0.0019497
+  sigma <- matrix(c(0.173953,0.0019497,0.0019497,0.1290671), 2, 2)
+  mu <- c(2.272053, 1.940514)
+  x <- rmvnorm(n_samples, mu, sigma)
+  head(x)
+  SensSpec_IgATTG <- exp(x)/(1+exp(x))
+  sens_IgATTG <- SensSpec_IgATTG[,1]
+  spec_IgATTG <- SensSpec_IgATTG[,2]
+  LR_IgATTG <- SensSpec_IgATTG[,1]/ (1 - SensSpec_IgATTG[,2])
+  
+  post_test_odds_IgATTG <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  post_test_probability_IgATTG <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  
+  for (i in 1:n_combinations){
+    post_test_odds_IgATTG[,i] <- pre_test_odds[,i] * LR_IgATTG
+    post_test_probability_IgATTG[,i] <- post_test_odds_IgATTG[,i]/(1 + post_test_odds_IgATTG[,i])
   }
-  sum(post_test_probability_IgAEMAantihTTG[,1] > 0.9)  #100
-  sum(post_test_probability_IgAEMAantihTTG[,2] > 0.9)  #100
-  sum(post_test_probability_IgAEMAantihTTG[,3] > 0.9)  #100
-  sum(post_test_probability_IgAEMAantihTTG[,4] > 0.9)  #100
-  sum(post_test_probability_IgAEMAantihTTG[,5] > 0.9)  #100
+  sum_IgATTG <- rep(0, n_combinations)
+  for (i in 1:n_combinations){
+    sum_IgATTG[i] <- sum(post_test_probability_IgATTG[,i] > 0.9)/n_samples  
+  }
+  names(sum_IgATTG) <- combinations_names
+  
+  ######################################################################################################################
+  
   
   return(data.frame(probability_late_diagnosis, probability_subfertility, probability_osteoporosis, probability_NHL, probability_nocomplications,
                     osteoporosis_probability_GFD_all, subfertility_probability_GFD_all, NHL_probability_GFD, osteoporosis_probability_noGFD_all, subfertility_probability_noGFD_all,
                     NHL_probability_noGFD, death_probability_NHL, 
                     utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL,
                     cost_CDGFD, cost_osteoporosis, cost_undiagnosedCD, cost_IDA, cost_biopsy, probability_biopsy,
-                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, treatment_cost_IgAEMA, treatment_cost_IgATTG, treatment_cost_IgAEMAantihTTG,
-                    sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_IgAEMAantihTTG, spec_IgAEMAantihTTG, sens_IgAEMA_adults, spec_IgAEMA_adults, cost_gfp, sens_biopsy, spec_biopsy, 
-                    post_test_probability_IgAEMA_adults, post_test_probability_IgATTGplusEMA, post_test_probability_IgAEMAantihTTG))
+                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, treatment_cost_IgAEMA, treatment_cost_IgATTG, treatment_cost_HLA,
+                    sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_IgAEMA, spec_IgAEMA, sens_IgATTG, spec_IgATTG, cost_gfp, sens_biopsy, spec_biopsy, 
+                    post_test_probability_IgAEMA, post_test_probability_IgATTGplusEMA, post_test_probability_IgATTG, pre_test_probability, pre_test_probability_overall,
+                    fn_riskfactor))
 }
 
 generate_model_parameters(starting_age)

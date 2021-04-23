@@ -4,23 +4,30 @@ library(tictoc)
 library(BCEA)
 library(SimDesign)
 library(BCEA)
-
-
+library(dplyr)
 
 tic()
 rm(list=ls())
 set.seed(14143)
   
-  # Define the number and names of treatments
-
-  n_treatments <- 18
+ 
   
-  treatments <- c("IgAEMA", "IgATTGplusEMA", "IgAEMAantihTTG")
+  treatments <- c("IgAEMA", "IgATTGplusEMA", "IgATTG")
+  n_tests <- length(treatments)
   
   #pre-test probabilities of coeliac disease 
-  pre_test_probability <- c(0.05, 0.15, 0.25, 0.35, 0.45, 0.99999)
+  sens_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.9999)
+  spec_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.9999)
+  combinations <- expand.grid(sens_riskfactor = sens_riskfactor, spec_riskfactor = spec_riskfactor)
+  combinations$x <- paste(combinations$sens_riskfactor, combinations$spec_riskfactor)
+  combinations_names <- combinations$x
+  n_combinations <- length(combinations$x)
   
-  t_names <-  outer(pre_test_probability, treatments, FUN = "paste")[1:18]
+  # Define the number and names of treatments
+  
+  n_treatments <- n_tests * n_combinations
+  
+  t_names <-  outer(combinations_names, treatments, FUN = "paste")[1:n_treatments]
 
   
   # Define the number and names of states of the model
@@ -37,20 +44,23 @@ set.seed(14143)
  
   
   
-   # Define the number of cycles
-  n_cycles <- 50
+  
   
   # Define simulation parameters
   # This is the number of PSA samples to use
   n_samples <- 1000
   
- 
-  
   starting_age <- 30 #Max is 50 with 50 cycles
+  
+  # Define the number of cycles
+  n_cycles <- 50
  
   
   perspective <- "NHS" #Options are "NHS" or "NHS+OOP" if out-of-pocket costs for iron supplements and gluten free products are to be included
   
+  population <- "adults" #Options are "adults" or "children"
+  
+  #########################################################################################################################
   source("generate_state_costs.R")
   source("generate_state_qalys.R")
   source("generate_model_parameters.R")
@@ -67,6 +77,8 @@ set.seed(14143)
   output <- generate_net_benefit(input_parameters)
   output
   
+  write.csv(t(output$total_costs), "costs.csv")
+  write.csv(t(output$total_qalys), "qalys.csv")
 
   # Now use the BCEA package to analyse the results
  # pkgs <- c("MASS","Rtools","devtools")
