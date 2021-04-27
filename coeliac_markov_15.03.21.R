@@ -41,24 +41,20 @@ set.seed(14143)
                   "Undiagnosed CD osteoporosis",
                   "Undiagnosed CD NHL",
                   "Death")
- 
-  
-  
   
   
   # Define simulation parameters
   # This is the number of PSA samples to use
   n_samples <- 1000
-  
-  starting_age <- 30 #Max is 50 with 50 cycles
-  
-  # Define the number of cycles
-  n_cycles <- 50
  
-  
   perspective <- "NHS" #Options are "NHS" or "NHS+OOP" if out-of-pocket costs for iron supplements and gluten free products are to be included
   
-  population <- "adults" #Options are "adults" or "children"
+  population <- "children" #Options are "adults" or "children"
+  
+  starting_age <- 10
+  
+  # Define the number of cycles
+  n_cycles <- 90 - starting_age
   
   #########################################################################################################################
   source("generate_state_costs.R")

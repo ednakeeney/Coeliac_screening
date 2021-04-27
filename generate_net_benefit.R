@@ -78,7 +78,7 @@ generate_net_benefit <- function(input_parameters) {
   cohort_vectors<-array(dim=c(n_treatments,n_samples,n_cycles,n_states),  
                         dimnames=list(t_names,NULL,NULL, state_names))
   
-  #scaling up true positives and false negatives 
+ 
  #fn_riskfactor
  #ncol(fn_riskfactor)
 #fn_riskfactor_table <- array(dim=c(n_samples, n_treatments), dimnames = list(NULL, t_names))
@@ -88,8 +88,9 @@ generate_net_benefit <- function(input_parameters) {
   #fn_riskfactor_table[,i+n_combinations] <- fn_riskfactor[,i]
   #fn_riskfactor_table[,i+n_combinations+n_combinations] <- fn_riskfactor[,i]
   #}
-  
    #fn <- fn + fn_riskfactor_table
+  
+  #scaling up true positives and false negatives 
   tp <- tp/(input_parameters$pre_test_probability_overall)  #not sure this scaling is correct
   fn <- 1 - tp
   
@@ -215,21 +216,16 @@ generate_net_benefit <- function(input_parameters) {
   # Average effects (in QALY units)
   output$average_effects <- rowMeans(total_qalys)
   
+ 
+  output$incremental_costs <-  output$average_costs - output$average_costs["0.5 0.5 IgATTG"]
+  output$incremental_effects <-  output$average_effects -  output$average_effects["0.5 0.5 IgATTG"]
   
-  #output$incremental_costs_IgATTGplusIgAEMA_IgAEMA <- total_costs["IgATTGplusIgAEMA", ] - total_costs["IgAEMA", ]
-  #output$incremental_effects_IgATTGplusIgAEMA_IgAEMA <- total_qalys["IgATTGplusIgAEMA", ] - total_qalys["IgAEMA", ]
-  
-  #output$incremental_costs_doubletest_IgAEMA <- total_costs["Double test", ] - total_costs["IgAEMA", ]
-  #output$incremental_effects_doubletest_IgAEMA <- total_qalys["Double test", ] - total_qalys["IgAEMA", ]
-  
-  
-  #output$ICER_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_costs_IgATTGplusIgAEMA_IgAEMA)/mean(output$incremental_effects_IgATTGplusIgAEMA_IgAEMA)
-  #output$ICER_doubletest_IgAEMA <- mean(output$incremental_costs_doubletest_IgAEMA)/mean(output$incremental_effects_doubletest_IgAEMA)
-  
+  output$ICER <- output$incremental_costs/output$incremental_effects
+
   # Incremental net benefit at the ?20,000 willingness-to-pay
   
-  #output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA <- 20000*output$incremental_effects_IgATTGplusIgAEMA_IgAEMA - output$incremental_costs_IgATTGplusIgAEMA_IgAEMA
-  #output$incremental_net_benefit_doubletest_IgAEMA <- 20000*output$incremental_effects_doubletest_IgAEMA - output$incremental_costs_doubletest_IgAEMA
+  output$incremental_net_benefit <- 20000*output$incremental_effects - output$incremental_costs
+ write.csv(output$incremental_effects, "inb.csv")
   
   # Average incremental net benefit
   #output$average_inb_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA)

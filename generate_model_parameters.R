@@ -159,7 +159,7 @@ generate_model_parameters <- function(starting_age) {
   utility_undiagnosedCD_se_children <- (0.67 - 0.63)/3.92
   utility_undiagnosedCD_alpha_children <- (utility_undiagnosedCD_children ^ 2 * (1 - utility_undiagnosedCD_children)/utility_undiagnosedCD_se_children ^ 2) - utility_undiagnosedCD_children
   utility_undiagnosedCD_beta_children <- (utility_undiagnosedCD_alpha_children/utility_undiagnosedCD_children) - utility_undiagnosedCD_alpha_children
-  utility_undiagnosedCD_adults <- rbeta(n = n_samples, shape1 = utility_undiagnosedCD_alpha_children, shape2 = utility_undiagnosedCD_beta_children)
+  utility_undiagnosedCD_children <- rbeta(n = n_samples, shape1 = utility_undiagnosedCD_alpha_children, shape2 = utility_undiagnosedCD_beta_children)
   
   utility_undiagnosedCD <- rep(0, times = n_samples)
   for (i_sample in 1:n_samples) {
@@ -291,15 +291,17 @@ generate_model_parameters <- function(starting_age) {
   treatment_cost_IgATTG_beta <- (treatment_cost_IgATTG_se^2)/treatment_cost_IgATTG
   treatment_cost_IgATTG <- rgamma(n = n_samples, shape = treatment_cost_IgATTG_alpha, scale = treatment_cost_IgATTG_beta)
   #rgamma(n = n_samples, shape = 26.16, scale = 0.42) #from NICE model
-  treatment_cost_HLA <- 30 #correspondence with Peter Gillett
+  treatment_cost_HLA <- 100 #correspondence with Peter Gillett
   
   #############################################################################
   ## Accuracy of tests ########################################################
   #############################################################################
   sens_biopsy <- 1
   spec_biopsy <- 1
+  sens_HLA <- 0.96
+  spec_HLA <- 0.64
   
-  pre_test_probability_overall <- 0.01
+  pre_test_probability_overall <- 0.01 #based on West 2014
   tp_riskfactor <- fn_riskfactor <- fp_riskfactor <- tn_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, combinations_names))
   
   for (i in 1:n_combinations) {
@@ -341,12 +343,7 @@ generate_model_parameters <- function(starting_age) {
   post_test_probability_IgAEMA_adults[,i] <- post_test_odds_IgAEMA_adults[,i]/(1 + post_test_odds_IgAEMA_adults[,i])
   }
   
-  sum_IgAEMA_adults <- rep(0, n_combinations)
-  for (i in 1:n_combinations){
-  sum_IgAEMA_adults[i] <- sum(post_test_probability_IgAEMA_adults[,i] > 0.9)/n_samples  
-  }
- names(sum_IgAEMA_adults) <- combinations_names
-  
+ 
   #Iga EMA children
   #E(logitSE) coef = 2.839716, SE = 0.3886658
   #E(logitSP) coef = 2.716697, SE = 0.4927015
@@ -369,11 +366,7 @@ generate_model_parameters <- function(starting_age) {
     post_test_odds_IgAEMA_children[,i] <- pre_test_odds[,i] * LR_IgAEMA_children
     post_test_probability_IgAEMA_children[,i] <- post_test_odds_IgAEMA_children[,i]/(1 + post_test_odds_IgAEMA_children[,i])
   }
-  sum_IgAEMA_children <- rep(0, n_combinations)
-  for (i in 1:n_combinations){
-    sum_IgAEMA_children[i] <- sum(post_test_probability_IgAEMA_children[,i] > 0.9)/n_samples  
-  }
-  names(sum_IgAEMA_children) <- combinations_names
+
   
   post_test_probability_IgAEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
   sens_IgAEMA <- rep(0, times = n_samples)
@@ -382,12 +375,7 @@ generate_model_parameters <- function(starting_age) {
   for (i in 1:n_combinations){
   post_test_probability_IgAEMA[i_sample,i] <- ifelse(population == "adults", post_test_probability_IgAEMA_adults[i_sample,i], post_test_probability_IgAEMA_children[i_sample,i])
   }}
-  sum_IgAEMA <- rep(0, n_combinations)
-  for (i in 1:n_combinations){
-    sum_IgAEMA[i] <- sum(post_test_probability_IgAEMA[,i] > 0.9)/n_samples  
-  }
-  names(sum_IgAEMA) <- combinations_names
-  
+
   for(i_sample in 1:n_samples){
   sens_IgAEMA[i_sample] <- ifelse(population == "adults", sens_IgAEMA_adults[i_sample], sens_IgAEMA_children[i_sample])
   spec_IgAEMA[i_sample] <- ifelse(population == "adults", spec_IgAEMA_adults[i_sample], spec_IgAEMA_children[i_sample])
@@ -409,12 +397,7 @@ generate_model_parameters <- function(starting_age) {
     post_test_odds_IgATTGplusEMA[,i] <- pre_test_odds[,i] * LR_IgATTGplusEMA[1:n_samples]
     post_test_probability_IgATTGplusEMA[,i] <- post_test_odds_IgATTGplusEMA[,i]/(1 + post_test_odds_IgATTGplusEMA[,i])
   }
-  sum_IgATTGplusEMA <- rep(0, n_combinations)
-  for (i in 1:n_combinations){
-    sum_IgATTGplusEMA[i] <- sum(post_test_probability_IgATTGplusEMA[,i] > 0.9)/n_samples  
-  }
-  names(sum_IgATTGplusEMA) <- combinations_names
-  
+
   ######################################################################################################################
   
   #IgATTG
@@ -437,12 +420,7 @@ generate_model_parameters <- function(starting_age) {
     post_test_odds_IgATTG[,i] <- pre_test_odds[,i] * LR_IgATTG
     post_test_probability_IgATTG[,i] <- post_test_odds_IgATTG[,i]/(1 + post_test_odds_IgATTG[,i])
   }
-  sum_IgATTG <- rep(0, n_combinations)
-  for (i in 1:n_combinations){
-    sum_IgATTG[i] <- sum(post_test_probability_IgATTG[,i] > 0.9)/n_samples  
-  }
-  names(sum_IgATTG) <- combinations_names
-  
+
   ######################################################################################################################
   
   

@@ -15,7 +15,9 @@ generate_state_qalys <- function(input_parameters) {
   eq5d_norms <- read.csv("eq5d_norms.csv")
   eq5d_norms$age <- c(0, 10, 20, 30, 40, 50, 60, 70, 80)
   
-  for(i_age_category in c(0:4)) {
+  n_agecategories <- (n_cycles/10) - 1
+  
+  for(i_age_category in c(0:n_agecategories)) {
     state_qalys[, (c(1:10) + i_age_category * 10), "CD GFD no complications"] <- eq5d_norms[starting_age_row + i_age_category, 2] * input_parameters$utility_GFD
     state_qalys[, (c(1:10) + i_age_category * 10), "Undiagnosed CD no complications"] <- eq5d_norms[starting_age_row + i_age_category, 2] * input_parameters$utility_undiagnosedCD
   }

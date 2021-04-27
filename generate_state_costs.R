@@ -9,8 +9,9 @@ generate_state_costs <- function(input_parameters) {
   probability_IDA <- data.frame(input_parameters$probability_IDA_0, input_parameters$probability_IDA_10, input_parameters$probability_IDA_20, input_parameters$probability_IDA_30, input_parameters$probability_IDA_40, 
                                 input_parameters$probability_IDA_50, input_parameters$probability_IDA_60, input_parameters$probability_IDA_70, input_parameters$probability_IDA_80, input_parameters$probability_IDA_90)
   
+  n_agecategories <- (n_cycles/10) - 1
   
-  for(i_age_category in c(0:4)) {
+  for(i_age_category in c(0:n_agecategories)) {
     state_costs[, (c(1:10) + i_age_category * 10), "CD GFD no complications"] <- input_parameters$cost_CDGFD + (probability_IDA[, starting_age_column + i_age_category] * input_parameters$cost_IDA) + (transition_matrices[, (c(1:10) + i_age_category * 10), "CD GFD no complications", "CD GFD subfertility"] * input_parameters$cost_subfertility) + (input_parameters$NHL_probability_GFD * input_parameters$cost_NHL)
     state_costs[, (c(1:10) + i_age_category * 10), "CD GFD osteoporosis"]  <- input_parameters$cost_osteoporosis + input_parameters$cost_CDGFD + (probability_IDA[, starting_age_column + i_age_category] * input_parameters$cost_IDA) + (input_parameters$NHL_probability_GFD + input_parameters$cost_NHL)
     state_costs[, (c(1:10) + i_age_category * 10), "Undiagnosed CD no complications"] <- input_parameters$cost_undiagnosedCD + (probability_IDA[, starting_age_column + i_age_category] * input_parameters$cost_IDA) + (input_parameters$probability_late_diagnosis * input_parameters$probability_biopsy * input_parameters$cost_biopsy) +

@@ -55,7 +55,9 @@ generate_transition_matrices <- function(input_parameters) {
   transition_matrices[, ,"Undiagnosed CD NHL", "CD GFD NHL"] <- input_parameters$probability_late_diagnosis 
 
   
-  for(i_age_category in c(0:4)) {
+  n_agecategories <- (n_cycles/10) - 1
+  
+  for(i_age_category in c(0:n_agecategories)) {
     transition_matrices[, (c(1:10) + i_age_category * 10), "CD GFD no complications", "CD GFD subfertility"] <- subfertility_probability_GFD_all[, starting_age_column + i_age_category]  
     transition_matrices[, (c(1:10) + i_age_category * 10), "CD GFD no complications", "CD GFD osteoporosis"] <- osteoporosis_probability_GFD_all[, starting_age_column + i_age_category]
     transition_matrices[, (c(1:10) + i_age_category * 10), "CD GFD subfertility", "CD GFD osteoporosis"] <- osteoporosis_probability_GFD_all[, starting_age_column + i_age_category]
@@ -70,9 +72,10 @@ generate_transition_matrices <- function(input_parameters) {
     transition_matrices[, (c(1:10) + i_age_category * 10),"Undiagnosed CD subfertility", "CD GFD subfertility"] <- input_parameters$probability_late_diagnosis - (transition_matrices[, (c(1:10) + i_age_category * 10), "Undiagnosed CD subfertility", "CD GFD osteoporosis"] + (input_parameters$probability_late_diagnosis * input_parameters$NHL_probability_noGFD) )
       
       
-     }
+  }
+  n_ages <- 90 - starting_age
   
-  for (i_age in 1:50){
+  for (i_age in 1:n_ages){
     transition_matrices[, i_age, "CD GFD no complications", "Death"] <- death_probability_nocomplications[starting_age + i_age, 2]
     transition_matrices[, i_age, "CD GFD subfertility", "Death"] <- death_probability_nocomplications[starting_age + i_age, 2]
     transition_matrices[, i_age, "CD GFD osteoporosis", "Death"] <- death_probability_osteoporosis[starting_age + i_age, 2]
@@ -92,9 +95,7 @@ generate_transition_matrices <- function(input_parameters) {
       apply(transition_matrices[, , i_state, -i_state], c(1,2), sum, na.rm=TRUE)
   }
   
-  # HT: This is a little dangerous as you may have missed something by accident.
-  # Please look at one matrix (e.g. transition_matrices[1, 1, , ]) and check that each NA really should be NA. We could perhaps do this together on our next call.
-  # EK: Yes, let's talk through it
+
   transition_matrices[, , , ] [is.na(transition_matrices[, , , ] )] <- 0
   
   rowSums (transition_matrices[1, 4, , ], na.rm = FALSE, dims = 1)
