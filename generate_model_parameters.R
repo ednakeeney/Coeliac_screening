@@ -383,12 +383,19 @@ generate_model_parameters <- function(starting_age) {
   ##################################################################################################
   
   #IgATTGplusEMA
-  SensSpec_IgATTGplusEMA <- read.csv("SensSpec_IgATTGplusEMA.csv")
-  SensSpec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[sample(nrow(SensSpec_IgATTGplusEMA), n_samples, replace=TRUE),]
-  sens_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,3]
-  spec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,5]
-  spec_IgATTGplusEMA[spec_IgATTGplusEMA == 1] <- 0.99999
-  LR_IgATTGplusEMA <- sens_IgATTGplusEMA/ (1 - spec_IgATTGplusEMA)
+  #E(logitSE) coef = 1.939019, SE = 0.3723165
+  #E(logitSP) coef = 4.252873, SE = 0.5569404
+  #Covariance = -0.358947
+  
+  #random normal values with mean [1.939019, 4.252873] and variances [0.3723165, 0.5569404], and covariance -0.358947
+  sigma <- matrix(c(0.3723165,-0.358947,-0.358947,0.5569404), 2, 2)
+  mu <- c(1.939019, 4.252873)
+  x <- rmvnorm(n_samples, mu, sigma)
+  head(x)
+  SensSpec_IgATTGplusEMA <- exp(x)/(1+exp(x))
+  sens_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,1]
+  spec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,2]
+  LR_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,1]/ (1 - SensSpec_IgATTGplusEMA[,2])
   
   post_test_odds_IgATTGplusEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
   post_test_probability_IgATTGplusEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
@@ -423,6 +430,31 @@ generate_model_parameters <- function(starting_age) {
 
   ######################################################################################################################
   
+  #HLA
+  #E(logitSE) coef = 3.145430687, SE = 0.704324701
+  #E(logitSP) coef = 0.568258353, 0.169650745
+
+  #Covariance = -0.526523769
+
+  
+  #random normal values with mean [3.145430687, 0.568258353] and variances [0.704324701, 0.169650745], and covariance -0.526523769
+  sigma_HLA <- matrix(c(0.704324701,-0.526523769,-0.526523769,0.169650745), 2, 2)
+  mu_HLA <- c(3.145430687, 0.568258353)
+  x_HLA <- rmvnorm(n_samples, mu_HLA, sigma_HLA)
+  head(x_HLA)
+  SensSpec_HLA <- exp(x_HLA)/(1+exp(x_HLA))
+  sens_HLA <- SensSpec_HLA[,1]
+  spec_HLA <- SensSpec_HLA[,2]
+  LR_HLA <- SensSpec_HLA[,1]/ (1 - SensSpec_HLA[,2])
+  
+  #post_test_odds_HLA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  #post_test_probability_HLA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  
+#  for (i in 1:n_combinations){
+ #   post_test_odds_HLA[,i] <- pre_test_odds[,i] * LR_HLA
+  #  post_test_probability_HLA[,i] <- post_test_odds_HLA[,i]/(1 + post_test_odds_HLA[,i])
+  #}
+  
   
   return(data.frame(probability_late_diagnosis, probability_subfertility, probability_osteoporosis, probability_NHL, probability_nocomplications,
                     osteoporosis_probability_GFD_all, subfertility_probability_GFD_all, NHL_probability_GFD, osteoporosis_probability_noGFD_all, subfertility_probability_noGFD_all,
@@ -432,7 +464,7 @@ generate_model_parameters <- function(starting_age) {
                     cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, treatment_cost_IgAEMA, treatment_cost_IgATTG, treatment_cost_HLA,
                     sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_IgAEMA, spec_IgAEMA, sens_IgATTG, spec_IgATTG, cost_gfp, sens_biopsy, spec_biopsy, 
                     post_test_probability_IgAEMA, post_test_probability_IgATTGplusEMA, post_test_probability_IgATTG, pre_test_probability, pre_test_probability_overall,
-                    fn_riskfactor))
+                    fn_riskfactor, LR_HLA, sens_HLA, spec_HLA))
 }
 
 generate_model_parameters(starting_age)

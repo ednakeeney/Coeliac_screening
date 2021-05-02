@@ -6,13 +6,15 @@ library(SimDesign)
 library(BCEA)
 library(dplyr)
 
+setwd("C:/Users/ek14588/Downloads/Coeliac_screening")
+
 tic()
 rm(list=ls())
 set.seed(14143)
   
  
   
-  treatments <- c("IgAEMA", "IgATTGplusEMA", "IgATTG")
+  treatments <- c("IgAEMA", "IgATTGplusEMA", "IgATTG", "IgAEMA plus HLA", "IgATTGplusEMA plus HLA", "IgATTG plus HLA")
   n_tests <- length(treatments)
   
   #pre-test probabilities of coeliac disease 
@@ -25,9 +27,9 @@ set.seed(14143)
   
   # Define the number and names of treatments
   
-  n_treatments <- n_tests * n_combinations
+  n_treatments <- (n_tests * n_combinations) + 1
   
-  t_names <-  outer(combinations_names, treatments, FUN = "paste")[1:n_treatments]
+  t_names <-  c("No screening", outer(combinations_names, treatments, FUN = "paste")[1:n_treatments-1])
 
   
   # Define the number and names of states of the model
@@ -49,9 +51,9 @@ set.seed(14143)
  
   perspective <- "NHS" #Options are "NHS" or "NHS+OOP" if out-of-pocket costs for iron supplements and gluten free products are to be included
   
-  population <- "children" #Options are "adults" or "children"
+  population <- "adults" #Options are "adults" or "children"
   
-  starting_age <- 10
+  starting_age <- 30
   
   # Define the number of cycles
   n_cycles <- 90 - starting_age
@@ -61,7 +63,7 @@ set.seed(14143)
   source("generate_state_qalys.R")
   source("generate_model_parameters.R")
   source("generate_transition_matrices.R")
-  source("generate_net_benefit.R")
+  source("generate_net_benefit_hla.R")
   
   
   #generate input parameters
@@ -72,6 +74,7 @@ set.seed(14143)
   #generate results
   output <- generate_net_benefit(input_parameters)
   output
+  
   
   write.csv(t(output$total_costs), "costs.csv")
   write.csv(t(output$total_qalys), "qalys.csv")
@@ -90,7 +93,7 @@ eib.plot(m, comparison = NULL, pos =
 evi.plot(m, graph = c("base", "ggplot2",
                        "plotly"))
 ceac.plot(m, comparison = NULL,
-          pos = FALSE, graph = c("ggplot2"), line_colors = c(1:14))
+          pos = FALSE, graph = c("ggplot2"))
 
 mce <- multi.ce(m)
 ceaf.plot(mce, graph = c("ggplot2"))
