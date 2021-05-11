@@ -1,5 +1,6 @@
 generate_state_qalys <- function(input_parameters) {
-  
+  starting_age <- ifelse(population == "adults", 50, 10) #based on mean age in under and over 18s in CPRD cost data
+  n_cycles <- 90 - starting_age
   # State utilities
   # Anything between 0 and 1
   # Now define the QALYS associated with the states per cycle

@@ -1,6 +1,10 @@
 generate_model_parameters <- function(starting_age) {
   
-
+ starting_age <- ifelse(population == "adults", 50, 10) #based on mean age in under and over 18s in CPRD cost data
+ 
+ # Define the number of cycles
+ n_cycles <- 90 - starting_age
+ 
   duration_of_symptoms_adults <- 10.93
   duration_of_symptoms_adults_sd <- 13.10
   duration_of_symptoms_adults_location <- log(duration_of_symptoms_adults ^ 2 / sqrt(duration_of_symptoms_adults_sd ^ 2 + duration_of_symptoms_adults ^ 2))
@@ -446,14 +450,7 @@ generate_model_parameters <- function(starting_age) {
   sens_HLA <- SensSpec_HLA[,1]
   spec_HLA <- SensSpec_HLA[,2]
   LR_HLA <- SensSpec_HLA[,1]/ (1 - SensSpec_HLA[,2])
-  
-  #post_test_odds_HLA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  #post_test_probability_HLA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  
-#  for (i in 1:n_combinations){
- #   post_test_odds_HLA[,i] <- pre_test_odds[,i] * LR_HLA
-  #  post_test_probability_HLA[,i] <- post_test_odds_HLA[,i]/(1 + post_test_odds_HLA[,i])
-  #}
+
   
   
   return(data.frame(probability_late_diagnosis, probability_subfertility, probability_osteoporosis, probability_NHL, probability_nocomplications,

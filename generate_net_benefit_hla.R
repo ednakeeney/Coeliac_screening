@@ -1,5 +1,8 @@
 generate_net_benefit <- function(input_parameters) {
   
+  starting_age <- ifelse(population == "adults", 50, 10) #based on mean age in under and over 18s in CPRD cost data
+  n_cycles <- 90 - starting_age
+  
   transition_matrices <- generate_transition_matrices(input_parameters)
   
   state_qalys <- generate_state_qalys(input_parameters)
@@ -24,7 +27,7 @@ generate_net_benefit <- function(input_parameters) {
     tp[,1] <- 0
   tp[,i+1] <- ifelse(post_test_probability_IgAEMA[i] >= 0.9, (pre_test_probability[,i] * input_parameters$sens_IgAEMA), 
                    (pre_test_probability[,i] * input_parameters$sens_biopsy))
-  fn[,1] <- 1
+  fn[,1] <- 1  #in no screening all False Negatives
   fn[,i+1] <- pre_test_probability[,i] - tp[,i+1]  
   tn[,1] <- 0
   tn[,i+1] <- ifelse(post_test_probability_IgAEMA[i] >= 0.9, ((1 - pre_test_probability[,i]) * input_parameters$spec_IgAEMA),
@@ -55,6 +58,7 @@ generate_net_benefit <- function(input_parameters) {
     fp[,i+1+n_combinations+n_combinations] <- (1 - pre_test_probability[,i]) - tn[,i+1+n_combinations+n_combinations]
   }
   
+   
    pre_test_probability_HLA <- array(0, dim=c(n_samples, n_combinations*3), dimnames = list(NULL, t_names[2:109]))
    
    for (i in 1:n_combinations) {
@@ -256,25 +260,46 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   output <- list()
   sum_IgAEMA <- rep(0, n_combinations)
   for (i in 1:n_combinations){
-    sum_IgAEMA[i] <- sum(post_test_probability_IgAEMA[,i] > 0.9)/n_samples  
+    sum_IgAEMA[i] <- sum(post_test_probability_IgAEMA[,i] <= 0.9)/n_samples  
   }
   names(sum_IgAEMA) <- combinations_names
   
   sum_IgATTGplusEMA <- rep(0, n_combinations)
   for (i in 1:n_combinations){
-    sum_IgATTGplusEMA[i] <- sum(post_test_probability_IgATTGplusEMA[,i] > 0.9)/n_samples  
+    sum_IgATTGplusEMA[i] <- sum(post_test_probability_IgATTGplusEMA[,i] <= 0.9)/n_samples  
   }
   names(sum_IgATTGplusEMA) <- combinations_names
   
   sum_IgATTG <- rep(0, n_combinations)
   for (i in 1:n_combinations){
-    sum_IgATTG[i] <- sum(post_test_probability_IgATTG[,i] > 0.9)/n_samples  
+    sum_IgATTG[i] <- sum(post_test_probability_IgATTG[,i] <= 0.9)/n_samples  
   }
   names(sum_IgATTG) <- combinations_names
   
-  output$percentage_nobiopsy_IgAEMA <- sum_IgAEMA
-  output$percentage_nobiopsy_IgATTGplusEMA <- sum_IgATTGplusEMA
-  output$percentage_nobiopsy_IgATTG <- sum_IgATTG
+  sum_IgAEMAplusHLA <- rep(0, n_combinations)
+  for (i in 1:n_combinations){
+    sum_IgAEMAplusHLA[i] <- sum(post_test_probability_HLA[,i] <= 0.9)/n_samples  
+  }
+  names(sum_IgAEMAplusHLA) <- t_names[110:145]
+  
+  sum_IgATTGplusEMAplusHLA <- rep(0, n_combinations)
+  for (i in 1:n_combinations){
+    sum_IgATTGplusEMAplusHLA[i] <- sum(post_test_probability_HLA[,i+n_combinations] <= 0.9)/n_samples  
+  }
+  names(sum_IgATTGplusEMAplusHLA) <- t_names[146:181]
+  
+  sum_IgATTGplusHLA <- rep(0, n_combinations)
+  for (i in 1:n_combinations){
+    sum_IgATTGplusHLA[i] <- sum(post_test_probability_HLA[,i+n_combinations+n_combinations] <= 0.9)/n_samples  
+  }
+  names(sum_IgATTGplusHLA) <- t_names[182:217]
+  
+  output$percentage_biopsy_IgAEMA <- sum_IgAEMA
+  output$percentage_biopsy_IgATTGplusEMA <- sum_IgATTGplusEMA
+  output$percentage_biopsy_IgATTG <- sum_IgATTG
+  output$percentage_biopsy_IgAEMAplusHLA <- sum_IgAEMAplusHLA
+  output$percentage_biopsy_IgATTGplusEMAplusHLA <- sum_IgATTGplusEMAplusHLA
+  output$percentage_biopsy_IgATTGplusHLA <- sum_IgATTGplusHLA
   
   output$total_costs <- total_costs
   output$total_qalys <- total_qalys

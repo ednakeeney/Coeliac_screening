@@ -1,5 +1,8 @@
 generate_transition_matrices <- function(input_parameters) {
  
+   starting_age <- ifelse(population == "adults", 50, 10) #based on mean age in under and over 18s in CPRD cost data
+  n_cycles <- 90 - starting_age
+  
   transition_matrices <- array(dim = c(n_samples, n_cycles, n_states, n_states),
                                dimnames = list(NULL, NULL, state_names, state_names))
   

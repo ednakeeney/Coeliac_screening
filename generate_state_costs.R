@@ -1,5 +1,6 @@
 generate_state_costs <- function(input_parameters) {
-  
+  starting_age <- ifelse(population == "adults", 50, 10) #based on mean age in under and over 18s in CPRD cost data
+  n_cycles <- 90 - starting_age
   state_costs <- array(dim=c(n_samples, n_cycles, n_states), dimnames = list(NULL, NULL, state_names))
   
   starting_age_columnandrow <- read.csv("starting_age_column.csv")
