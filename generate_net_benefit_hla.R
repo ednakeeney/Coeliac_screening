@@ -16,6 +16,7 @@ generate_net_benefit <- function(input_parameters) {
   post_test_probability_IgATTG <- input_parameters %>% select(X0.5.0.5.2 : X0.9999.0.9999.2)
   pre_test_probability <- input_parameters %>% select(X0.5.0.5.3 : X0.9999.0.9999.3)
   fn_riskfactor <- input_parameters %>% select(X0.5.0.5.4 : X0.9999.0.9999.4)
+  pre_test_probability_overall <- 0.01 #based on West 2014
   
  
   
@@ -27,9 +28,9 @@ generate_net_benefit <- function(input_parameters) {
     tp[,1] <- 0
   tp[,i+1] <- ifelse(post_test_probability_IgAEMA[i] >= 0.9, (pre_test_probability[,i] * input_parameters$sens_IgAEMA), 
                    (pre_test_probability[,i] * input_parameters$sens_biopsy))
-  fn[,1] <- 1  #in no screening all False Negatives
+  fn[,1] <- pre_test_probability_overall  #in no screening all False Negatives
   fn[,i+1] <- pre_test_probability[,i] - tp[,i+1]  
-  tn[,1] <- 0
+  tn[,1] <- 1 - pre_test_probability_overall
   tn[,i+1] <- ifelse(post_test_probability_IgAEMA[i] >= 0.9, ((1 - pre_test_probability[,i]) * input_parameters$spec_IgAEMA),
                    ((1 - pre_test_probability[,i]) * input_parameters$spec_biopsy))
   fp[,1] <- 0
@@ -175,6 +176,8 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
     cohort_vectors[i_treatment, , 1, "Undiagnosed CD subfertility"] <- fn[, i_treatment] * input_parameters$probability_subfertility 
     cohort_vectors[i_treatment, , 1, "Undiagnosed CD osteoporosis"] <- fn[, i_treatment] * input_parameters$probability_osteoporosis 
     cohort_vectors[i_treatment, , 1, "Undiagnosed CD NHL"] <- fn[, i_treatment] * input_parameters$probability_NHL 
+    
+    cohort_vectors[i_treatment, , 1, "Death"] <- 0
   }
   
   cohort_vectors[, , , ] [is.na(cohort_vectors[, , , ] )] <- 0

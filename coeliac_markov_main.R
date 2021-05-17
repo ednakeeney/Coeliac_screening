@@ -51,7 +51,7 @@ set.seed(14143)
  
   perspective <- "NHS" #Options are "NHS" or "NHS+OOP" if out-of-pocket costs for iron supplements and gluten free products are to be included
   
-  population <- "adults" #Options are "adults" or "children"
+  population <- "children" #Options are "adults" or "children"
 
 
   
@@ -71,6 +71,8 @@ set.seed(14143)
   #generate results
   output <- generate_net_benefit(input_parameters)
   output
+  
+  strategies_excluded <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit < 0)) #strategies with ENB less than no screening
   
   output$percentage_biopsy_IgAEMA 
   output$percentage_biopsy_IgATTGplusEMA 

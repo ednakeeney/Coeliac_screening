@@ -5,7 +5,7 @@ generate_model_parameters <- function(starting_age) {
  # Define the number of cycles
  n_cycles <- 90 - starting_age
  
-  duration_of_symptoms_adults <- 10.93
+  duration_of_symptoms_adults <- 10.93  #Violato et al 
   duration_of_symptoms_adults_sd <- 13.10
   duration_of_symptoms_adults_location <- log(duration_of_symptoms_adults ^ 2 / sqrt(duration_of_symptoms_adults_sd ^ 2 + duration_of_symptoms_adults ^ 2))
   duration_of_symptoms_adults_shape <- sqrt(log(1 + (duration_of_symptoms_adults_sd ^ 2 / duration_of_symptoms_adults ^ 2)))
@@ -13,7 +13,7 @@ generate_model_parameters <- function(starting_age) {
   rate_of_symptoms_adults <- 1 / duration_of_symptoms_adults
   probability_late_diagnosis_adults <- 1 - exp(-rate_of_symptoms_adults)
   
-  duration_of_symptoms_children <- 3.34
+  duration_of_symptoms_children <- 3.34  #Violato et al
   duration_of_symptoms_children_sd <- 3.71
   duration_of_symptoms_children_location <- log(duration_of_symptoms_children ^ 2 / sqrt(duration_of_symptoms_children_sd ^ 2 + duration_of_symptoms_children ^ 2))
   duration_of_symptoms_children_shape <- sqrt(log(1 + (duration_of_symptoms_children_sd ^ 2 / duration_of_symptoms_children ^ 2)))
@@ -283,27 +283,29 @@ generate_model_parameters <- function(starting_age) {
 
   #Need to include cost of GFD - Penny contacting Coeliac UK
 
-  treatment_cost_IgAEMA <- 20 #based on correspondence with Liz Furie 
-  treatment_cost_IgAEMA_se <- treatment_cost_IgAEMA/10
+  treatment_cost_IgAEMA <- 14.92 #based on correspondence from labs 
+  treatment_cost_IgAEMA_se <- treatment_cost_IgAEMA/8  #this gives a min of 9.5 and max of 21 which is in line with lab estimates
   treatment_cost_IgAEMA_alpha <- (treatment_cost_IgAEMA/treatment_cost_IgAEMA_se)^2
   treatment_cost_IgAEMA_beta <- (treatment_cost_IgAEMA_se^2)/treatment_cost_IgAEMA
   treatment_cost_IgAEMA <- rgamma(n = n_samples, shape = treatment_cost_IgAEMA_alpha, scale = treatment_cost_IgAEMA_beta)
   #rgamma(n = n_samples, shape = 122.57, scale = 0.08) #from NICE model
-  treatment_cost_IgATTG <- 5.50 #based on correspondence with Liz Furie 
-  treatment_cost_IgATTG_se <- treatment_cost_IgATTG/10
+  treatment_cost_IgATTG <- 10.77 #based on correspondence from labs
+  treatment_cost_IgATTG_se <- treatment_cost_IgATTG/5
   treatment_cost_IgATTG_alpha <- (treatment_cost_IgATTG/treatment_cost_IgATTG_se)^2
   treatment_cost_IgATTG_beta <- (treatment_cost_IgATTG_se^2)/treatment_cost_IgATTG
-  treatment_cost_IgATTG <- rgamma(n = n_samples, shape = treatment_cost_IgATTG_alpha, scale = treatment_cost_IgATTG_beta)
+  treatment_cost_IgATTG <- rgamma(n = n_samples, shape = treatment_cost_IgATTG_alpha, scale = treatment_cost_IgATTG_beta) #this gives a min of 5.04 and max of 18.21 which is in line with lab estimates
   #rgamma(n = n_samples, shape = 26.16, scale = 0.42) #from NICE model
-  treatment_cost_HLA <- 100 #correspondence with Peter Gillett
-  
+  treatment_cost_HLA <- 122.34 #correspondence from labs
+  treatment_cost_HLA_se <- treatment_cost_HLA/5  #this gives a min of 61.15 and max of 214.29 which is in line with lab estimates
+  treatment_cost_HLA_alpha <- (treatment_cost_HLA/treatment_cost_HLA_se)^2
+  treatment_cost_HLA_beta <- (treatment_cost_HLA_se^2)/treatment_cost_HLA
+  treatment_cost_HLA <- rgamma(n = n_samples, shape = treatment_cost_HLA_alpha, scale = treatment_cost_HLA_beta)
   #############################################################################
   ## Accuracy of tests ########################################################
   #############################################################################
-  sens_biopsy <- 1
-  spec_biopsy <- 1
-  sens_HLA <- 0.96
-  spec_HLA <- 0.64
+  sens_biopsy <- 1 #assumption to be varied in sensitivity analysis
+  spec_biopsy <- 1 #assumption to be varied in sensitivity analysis
+
   
   pre_test_probability_overall <- 0.01 #based on West 2014
   tp_riskfactor <- fn_riskfactor <- fp_riskfactor <- tn_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, combinations_names))
@@ -330,7 +332,7 @@ generate_model_parameters <- function(starting_age) {
   #Covariance = -0.2689103
   
   #random normal values with mean [1.993122, 5.54022] and variances [0.4508497, 1.556019], and covariance -0.2689103
-  sigma_IgAEMA_adults <- matrix(c(0.4508497,-0.2689103,-0.2689103,1.556019), 2, 2)
+  sigma_IgAEMA_adults <- matrix(c((0.4508497^2),-0.2689103,-0.2689103,(1.556019^2)), 2, 2)
   mu_IgAEMA_adults <- c(1.993122, 5.54022)
   x_IgAEMA_adults <- rmvnorm(n_samples, mu_IgAEMA_adults, sigma_IgAEMA_adults)
   head(x_IgAEMA_adults)
@@ -354,7 +356,7 @@ generate_model_parameters <- function(starting_age) {
   #Covariance = 0.1592634
   
   #random normal values with mean [2.839716, 2.716697] and variances [0.3886658, 0.4927015], and covariance 0.1592634
-  sigma <- matrix(c(0.3886658,0.1592634,0.1592634,0.4927015), 2, 2)
+  sigma <- matrix(c((0.3886658^2),0.1592634,0.1592634,(0.4927015^2)), 2, 2)
   mu <- c(2.839716, 2.716697)
   x <- rmvnorm(n_samples, mu, sigma)
   head(x)
@@ -392,7 +394,7 @@ generate_model_parameters <- function(starting_age) {
   #Covariance = -0.358947
   
   #random normal values with mean [1.939019, 4.252873] and variances [0.3723165, 0.5569404], and covariance -0.358947
-  sigma <- matrix(c(0.3723165,-0.358947,-0.358947,0.5569404), 2, 2)
+  sigma <- matrix(c((0.3723165^2),-0.358947,-0.358947, (0.5569404^2)), 2, 2)
   mu <- c(1.939019, 4.252873)
   x <- rmvnorm(n_samples, mu, sigma)
   head(x)
@@ -415,7 +417,7 @@ generate_model_parameters <- function(starting_age) {
   #E(logitSE) coef = 2.272053, SE = 0.173953
   #E(logitSP) coef = 1.940514, se = 0.1290671
   #Covariance = 0.0019497
-  sigma <- matrix(c(0.173953,0.0019497,0.0019497,0.1290671), 2, 2)
+  sigma <- matrix(c((0.173953^2),0.0019497,0.0019497,(0.1290671^2)), 2, 2)
   mu <- c(2.272053, 1.940514)
   x <- rmvnorm(n_samples, mu, sigma)
   head(x)
@@ -442,7 +444,7 @@ generate_model_parameters <- function(starting_age) {
 
   
   #random normal values with mean [3.145430687, 0.568258353] and variances [0.704324701, 0.169650745], and covariance -0.526523769
-  sigma_HLA <- matrix(c(0.704324701,-0.526523769,-0.526523769,0.169650745), 2, 2)
+  sigma_HLA <- matrix(c((0.704324701^2),-0.526523769,-0.526523769,(0.169650745^2)), 2, 2)
   mu_HLA <- c(3.145430687, 0.568258353)
   x_HLA <- rmvnorm(n_samples, mu_HLA, sigma_HLA)
   head(x_HLA)
