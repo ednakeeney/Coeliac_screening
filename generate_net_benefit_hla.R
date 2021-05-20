@@ -111,12 +111,12 @@ generate_net_benefit <- function(input_parameters) {
    }
    
   fp_costs <- array(dim = c(n_samples, n_treatments),
-                    dimnames = list(t_names, NULL))
+                    dimnames = list(NULL, t_names))
   
   fp_costs[,] <- (fp[,] * input_parameters$cost_gfp) 
   
   diagnosis_costs <- array(dim = c(n_samples, n_treatments),
-                           dimnames = list(t_names, NULL))
+                           dimnames = list(NULL, t_names))
   
   diagnosis_costs[,] <- (tp[,] + fp[,]) * input_parameters$cost_diagnosis
   
