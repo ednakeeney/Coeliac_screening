@@ -110,12 +110,12 @@ generate_net_benefit <- function(input_parameters) {
      fp[,i+1+(n_combinations*5)] <- (1 - pre_test_probability_HLA[,i + n_combinations + n_combinations]) - tn[,i+1+(n_combinations*5)]
    }
    
-  fp_costs <- array(dim = c(n_treatments, n_samples),
+  fp_costs <- array(dim = c(n_samples, n_treatments),
                     dimnames = list(t_names, NULL))
   
   fp_costs[,] <- (fp[,] * input_parameters$cost_gfp) 
   
-  diagnosis_costs <- array(dim = c(n_treatments, n_samples),
+  diagnosis_costs <- array(dim = c(n_samples, n_treatments),
                            dimnames = list(t_names, NULL))
   
   diagnosis_costs[,] <- (tp[,] + fp[,]) * input_parameters$cost_diagnosis
@@ -243,7 +243,7 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
       # Apply the discount factor 
       # (1 in first year, 1.035 in second, 1.035^2 in third, and so on)
       # Each year acounts for two cycles so need to repeat the discount values
-      total_costs[i_treatment, i_sample] <- treatment_costs[i_treatment, i_sample] + fp_costs[i_treatment, i_sample] + diagnosis_costs[i_treatment, i_sample]
+      total_costs[i_treatment, i_sample] <- treatment_costs[i_treatment, i_sample] + fp_costs[i_sample, i_treatment] + diagnosis_costs[i_sample, i_treatment]
       + cycle_costs[i_treatment, i_sample, ] %*% disc_vec
       
       # Combine the cycle_qalys to get total qalys
