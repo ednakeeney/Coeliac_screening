@@ -444,7 +444,7 @@ generate_model_parameters <- function(starting_age) {
 
   
   #random normal values with mean [3.145430687, 0.568258353] and variances [0.704324701, 0.169650745], and covariance -0.526523769
-  sigma_HLA <- matrix(c((0.704324701^2),-0.526523769,-0.526523769,(0.169650745^2)), 2, 2)
+  sigma_HLA <- matrix(c((0.704324701^2),(-0.526523769*0.704324701*0.169650745),(-0.526523769*0.704324701*0.169650745),(0.169650745^2)), 2, 2)
   mu_HLA <- c(3.145430687, 0.568258353)
   x_HLA <- rmvnorm(n_samples, mu_HLA, sigma_HLA)
   head(x_HLA)
