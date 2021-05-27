@@ -73,6 +73,8 @@ set.seed(14143)
   output
   
   strategies_excluded <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit < 0)) #strategies with ENB less than no screening
+  strategies_included <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit > 0)) #strategies with ENB less than no screening
+  
   
   output$percentage_biopsy_IgAEMA 
   output$percentage_biopsy_IgATTGplusEMA 
@@ -81,9 +83,62 @@ set.seed(14143)
   output$percentage_biopsy_IgATTGplusEMAplusHLA 
   output$percentage_biopsy_IgATTGplusHLA 
   
+  ICER_table <- as.data.frame(output$ICER[2:7])
+  plot(output$ICER[2:7],pch=19, ylim=c(0,75000), ylab = "ICER", main = "IGA EMA")
+  text(output$ICER[2:7], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=3)
+  abline(h=20000)
+  points(output$ICER[8:13])
+  text(output$ICER[8:13], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
+  points(output$ICER[14:19], col = 2)
+  text(output$ICER[14:19], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
+  
+  
   write.csv(t(output$total_costs), "costs.csv")
   write.csv(t(output$total_qalys), "qalys.csv")
-
+  
+  results <- data.frame(output$average_costs, output$average_effects)
+  results <- results[order(results$output.average_costs),]
+  for (i in 1:216) {
+  results$x[i+1] <- ifelse(results$output.average_effects[i+1] > results$output.average_effects[i], 1,0) }
+  results <- subset(results, x== 1)
+  for (i in 1:138) {
+    results$x[i+1] <- ifelse(results$output.average_effects[i+1] > results$output.average_effects[i], 1,0) }
+  results <- subset(results, x== 1)
+  for (i in 1:101) {
+    results$x[i+1] <- ifelse(results$output.average_effects[i+1] > results$output.average_effects[i], 1,0) }
+  results <- subset(results, x== 1)
+  nrow(results)
+  for (i in 1:77) {
+    results$x[i+1] <- ifelse(results$output.average_effects[i+1] > results$output.average_effects[i], 1,0) }
+  results <- subset(results, x== 1)
+  nrow(results)
+  for (i in 1:58) {
+    results$x[i+1] <- ifelse(results$output.average_effects[i+1] > results$output.average_effects[i], 1,0) }
+  results <- subset(results, x== 1)
+  nrow(results)
+  for (i in 1:41) {
+    results$x[i+1] <- ifelse(results$output.average_effects[i+1] > results$output.average_effects[i], 1,0) }
+  results <- subset(results, x== 1)
+  nrow(results)
+  for (i in 1:30) {
+    results$x[i+1] <- ifelse(results$output.average_effects[i+1] > results$output.average_effects[i], 1,0) }
+  results <- subset(results, x== 1)
+  nrow(results)
+  for (i in 1:28) {
+    results$x[i+1] <- ifelse(results$output.average_effects[i+1] > results$output.average_effects[i], 1,0) }
+  results <- subset(results, x== 1)
+  nrow(results)
+  for (i in 1:27) {
+    results$x[i+1] <- ifelse(results$output.average_effects[i+1] > results$output.average_effects[i], 1,0) }
+  results <- subset(results, x== 1)
+  nrow(results)
+  
+  results$ICER <- 0
+  for (i in 1:26) {
+    results$cost_difference[i+1] <- results$output.average_costs[i+1] - results$output.average_costs[i]
+   results$effect_difference[i+1] <- results$output.average_effects[i+1] - results$output.average_effects[i]
+   # results$ICER[i+1] <- (results$output.average_costs[i+1] - results$output.average_costs[i])/ (results$output.average_effects[i+1] - results$output.average_effects[i]) }
+  }
   # Now use the BCEA package to analyse the results
  # pkgs <- c("MASS","Rtools","devtools")
   #repos <- c("https://cran.rstudio.com", "https://www.math.ntnu.no/inla/R/stable") 
