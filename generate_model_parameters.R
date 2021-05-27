@@ -223,13 +223,13 @@ generate_model_parameters <- function(starting_age) {
   cost_gfp <- if(perspective == "NHS") 0 else 100
   
   cost_undiagnosedCD_adults <- 421
-  cost_undiagnosedCD_se_adults <- 3.39
+  cost_undiagnosedCD_se_adults <- 3.34
   cost_undiagnosedCD_alpha_adults <- (cost_undiagnosedCD_adults/cost_undiagnosedCD_se_adults)^2
   cost_undiagnosedCD_beta_adults <- (cost_undiagnosedCD_se_adults^2)/cost_undiagnosedCD_adults
   cost_undiagnosedCD_adults <- rgamma(n = n_samples, shape = cost_undiagnosedCD_alpha_adults, scale = cost_undiagnosedCD_beta_adults) 
   
   cost_undiagnosedCD_children <- 248
-  cost_undiagnosedCD_se_children <- 5.11
+  cost_undiagnosedCD_se_children <- 4.97
   cost_undiagnosedCD_alpha_children <- (cost_undiagnosedCD_children/cost_undiagnosedCD_se_children)^2
   cost_undiagnosedCD_beta_children <- (cost_undiagnosedCD_se_children^2)/cost_undiagnosedCD_children
   cost_undiagnosedCD_children <- rgamma(n = n_samples, shape = cost_undiagnosedCD_alpha_children, scale = cost_undiagnosedCD_beta_children) 
@@ -239,14 +239,14 @@ generate_model_parameters <- function(starting_age) {
     cost_undiagnosedCD[i_sample] <- ifelse(population == "adults", cost_undiagnosedCD_adults[i_sample], cost_undiagnosedCD_children[i_sample])
   }
   
-  cost_CDGFD_adults <- 758
-  cost_CDGFD_se_adults <- 5.4
+  cost_CDGFD_adults <- 757
+  cost_CDGFD_se_adults <- 5.3
   cost_CDGFD_alpha_adults <- (cost_CDGFD_adults/cost_CDGFD_se_adults)^2
   cost_CDGFD_beta_adults <- (cost_CDGFD_se_adults^2)/cost_CDGFD_adults
   cost_CDGFD_adults <- rgamma(n = n_samples, shape = cost_CDGFD_alpha_adults, scale = cost_CDGFD_beta_adults)
   
-  cost_CDGFD_children <- 458
-  cost_CDGFD_se_children <- 21.48
+  cost_CDGFD_children <- 452
+  cost_CDGFD_se_children <- 20.6
   cost_CDGFD_alpha_children <- (cost_CDGFD_children/cost_CDGFD_se_children)^2
   cost_CDGFD_beta_children <- (cost_CDGFD_se_children^2)/cost_CDGFD_children
   cost_CDGFD_children <- rgamma(n = n_samples, shape = cost_CDGFD_alpha_children, scale = cost_CDGFD_beta_children)
@@ -328,7 +328,7 @@ generate_model_parameters <- function(starting_age) {
   #################################################################################################################
   #Iga EMA adults
   #E(logitSE) coef = 1.993122, SE = 0.4508497
-  #E(logitSP) coef = 5.54022, 1.556019
+  #E(logitSP) coef = 5.54022, SE = 1.556019
   #Covariance = -0.2689103
   
   #random normal values with mean [1.993122, 5.54022] and variances [0.4508497, 1.556019], and covariance -0.2689103
