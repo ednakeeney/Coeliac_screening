@@ -334,7 +334,11 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   output$incremental_net_benefit <- 20000*output$incremental_effects - output$incremental_costs
  write.csv(output$incremental_effects, "inb.csv")
   
-  # Average incremental net benefit
+  output$test_costs <- colMeans(t(treatment_costs)) #costs of test and biopsies
+  output$fp_costs <- colMeans(fp_costs)
+  output$diagnosis_costs <- colMeans(diagnosis_costs)
+ 
+ # Average incremental net benefit
   #output$average_inb_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA)
   #output$average_inb_doubletest_IgAEMA <- mean(output$incremental_net_benefit_doubletest_IgAEMA)
   
