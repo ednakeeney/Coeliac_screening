@@ -60,7 +60,7 @@ set.seed(14143)
   source("generate_state_qalys.R")
   source("generate_model_parameters.R")
   source("generate_transition_matrices.R")
-  source("generate_net_benefit_hla.R")
+  source("generate_net_benefit_hla-HT.R")
   
   
   #generate input parameters
@@ -74,7 +74,7 @@ set.seed(14143)
   
   strategies_excluded <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit < 0)) #strategies with ENB less than no screening
   strategies_included <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit > 0)) #strategies with ENB less than no screening
-  
+
   
   output$percentage_biopsy_IgAEMA 
   output$percentage_biopsy_IgATTGplusEMA 
@@ -83,15 +83,93 @@ set.seed(14143)
   output$percentage_biopsy_IgATTGplusEMAplusHLA 
   output$percentage_biopsy_IgATTGplusHLA 
   
-  ICER_table <- as.data.frame(output$ICER[2:7])
-  plot(output$ICER[2:7],pch=19, ylim=c(0,75000), ylab = "ICER", main = "IGA EMA")
-  text(output$ICER[2:7], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=3)
+  #ICER_table <- as.data.frame(output$ICER[2:7])
+  plot(output$ICER[2:7],pch=19, ylim=c(0,75000), ylab = "ICER", main = "IGA EMA", )
+  text(output$ICER[2:7], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
   abline(h=20000)
-  points(output$ICER[8:13])
+  abline(h=30000)
+  points(output$ICER[8:13], col = 2)
   text(output$ICER[8:13], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
-  points(output$ICER[14:19], col = 2)
+  points(output$ICER[14:19], col = 3)
   text(output$ICER[14:19], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
+  points(output$ICER[20:25], col = 4)
+  text(output$ICER[20:25], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
+  points(output$ICER[26:31], col = 5)
+  text(output$ICER[26:31], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
+  points(output$ICER[32:37], col = 6)
+  text(output$ICER[32:37], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
   
+  plot(output$ICER[38:43],pch=19, ylim=c(0,75000), ylab = "ICER", main = "IGA TTG plus EMA", )
+  text(output$ICER[38:43], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
+  abline(h=20000)
+  points(output$ICER[44:49], col = 2)
+  text(output$ICER[44:49], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
+  points(output$ICER[50:55], col = 3)
+  text(output$ICER[50:55], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
+  points(output$ICER[56:61], col = 4)
+  text(output$ICER[56:61], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
+  points(output$ICER[62:67], col = 5)
+  text(output$ICER[62:67], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
+  points(output$ICER[68:73], col = 6)
+  text(output$ICER[68:73], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
+  
+  plot(output$ICER[74:79],pch=19, ylim=c(0,75000), ylab = "ICER", main = "IGA TTG", )
+  text(output$ICER[74:79], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
+  abline(h=20000)
+  points(output$ICER[80:85], col = 2)
+  text(output$ICER[80:85], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
+  points(output$ICER[86:91], col = 3)
+  text(output$ICER[86:91], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
+  points(output$ICER[92:97], col = 4)
+  text(output$ICER[92:97], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
+  points(output$ICER[98:103], col = 5)
+  text(output$ICER[98:103], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
+  points(output$ICER[104:109], col = 6)
+  text(output$ICER[104:109], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
+ 
+  plot(output$ICER[110:115],pch=19, ylim=c(930,975), ylab = "ICER", main = "Tests plus HLA")
+  legend(1, 940, legend=c("IgA TTG", "IgA EMA", "IgA TTGplusEMA"),
+       pch=c(2, 1,4))
+  text(output$ICER[110:115], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
+  abline(h=20000)
+  points(output$ICER[116:121], col = 2)
+  text(output$ICER[116:121], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
+  points(output$ICER[122:127], col = 3)
+  text(output$ICER[122:127], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
+  points(output$ICER[128:133], col = 4)
+  text(output$ICER[128:133], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
+  points(output$ICER[134:139], col = 5)
+  text(output$ICER[134:139], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
+  points(output$ICER[140:145], col = 6)
+  text(output$ICER[140:145], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
+  
+  points(output$ICER[146:151],pch=4)
+  text(output$ICER[146:151], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
+  abline(h=20000)
+  points(output$ICER[152:157], pch=4, col = 2)
+  text(output$ICER[152:157], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
+  points(output$ICER[158:163], pch=4, col = 3)
+  text(output$ICER[158:163], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
+  points(output$ICER[164:169], pch=4, col = 4)
+  text(output$ICER[164:169], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
+  points(output$ICER[170:175], pch=4, col = 5)
+  text(output$ICER[170:175], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
+  points(output$ICER[176:181], pch=4, col = 6)
+  text(output$ICER[176:181], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
+  
+  points(output$ICER[182:187],pch=2)
+  text(output$ICER[182:187], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
+  abline(h=20000)
+  points(output$ICER[188:193], pch=2, col = 2)
+  text(output$ICER[188:193], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
+  points(output$ICER[194:199], pch=2, col = 3)
+  text(output$ICER[194:199], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
+  points(output$ICER[200:205], pch=2, col = 4)
+  text(output$ICER[200:205], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
+  points(output$ICER[206:201], pch=2, col = 5)
+  text(output$ICER[206:211], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
+  points(output$ICER[212:217], pch=2, col = 6)
+  text(output$ICER[212:217], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
   
   write.csv(t(output$total_costs), "costs.csv")
   write.csv(t(output$total_qalys), "qalys.csv")
@@ -145,8 +223,15 @@ set.seed(14143)
   #install.packages(pkgs,repos=repos,dependencies = "Depends")
   #devtools::install_github("giabaio/BCEA")
   
-  m <- bcea(e = t(output$total_qalys), c = t(output$total_costs), ref = 1, interventions = t_names)
+m <- bcea(e = t(output$total_qalys[1:37,]), c = t(output$total_costs[1:37,]), ref = 1, interventions = t_names[1:37])
 summary(m)
+m <- bcea(e = t(output$total_qalys[38:73,]), c = t(output$total_costs[38:73,]), ref = 1, interventions = t_names[38:73])
+summary(m)
+m <- bcea(e = t(output$total_qalys[74:109,]), c = t(output$total_costs[74:109,]), ref = 1, interventions = t_names[74:109])
+summary(m)
+m <- bcea(e = t(output$total_qalys[110:145,]), c = t(output$total_costs[110:145,]), ref = 1, interventions = t_names[110:145])
+summary(m)
+
 eib.plot(m, comparison = NULL, pos =
            c(1, 0), size = NULL, plot.cri = NULL, graph
          = c("ggplot2"))
@@ -160,7 +245,7 @@ ceaf.plot(mce, graph = c("ggplot2"))
 
 
 ceplane.plot(m, comparison =
-               NULL, pos = c(1, 0), graph = c("ggplot2"), point_colors = c(1:14))
+               NULL, pos = c(1, 0), graph = c("ggplot2"), point_colors = c(1:36))
 sim.table(m)
 toc()
 
