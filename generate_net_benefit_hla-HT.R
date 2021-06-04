@@ -15,7 +15,9 @@ generate_net_benefit <- function(input_parameters) {
   post_test_probability_IgATTGplusEMA <- input_parameters %>% select(X0.5.0.5.1 : X0.9999.0.9999.1)
   post_test_probability_IgATTG <- input_parameters %>% select(X0.5.0.5.2 : X0.9999.0.9999.2)
   pre_test_probability <- input_parameters %>% select(X0.5.0.5.3 : X0.9999.0.9999.3)
-  fn_riskfactor <- input_parameters %>% select(X0.5.0.5.4 : X0.9999.0.9999.4)
+  tp_riskfactor <- input_parameters %>% select(X0.5.0.5.4 : X0.9999.0.9999.4)
+  fn_riskfactor <- input_parameters %>% select(X0.5.0.5.5 : X0.9999.0.9999.5)
+  fp_riskfactor <- input_parameters %>% select(X0.5.0.5.6 : X0.9999.0.9999.6)
   pre_test_probability_overall <- 0.01 #based on West 2014
   
  
@@ -336,29 +338,39 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   names(sum_IgATTG) <- combinations_names
   
   sum_IgAEMAplusHLA <- rep(0, n_combinations)
+  sum_IgAEMAplusHLA_test <- rep(0, n_combinations)
   for (i in 1:n_combinations){
     sum_IgAEMAplusHLA[i] <- sum(post_test_probability_HLA[,i] <= 0.9)/n_samples  
+    sum_IgAEMAplusHLA_test[i] <- sum(post_test_probability_IgAEMA[,i] <= 0.9)/n_samples
   }
-  names(sum_IgAEMAplusHLA) <- t_names[110:145]
+  names(sum_IgAEMAplusHLA) <- names(sum_IgAEMAplusHLA_test) <- t_names[110:145]
   
   sum_IgATTGplusEMAplusHLA <- rep(0, n_combinations)
+  sum_IgATTGplusEMAplusHLA_test <- rep(0, n_combinations)
   for (i in 1:n_combinations){
-    sum_IgATTGplusEMAplusHLA[i] <- sum(post_test_probability_HLA[,i+n_combinations] <= 0.9)/n_samples  
+    sum_IgATTGplusEMAplusHLA[i] <- sum(post_test_probability_HLA[,i+n_combinations] <= 0.9)/n_samples 
+    sum_IgATTGplusEMAplusHLA_test[i] <- sum(post_test_probability_IgATTGplusEMA[,i] <= 0.9)/n_samples
   }
-  names(sum_IgATTGplusEMAplusHLA) <- t_names[146:181]
+  names(sum_IgATTGplusEMAplusHLA) <- names(sum_IgATTGplusEMAplusHLA_test) <- t_names[146:181]
   
   sum_IgATTGplusHLA <- rep(0, n_combinations)
-  for (i in 1:n_combinations){
+  sum_IgATTGplusHLA_test <- rep(0, n_combinations)
+   for (i in 1:n_combinations){
     sum_IgATTGplusHLA[i] <- sum(post_test_probability_HLA[,i+n_combinations+n_combinations] <= 0.9)/n_samples  
+    sum_IgATTGplusHLA_test[i] <- sum(post_test_probability_IgATTG[,i] <= 0.9)/n_samples  
+    
   }
-  names(sum_IgATTGplusHLA) <- t_names[182:217]
+  names(sum_IgATTGplusHLA) <-  names(sum_IgATTGplusHLA_test) <- t_names[182:217]
   
   output$percentage_biopsy_IgAEMA <- sum_IgAEMA
   output$percentage_biopsy_IgATTGplusEMA <- sum_IgATTGplusEMA
   output$percentage_biopsy_IgATTG <- sum_IgATTG
   output$percentage_biopsy_IgAEMAplusHLA <- sum_IgAEMAplusHLA
+  output$percentage_hla_IgAEMAplusHLA <- sum_IgAEMAplusHLA_test
   output$percentage_biopsy_IgATTGplusEMAplusHLA <- sum_IgATTGplusEMAplusHLA
+  output$percentage_hla_IgATTGplusEMAplusHLA <- sum_IgATTGplusEMAplusHLA_test
   output$percentage_biopsy_IgATTGplusHLA <- sum_IgATTGplusHLA
+  output$percentage_hla_IgATTGplusHLA <- sum_IgATTGplusHLA_test
   
   output$total_costs <- total_costs
   output$total_qalys <- total_qalys
@@ -376,11 +388,13 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   # Incremental net benefit at the ?20,000 willingness-to-pay
   
   output$incremental_net_benefit <- 20000*output$incremental_effects - output$incremental_costs
+  output$net_benefit <- 20000*output$average_effects - output$average_costs
  write.csv(output$incremental_effects, "inb.csv")
   
-  output$test_costs <- colMeans(t(test_costs)) #costs of test and biopsies
+  output$test_costs <- colMeans(test_costs_applied) #costs of test and biopsies
   output$fp_costs <- colMeans(fp_costs)
   output$diagnosis_costs <- colMeans(diagnosis_costs)
+  output$cycle_costs <- rowMeans(cycle_costs)
  
  # Average incremental net benefit
   #output$average_inb_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA)

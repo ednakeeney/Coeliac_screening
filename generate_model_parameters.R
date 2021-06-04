@@ -465,7 +465,7 @@ generate_model_parameters <- function(starting_age) {
                     cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, test_cost_IgAEMA, test_cost_IgATTG, test_cost_HLA,
                     sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_IgAEMA, spec_IgAEMA, sens_IgATTG, spec_IgATTG, cost_gfp, sens_biopsy, spec_biopsy, 
                     post_test_probability_IgAEMA, post_test_probability_IgATTGplusEMA, post_test_probability_IgATTG, pre_test_probability, pre_test_probability_overall,
-                    fn_riskfactor, LR_HLA, sens_HLA, spec_HLA))
+                   tp_riskfactor, fn_riskfactor, fp_riskfactor, LR_HLA, sens_HLA, spec_HLA))
 }
 
 generate_model_parameters(starting_age)
