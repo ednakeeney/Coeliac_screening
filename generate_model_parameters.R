@@ -283,23 +283,24 @@ generate_model_parameters <- function(starting_age) {
 
   #Need to include cost of GFD - Penny contacting Coeliac UK
 
-  treatment_cost_IgAEMA <- 14.92 #based on correspondence from labs 
-  treatment_cost_IgAEMA_se <- treatment_cost_IgAEMA/8  #this gives a min of 9.5 and max of 21 which is in line with lab estimates
-  treatment_cost_IgAEMA_alpha <- (treatment_cost_IgAEMA/treatment_cost_IgAEMA_se)^2
-  treatment_cost_IgAEMA_beta <- (treatment_cost_IgAEMA_se^2)/treatment_cost_IgAEMA
-  treatment_cost_IgAEMA <- rgamma(n = n_samples, shape = treatment_cost_IgAEMA_alpha, scale = treatment_cost_IgAEMA_beta)
+  test_cost_IgAEMA <- 14.92 #based on correspondence from labs 
+  test_cost_IgAEMA_se <- test_cost_IgAEMA/8  #this gives a min of 9.5 and max of 21 which is in line with lab estimates
+  test_cost_IgAEMA_alpha <- (test_cost_IgAEMA/test_cost_IgAEMA_se)^2
+  test_cost_IgAEMA_beta <- (test_cost_IgAEMA_se^2)/test_cost_IgAEMA
+  test_cost_IgAEMA <- rgamma(n = n_samples, shape = test_cost_IgAEMA_alpha, scale = test_cost_IgAEMA_beta)
   #rgamma(n = n_samples, shape = 122.57, scale = 0.08) #from NICE model
-  treatment_cost_IgATTG <- 10.77 #based on correspondence from labs
-  treatment_cost_IgATTG_se <- treatment_cost_IgATTG/5
-  treatment_cost_IgATTG_alpha <- (treatment_cost_IgATTG/treatment_cost_IgATTG_se)^2
-  treatment_cost_IgATTG_beta <- (treatment_cost_IgATTG_se^2)/treatment_cost_IgATTG
-  treatment_cost_IgATTG <- rgamma(n = n_samples, shape = treatment_cost_IgATTG_alpha, scale = treatment_cost_IgATTG_beta) #this gives a min of 5.04 and max of 18.21 which is in line with lab estimates
+  test_cost_IgATTG <- 10.77 #based on correspondence from labs
+  test_cost_IgATTG_se <- test_cost_IgATTG/5
+  test_cost_IgATTG_alpha <- (test_cost_IgATTG/test_cost_IgATTG_se)^2
+  test_cost_IgATTG_beta <- (test_cost_IgATTG_se^2)/test_cost_IgATTG
+  test_cost_IgATTG <- rgamma(n = n_samples, shape = test_cost_IgATTG_alpha, scale = test_cost_IgATTG_beta) #this gives a min of 5.04 and max of 18.21 which is in line with lab estimates
   #rgamma(n = n_samples, shape = 26.16, scale = 0.42) #from NICE model
-  treatment_cost_HLA <- 122.34 #correspondence from labs
-  treatment_cost_HLA_se <- treatment_cost_HLA/5  #this gives a min of 61.15 and max of 214.29 which is in line with lab estimates
-  treatment_cost_HLA_alpha <- (treatment_cost_HLA/treatment_cost_HLA_se)^2
-  treatment_cost_HLA_beta <- (treatment_cost_HLA_se^2)/treatment_cost_HLA
-  treatment_cost_HLA <- rgamma(n = n_samples, shape = treatment_cost_HLA_alpha, scale = treatment_cost_HLA_beta)
+  test_cost_HLA <- 122.34 #correspondence from labs
+  test_cost_HLA_se <- test_cost_HLA/5  #this gives a min of 61.15 and max of 214.29 which is in line with lab estimates
+  test_cost_HLA_alpha <- (test_cost_HLA/test_cost_HLA_se)^2
+  test_cost_HLA_beta <- (test_cost_HLA_se^2)/test_cost_HLA
+  test_cost_HLA <- rgamma(n = n_samples, shape = test_cost_HLA_alpha, scale = test_cost_HLA_beta)
+  
   #############################################################################
   ## Accuracy of tests ########################################################
   #############################################################################
@@ -317,6 +318,7 @@ generate_model_parameters <- function(starting_age) {
     fp_riskfactor[,i] <- (1 - pre_test_probability_overall) - tn_riskfactor[,i]
   }
   
+ write.csv(data.frame(tp_riskfactor[1,], fn_riskfactor[1,], tn_riskfactor[1,], fp_riskfactor[1,]), "risk_factor.csv")
   pre_test_probability <- tp_riskfactor/(tp_riskfactor+fp_riskfactor)
   
   pre_test_odds <- array(0, dim=c(n_samples, n_combinations), dimnames = list(NULL, combinations_names))
@@ -460,7 +462,7 @@ generate_model_parameters <- function(starting_age) {
                     NHL_probability_noGFD, death_probability_NHL, 
                     utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL,
                     cost_CDGFD, cost_osteoporosis, cost_undiagnosedCD, cost_IDA, cost_biopsy, probability_biopsy,
-                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, treatment_cost_IgAEMA, treatment_cost_IgATTG, treatment_cost_HLA,
+                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, test_cost_IgAEMA, test_cost_IgATTG, test_cost_HLA,
                     sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_IgAEMA, spec_IgAEMA, sens_IgATTG, spec_IgATTG, cost_gfp, sens_biopsy, spec_biopsy, 
                     post_test_probability_IgAEMA, post_test_probability_IgATTGplusEMA, post_test_probability_IgATTG, pre_test_probability, pre_test_probability_overall,
                     fn_riskfactor, LR_HLA, sens_HLA, spec_HLA))

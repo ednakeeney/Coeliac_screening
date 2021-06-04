@@ -6,7 +6,7 @@ library(SimDesign)
 library(BCEA)
 library(dplyr)
 
-setwd("C:/Users/ek14588/Downloads/Coeliac_screening")
+#setwd("C:/Users/ek14588/Downloads/Coeliac_screening")
 
 tic()
 rm(list=ls())
@@ -14,8 +14,8 @@ set.seed(14143)
   
  
   
-  treatments <- c("IgAEMA", "IgATTGplusEMA", "IgATTG", "IgAEMA plus HLA", "IgATTGplusEMA plus HLA", "IgATTG plus HLA")
-  n_tests <- length(treatments)
+  tests <- c("IgAEMA", "IgATTGplusEMA", "IgATTG", "IgAEMA plus HLA", "IgATTGplusEMA plus HLA", "IgATTG plus HLA")
+  n_tests <- length(tests)
   
   #pre-test probabilities of coeliac disease 
   sens_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.9999)
@@ -25,11 +25,11 @@ set.seed(14143)
   combinations_names <- combinations$x
   n_combinations <- length(combinations$x)
   
-  # Define the number and names of treatments
+  # Define the number and names of tests
   
-  n_treatments <- (n_tests * n_combinations) + 1
+  n_tests <- (n_tests * n_combinations) + 1
   
-  t_names <-  c("No screening", outer(combinations_names, treatments, FUN = "paste")[1:n_treatments-1])
+  t_names <-  c("No screening", outer(combinations_names, tests, FUN = "paste")[1:n_tests-1])
 
   
   # Define the number and names of states of the model
