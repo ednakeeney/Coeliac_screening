@@ -6,7 +6,7 @@ library(SimDesign)
 library(BCEA)
 library(dplyr)
 
-#setwd("C:/Users/ek14588/Downloads/Coeliac_screening")
+setwd("C:/Users/ek14588/Downloads/Coeliac_screening")
 
 tic()
 rm(list=ls())
@@ -220,7 +220,7 @@ set.seed(14143)
   text(output$incremental_net_benefit[104:109], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
   
  
-   plot(output$incremental_net_benefit[110:115],pch=19, ylim=c(14900, 15200), ylab = "incremental_net_benefit", main = "IgA EMA plus HLA")
+   plot(output$incremental_net_benefit[110:115],pch=19, ylim=c(10000, 15000),ylab = "incremental_net_benefit", main = "IgA EMA plus HLA")
   #legend(1, 940, legend=c("IgA TTG", "IgA EMA", "IgA TTGplusEMA"),
       #   pch=c(2, 1,4))
   text(output$incremental_net_benefit[110:115], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
@@ -235,7 +235,7 @@ set.seed(14143)
   points(output$incremental_net_benefit[140:145], col = 6)
   text(output$incremental_net_benefit[140:145], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
   
-  plot(output$incremental_net_benefit[146:151],pch=4, ylim=c(14900, 15200), ylab = "incremental_net_benefit", main = "IgATTG plus EMA plus HLA")
+  plot(output$incremental_net_benefit[146:151],pch=4, ylim=c(13000, 15000),ylab = "incremental_net_benefit", main = "IgATTG plus EMA plus HLA")
   text(output$incremental_net_benefit[146:151], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
   abline(h=20000)
   points(output$incremental_net_benefit[152:157], pch=4, col = 2)
@@ -249,7 +249,7 @@ set.seed(14143)
   points(output$incremental_net_benefit[176:181], pch=4, col = 6)
   text(output$incremental_net_benefit[176:181], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
   
-  plot(output$incremental_net_benefit[182:187],pch=2, ylim=c(14900, 15200), ylab = "incremental_net_benefit", main = "IgA TTG plus HLA")
+  plot(output$incremental_net_benefit[182:187],pch=2, ylim=c(7000, 15000),ylab = "incremental_net_benefit", main = "IgA TTG plus HLA")
   text(output$incremental_net_benefit[182:187], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
   points(output$incremental_net_benefit[188:193], pch=2, col = 2)
   text(output$incremental_net_benefit[188:193], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
@@ -264,6 +264,8 @@ set.seed(14143)
   
   
   write.csv(t(output$total_costs), "costs.csv")
+  write.csv(t(output$total_qalys), "qalys.csv")
+  
   write.csv(t(output$total_qalys), "qalys.csv")
   
   results <- data.frame(output$average_costs, output$average_effects)
@@ -322,6 +324,9 @@ summary(m)
 m <- bcea(e = t(output$total_qalys[74:109,]), c = t(output$total_costs[74:109,]), ref = 1, interventions = t_names[74:109])
 summary(m)
 m <- bcea(e = t(output$total_qalys[110:145,]), c = t(output$total_costs[110:145,]), ref = 1, interventions = t_names[110:145])
+summary(m)
+
+m <- bcea(e = t(output$total_qalys), c = t(output$total_costs), ref = 1, interventions = t_names)
 summary(m)
 
 eib.plot(m, comparison = NULL, pos =

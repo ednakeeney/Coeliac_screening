@@ -320,6 +320,7 @@ generate_model_parameters <- function(starting_age) {
   
  write.csv(data.frame(tp_riskfactor[1,], fn_riskfactor[1,], tn_riskfactor[1,], fp_riskfactor[1,]), "risk_factor.csv")
   pre_test_probability <- tp_riskfactor/(tp_riskfactor+fp_riskfactor)
+  write.csv(colMeans(pre_test_probability), "pretestprob.csv")
   
   pre_test_odds <- array(0, dim=c(n_samples, n_combinations), dimnames = list(NULL, combinations_names))
   
