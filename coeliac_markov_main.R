@@ -174,20 +174,29 @@ set.seed(14143)
   text(output$ICER[212:217], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
   
   #plots of incremental net benefit
+  par(mfrow=c(3,2))
+  
   #IGA EMA
-  plot(output$incremental_net_benefit[2:7],pch=19, ylim=c(-1100,15000), ylab = "incremental_net_benefit", main = "IGA EMA", )
-  text(output$incremental_net_benefit[2:7], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
-  abline(h=0)
-  points(output$incremental_net_benefit[8:13], col = 2)
-  text(output$incremental_net_benefit[8:13], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
-  points(output$incremental_net_benefit[14:19], col = 3)
-  text(output$incremental_net_benefit[14:19], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
-  points(output$incremental_net_benefit[20:25], col = 4)
-  text(output$incremental_net_benefit[20:25], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
-  points(output$incremental_net_benefit[26:31], col = 5)
-  text(output$incremental_net_benefit[26:31], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
-  points(output$incremental_net_benefit[32:37], col = 6)
-  text(output$incremental_net_benefit[32:37], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
+  plot(output$incremental_net_benefit[2:7],pch=19, ylim=c(-1100,15000), ylab = "Incremental net benefit", xlab = "sensitivity", main = "IGA EMA", xaxt="n" )
+ # text(output$incremental_net_benefit[2:7], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
+ lines(output$incremental_net_benefit[2:7], lwd=2)
+   abline(h=0)
+  axis(1,                         # Define x-axis manually
+       at = 1:6,
+       labels = c(0.5, 0.6, 0.7, 0.8, 0.9, 1))
+  lines(output$incremental_net_benefit[8:13], col = 2, lwd=2, lty=2)
+  #text(output$incremental_net_benefit[8:13], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
+  lines(output$incremental_net_benefit[14:19], col = 3, lwd=4, lty=3)
+ # text(output$incremental_net_benefit[14:19], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
+  lines(output$incremental_net_benefit[20:25], col = 4, lwd=2, lty=4)
+  #text(output$incremental_net_benefit[20:25], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
+  lines(output$incremental_net_benefit[26:31], col = 5, lwd=2, lty=5)
+ # text(output$incremental_net_benefit[26:31], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
+ # lines(output$incremental_net_benefit[32:37], col = 6, lwd=2, lty=6)
+  #text(output$incremental_net_benefit[32:37], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
+  legend(0.9, 15000, legend=c("Specificity 0.5", "0.6", "0.7", "0.8", "0.9"),
+           lty=c(1:5), col=c(1:5))
+  
   
   #IGA TTG plus EMA
   plot(output$incremental_net_benefit[38:43],pch=19, ylim=c(-1100,15000), ylab = "incremental_net_benefit", main = "IGA TTG plus EMA", )
@@ -220,9 +229,10 @@ set.seed(14143)
   text(output$incremental_net_benefit[104:109], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
   
  
-   plot(output$incremental_net_benefit[110:115],pch=19, ylim=c(10000, 15000),ylab = "incremental_net_benefit", main = "IgA EMA plus HLA")
+   plot(output$incremental_net_benefit[110:115],pch=19, ylim=c(-1100, 15000),ylab = "incremental_net_benefit", main = "IgA EMA plus HLA")
   #legend(1, 940, legend=c("IgA TTG", "IgA EMA", "IgA TTGplusEMA"),
       #   pch=c(2, 1,4))
+   abline(h=0)
   text(output$incremental_net_benefit[110:115], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
   points(output$incremental_net_benefit[116:121], col = 2)
   text(output$incremental_net_benefit[116:121], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
@@ -235,7 +245,7 @@ set.seed(14143)
   points(output$incremental_net_benefit[140:145], col = 6)
   text(output$incremental_net_benefit[140:145], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
   
-  plot(output$incremental_net_benefit[146:151],pch=4, ylim=c(13000, 15000),ylab = "incremental_net_benefit", main = "IgATTG plus EMA plus HLA")
+  plot(output$incremental_net_benefit[146:151],pch=4, ylim=c(-1100, 15000),ylab = "incremental_net_benefit", main = "IgATTG plus EMA plus HLA")
   text(output$incremental_net_benefit[146:151], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
   abline(h=20000)
   points(output$incremental_net_benefit[152:157], pch=4, col = 2)
@@ -249,8 +259,9 @@ set.seed(14143)
   points(output$incremental_net_benefit[176:181], pch=4, col = 6)
   text(output$incremental_net_benefit[176:181], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
   
-  plot(output$incremental_net_benefit[182:187],pch=2, ylim=c(7000, 15000),ylab = "incremental_net_benefit", main = "IgA TTG plus HLA")
-  text(output$incremental_net_benefit[182:187], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
+  plot(output$incremental_net_benefit[182:187],pch=2, ylim=c(-1100, 15000),ylab = "incremental_net_benefit", main = "IgA TTG plus HLA")
+ abline(h=0)
+   text(output$incremental_net_benefit[182:187], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
   points(output$incremental_net_benefit[188:193], pch=2, col = 2)
   text(output$incremental_net_benefit[188:193], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
   points(output$incremental_net_benefit[194:199], pch=2, col = 3)
