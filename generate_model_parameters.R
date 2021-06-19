@@ -198,6 +198,7 @@ generate_model_parameters <- function(starting_age) {
   
   disutility_NHL <- runif(n = n_samples, min = 0.036, max = 0.136)
   
+  disutility_biopsy <- runif(n = n_samples, min = 0.003, max = 0.005)
   #############################################################################
   ## Costs ####################################################################
   #############################################################################
@@ -461,7 +462,7 @@ generate_model_parameters <- function(starting_age) {
   return(data.frame(probability_late_diagnosis, probability_subfertility, probability_osteoporosis, probability_NHL, probability_nocomplications,
                     osteoporosis_probability_GFD_all, subfertility_probability_GFD_all, NHL_probability_GFD, osteoporosis_probability_noGFD_all, subfertility_probability_noGFD_all,
                     NHL_probability_noGFD, death_probability_NHL, 
-                    utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL,
+                    utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL, disutility_biopsy,
                     cost_CDGFD, cost_osteoporosis, cost_undiagnosedCD, cost_IDA, cost_biopsy, probability_biopsy,
                     cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, test_cost_IgAEMA, test_cost_IgATTG, test_cost_HLA,
                     sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_IgAEMA, spec_IgAEMA, sens_IgATTG, spec_IgATTG, cost_gfp, sens_biopsy, spec_biopsy, 

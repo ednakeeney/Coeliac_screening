@@ -20,7 +20,7 @@ generate_state_qalys <- function(input_parameters) {
   
   for(i_age_category in c(0:n_agecategories)) {
     state_qalys[, (c(1:10) + i_age_category * 10), "CD GFD no complications"] <- eq5d_norms[starting_age_row + i_age_category, 2] * input_parameters$utility_GFD
-    state_qalys[, (c(1:10) + i_age_category * 10), "Undiagnosed CD no complications"] <- eq5d_norms[starting_age_row + i_age_category, 2] * input_parameters$utility_undiagnosedCD
+    state_qalys[, (c(1:10) + i_age_category * 10), "Undiagnosed CD no complications"] <- eq5d_norms[starting_age_row + i_age_category, 2] * input_parameters$utility_undiagnosedCD - (input_parameters$probability_late_diagnosis * input_parameters$probability_biopsy * input_parameters$disutility_biopsy)
   }
   
   state_qalys[, , "CD GFD subfertility"] <- state_qalys[, , "CD GFD no complications"] - input_parameters$disutility_subfertility

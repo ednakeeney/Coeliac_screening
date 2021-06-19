@@ -21,7 +21,7 @@ generate_net_benefit <- function(input_parameters) {
  
   
   
-   tp <- fn <- fp <- tn <- array(dim=c(n_samples, n_treatments), dimnames = list(NULL, t_names))
+   tp <- fn <- fp <- tn <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
   
   # Probabilities for IgAEMA
   for (i in 1:n_combinations) {
@@ -110,18 +110,18 @@ generate_net_benefit <- function(input_parameters) {
      fp[,i+1+(n_combinations*5)] <- (1 - pre_test_probability_HLA[,i + n_combinations + n_combinations]) - tn[,i+1+(n_combinations*5)]
    }
    
-  fp_costs <- array(dim = c(n_samples, n_treatments),
+  fp_costs <- array(dim = c(n_samples, n_tests),
                     dimnames = list(NULL, t_names))
   
   fp_costs[,] <- (fp[,] * input_parameters$cost_gfp) 
   
-  diagnosis_costs <- array(dim = c(n_samples, n_treatments),
+  diagnosis_costs <- array(dim = c(n_samples, n_tests),
                            dimnames = list(NULL, t_names))
   
   diagnosis_costs[,] <- (tp[,] + fp[,]) * input_parameters$cost_diagnosis
   
   
-  treatment_costs <- array(dim=c(n_treatments,n_samples),dimnames=list(t_names,NULL))
+  treatment_costs <- array(dim=c(n_tests,n_samples),dimnames=list(t_names,NULL))
   for (i in 1:n_combinations) {
     treatment_costs[1,] <- 0
     treatment_costs[i+1, ] <-  ifelse(post_test_probability_IgAEMA[,i] >= 0.9, input_parameters$treatment_cost_IgAEMA, 
@@ -138,17 +138,27 @@ generate_net_benefit <- function(input_parameters) {
                                                                                                         input_parameters$treatment_cost_IgAEMA + input_parameters$cost_biopsy)
   }
  
+  disutility_biopsy_screen <- array(dim=c(n_tests,n_samples),dimnames=list(t_names,NULL))
+  for (i in 1:n_combinations) {
+    disutility_biopsy_screen[1,] <- 0
+    disutility_biopsy_screen[i+1, ] <-  ifelse(post_test_probability_IgAEMA[,i] >= 0.9, 0, input_parameters$disutility_biopsy)
+    disutility_biopsy_screen[n_combinations+i+1, ] <-  ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9, 0, input_parameters$disutility_biopsy)
+    disutility_biopsy_screen[n_combinations+n_combinations+i+1, ] <-  ifelse(post_test_probability_IgATTG[,i] >= 0.9, 0, input_parameters$disutility_biopsy)
+    disutility_biopsy_screen[n_combinations+n_combinations+ n_combinations+i+1, ] <-  ifelse(post_test_probability_HLA[,i] >= 0.9, 0, input_parameters$disutility_biopsy)
+    disutility_biopsy_screen[n_combinations + n_combinations+ n_combinations + n_combinations +i+1, ] <-  ifelse(post_test_probability_HLA[,i+n_combinations] >= 0.9, 0, input_parameters$disutility_biopsy)
+    disutility_biopsy_screen[n_combinations + n_combinations+ n_combinations + n_combinations+ n_combinations+i+1, ] <-  ifelse(post_test_probability_HLA[,i+n_combinations+n_combinations] >= 0.9, 0, input_parameters$disutility_biopsy)
+  }
   
   # Build an array to store the cohort vector at each cycle
   # Each cohort vector has n_states elements: probability of being in each state,
   # There is one cohort vector for each treatment, for each PSA sample, for each cycle.
-  cohort_vectors<-array(dim=c(n_treatments,n_samples,n_cycles,n_states),  
+  cohort_vectors<-array(dim=c(n_tests,n_samples,n_cycles,n_states),  
                         dimnames=list(t_names,NULL,NULL, state_names))
   
  
  fn_riskfactor
  #ncol(fn_riskfactor)
-fn_riskfactor_table <- array(dim=c(n_samples, n_treatments), dimnames = list(NULL, t_names))
+fn_riskfactor_table <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
   #ncol(fn_riskfactor_table)
   for (i in 1:n_combinations) {
   fn_riskfactor_table[,1] <- 1
@@ -166,7 +176,7 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   tp <- tp/(tp + fn_all)
   fn <- 1 - tp
   
-  for (i_treatment in c(1:n_treatments)) { 
+  for (i_treatment in c(1:n_tests)) { 
     cohort_vectors[i_treatment, , 1, "CD GFD no complications"] <- tp[, i_treatment] * input_parameters$probability_nocomplications 
     cohort_vectors[i_treatment, , 1, "CD GFD subfertility"] <- tp[, i_treatment] * input_parameters$probability_subfertility
     cohort_vectors[i_treatment, , 1, "CD GFD osteoporosis"] <- tp[, i_treatment] * input_parameters$probability_osteoporosis 
@@ -187,18 +197,18 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   # One for each treatment, for each PSA sample, for each cycle
   # These will be filled in below in the main model code
   # Then discounted and summed to contribute to total costs and total QALYs
-  cycle_costs <- array(dim = c(n_treatments, n_samples, n_cycles),
+  cycle_costs <- array(dim = c(n_tests, n_samples, n_cycles),
                        dimnames = list(t_names, NULL, NULL))
-  cycle_qalys <- array(dim = c(n_treatments, n_samples, n_cycles),
+  cycle_qalys <- array(dim = c(n_tests, n_samples, n_cycles),
                        dimnames = list(t_names, NULL, NULL))
   
   # Build arrays to store the total costs and total QALYs
   # There is one for each treatment and each PSA sample
   # These are filled in below using cycle_costs, 
   # treatment_costs, and cycle_qalys
-  total_costs <- array(dim = c(n_treatments, n_samples),
+  total_costs <- array(dim = c(n_tests, n_samples),
                        dimnames = list(t_names, NULL))
-  total_qalys <- array(dim = c(n_treatments, n_samples),
+  total_qalys <- array(dim = c(n_tests, n_samples),
                        dimnames = list(t_names, NULL))
   
   
@@ -207,7 +217,7 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   # Main model code
   # Loop over the treatment options
   
-  for (i_treatment in 1:n_treatments)
+  for (i_treatment in 1:n_tests)
   {
     # Loop over the PSA samples
     for(i_sample in 1:n_samples)
@@ -249,7 +259,7 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
       # Apply the discount factor 
       # (1 in first year, 1.035 in second, 1.035^2 in third, and so on)
       # Each year acounts for two cycles so need to repeat the discount values
-      total_qalys[i_treatment, i_sample] <- cycle_qalys[i_treatment, i_sample, ] %*%
+      total_qalys[i_treatment, i_sample] <- (cycle_qalys[i_treatment, i_sample, ]  - disutility_biopsy_screen[i_treatment, i_sample]) %*%
         disc_vec
     }
     

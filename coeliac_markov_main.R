@@ -194,8 +194,8 @@ set.seed(14143)
  # text(output$incremental_net_benefit[26:31], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
  # lines(output$incremental_net_benefit[32:37], col = 6, lwd=2, lty=6)
   #text(output$incremental_net_benefit[32:37], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
-  legend(0.9, 15000, legend=c("Specificity 0.5", "0.6", "0.7", "0.8", "0.9"),
-           lty=c(1:5), col=c(1:5))
+  #legend(0.9, 15000, legend=c("Specificity 0.5", "0.6", "0.7", "0.8", "0.9"),
+   #        lty=c(1:5), col=c(1:5))
   
   
   #IGA TTG plus EMA
