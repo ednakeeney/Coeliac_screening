@@ -83,6 +83,20 @@ set.seed(14143)
   output$percentage_biopsy_IgATTGplusEMAplusHLA 
   output$percentage_biopsy_IgATTGplusHLA 
   
+  # Simple graphical comparison of biospy proportions
+  plot(output$percentage_biopsy_IgAEMA, col = 0, xlab = "Risk factor strategy", ylab = "Proportion Biospy")
+  lines(output$percentage_biopsy_IgAEMA , col = 1)
+  lines(output$percentage_biopsy_IgATTGplusEMA, col = 2)
+  lines(output$percentage_biopsy_IgATTG, col = 3)
+  lines(output$percentage_biopsy_IgAEMAplusHLA, col = 4)
+  lines(output$percentage_biopsy_IgATTGplusEMAplusHLA, col = 5)
+  lines(output$percentage_biopsy_IgATTGplusHLA, col = 6)
+  legend("bottomleft", col = c(1:6), cex = 0.6, lty = 1,
+         legend = c("IgAEMA", "IgATTGplusEMA",
+                    "IgATTG", "IgAEMAplusHLA",
+                    "IgATTGplusEMAplusHLA",
+                    "IgATTGplusHLA"))
+  
   write.csv(data.frame(output$test_costs, output$diagnosis_costs, output$fp_costs, output$cycle_costs, output$average_costs), "costs.csv")
   
   #ICER_table <- as.data.frame(output$ICER[2:7])
@@ -356,4 +370,18 @@ ceplane.plot(m, comparison =
                NULL, pos = c(1, 0), graph = c("ggplot2"), point_colors = c(1:36))
 sim.table(m)
 toc()
+
+# Calculate population EVPI
+m <- bcea(e = t(output$total_qalys), c = t(output$total_costs), ref = 1, interventions = t_names, wtp = 20000)
+m$evi
+# Prevalence of CD (different for adults and children)
+cd_prevalence <- 0.1
+# Total population susceptible to CD (i.e. how many adults or children in UK)
+total_population <- 1200000
+# Assume test technology remains relevant for at least 10 years
+technology_horizon <- 10
+discounted_population_size <- sum((1/1.035)^(0:(technology_horizon - 1))) * total_population * cd_prevalence
+population_evpi <- m$evi * discounted_population_size 
+
+
 
