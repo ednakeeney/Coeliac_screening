@@ -84,6 +84,7 @@ set.seed(14143)
   output$percentage_biopsy_IgATTGplusHLA 
   
   # Simple graphical comparison of biospy proportions
+  jpeg("results/ biopsy plot.jpeg")
   par(mfrow=c(1,1))
   plot(output$percentage_biopsy_IgAEMA, col = 0, xlab = "Risk factor strategy", ylab = "Proportion Biospy")
   lines(output$percentage_biopsy_IgAEMA , col = 1)
@@ -98,6 +99,7 @@ set.seed(14143)
                     "IgATTGplusEMAplusHLA",
                     "IgATTGplusHLA"))
   
+  dev.off()
   write.csv(data.frame(output$test_costs, output$diagnosis_costs, output$fp_costs, output$cycle_costs, output$average_costs), "results/cost breakdown.csv")
   write.csv(data.frame(output$cycle_qalys, output$disutility_biopsy), "results/qaly breakdown.csv")
  

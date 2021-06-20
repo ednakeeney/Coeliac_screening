@@ -20,9 +20,7 @@ generate_net_benefit <- function(input_parameters) {
   fp_riskfactor <- input_parameters %>% select(X0.5.0.5.6 : X0.9999.0.9999.6)
   pre_test_probability_overall <- 0.01 #based on West 2014
   
-  write.csv(colMeans(post_test_probability_IgAEMA), "posttestIgAema.csv")
-  write.csv(colMeans(post_test_probability_IgATTGplusEMA), "posttestIgAttgplusema.csv")
-  write.csv(colMeans(post_test_probability_IgATTG), "posttestIgAttg.csv")
+
   
    tp <- fn <- fp <- tn <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
   
@@ -65,7 +63,7 @@ generate_net_benefit <- function(input_parameters) {
   
    tp_nobiopsy <- fn_nobiopsy <- fp_nobiopsy <- tn_nobiopsy <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
    
-   # Probabilities for IgAEMA without biopsy
+   # Probabilities for IgAEMA without biopsy (to use for HLA strategies)
    for (i in 1:n_combinations) {
      tp_nobiopsy[,1] <- 0
      tp_nobiopsy[,i+1] <- pre_test_probability[,i] * input_parameters$sens_IgAEMA
@@ -79,7 +77,6 @@ generate_net_benefit <- function(input_parameters) {
    
    
    # Probabilities for IgATTG + IgAEMA without biopsy
-   
    for (i in 1:n_combinations) {
      tp_nobiopsy[,i+1+n_combinations] <- pre_test_probability[,i] * input_parameters$sens_IgATTGplusEMA
      fn_nobiopsy[,i+1+n_combinations] <- pre_test_probability[,i] - tp_nobiopsy[,i+1+n_combinations] 
@@ -87,8 +84,7 @@ generate_net_benefit <- function(input_parameters) {
      fp_nobiopsy[,i+1+n_combinations] <- (1 - pre_test_probability[,i]) - tn_nobiopsy[,i+1+n_combinations]
    }
    
-   # Probabilities for IgATTG
-   
+   # Probabilities for IgATTG without biopsy
    for (i in 1:n_combinations) {
      tp_nobiopsy[,i+1+n_combinations+n_combinations] <- pre_test_probability[,i] * input_parameters$sens_IgATTG
      fn_nobiopsy[,i+1+n_combinations+n_combinations] <- pre_test_probability[,i] - tp_nobiopsy[,i+1+n_combinations+n_combinations] 
@@ -116,8 +112,7 @@ generate_net_benefit <- function(input_parameters) {
    post_test_probability_HLA[,i] <- post_test_odds_HLA[,i]/(1 + post_test_odds_HLA[,i])
    }
    
-   write.csv(colMeans(pre_test_probability_HLA), "hlapretest.csv")
-   write.csv(colMeans(post_test_probability_HLA), "hlaposttest.csv")
+  
    
    # Probabilities for IgAEMA plus HLA
    for (i in 1:n_combinations) {
@@ -150,9 +145,15 @@ generate_net_benefit <- function(input_parameters) {
      fp[,i+1+(n_combinations*5)] <- (1 - pre_test_probability_HLA[,i + n_combinations + n_combinations]) - tn[,i+1+(n_combinations*5)]
    }
  
+   
+   write.csv(colMeans(post_test_probability_IgAEMA), "posttestIgAema.csv")
+   write.csv(colMeans(post_test_probability_IgATTGplusEMA), "posttestIgAttgplusema.csv")
+   write.csv(colMeans(post_test_probability_IgATTG), "posttestIgAttg.csv")
+   write.csv(colMeans(pre_test_probability_HLA), "hlapretest.csv")
+   write.csv(colMeans(post_test_probability_HLA), "hlaposttest.csv")
    write.csv(data.frame(colMeans(tp), colMeans(fn), colMeans(tn), colMeans(fp)), "test.csv")
    
-     
+  #Adding costs   
   fp_costs <- array(dim = c(n_samples, n_tests),
                     dimnames = list(NULL, t_names))
   
@@ -180,7 +181,6 @@ generate_net_benefit <- function(input_parameters) {
           (input_parameters$test_cost_IgAEMA + input_parameters$test_cost_HLA),
         (input_parameters$test_cost_IgAEMA + input_parameters$test_cost_HLA + input_parameters$cost_biopsy)))
     
-    
     test_costs[, n_combinations + n_combinations+ n_combinations + n_combinations + i + 1] <-  
       ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9,
              input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG,
@@ -197,8 +197,7 @@ generate_net_benefit <- function(input_parameters) {
   
   }
   
-  test_costs_applied <- array(dim = c(n_samples, n_tests),
-                              dimnames = list(NULL, t_names))
+
   
   disutility_biopsy_screen <- array(dim=c(n_tests,n_samples),dimnames=list(t_names,NULL))
   for (i in 1:n_combinations) {
@@ -210,6 +209,8 @@ generate_net_benefit <- function(input_parameters) {
     disutility_biopsy_screen[n_combinations + n_combinations+ n_combinations + n_combinations +i+1, ] <-  ifelse(post_test_probability_HLA[,i+n_combinations] >= 0.9, 0, input_parameters$disutility_biopsy)
     disutility_biopsy_screen[n_combinations + n_combinations+ n_combinations + n_combinations+ n_combinations+i+1, ] <-  ifelse(post_test_probability_HLA[,i+n_combinations+n_combinations] >= 0.9, 0, input_parameters$disutility_biopsy)
   }
+  
+  
   
   tp_riskfactor_table <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
   #ncol(tp_riskfactor_table)
@@ -234,7 +235,10 @@ generate_net_benefit <- function(input_parameters) {
     fp_riskfactor_table[,i+1+n_combinations*4] <- fp_riskfactor[,i]
     fp_riskfactor_table[,i+1+n_combinations*5] <- fp_riskfactor[,i]
   }
-  test_costs_applied <- test_costs * (tp[,] + fp[,] + fn[,] + tn[,] + tp_riskfactor_table[,] + fp_riskfactor_table[,])
+  test_costs_applied <- array(dim = c(n_samples, n_tests),
+                              dimnames = list(NULL, t_names))
+  
+   test_costs_applied <- test_costs * (tp[,] + fp[,] + fn[,] + tn[,] + tp_riskfactor_table[,] + fp_riskfactor_table[,])
   
   
  
