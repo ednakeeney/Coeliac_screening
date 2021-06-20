@@ -6,7 +6,7 @@ library(SimDesign)
 library(BCEA)
 library(dplyr)
 
-setwd("C:/Users/ek14588/Downloads/Coeliac_screening")
+#setwd("C:/Users/ek14588/Downloads/Coeliac_screening")
 
 tic()
 rm(list=ls())
@@ -73,7 +73,7 @@ set.seed(14143)
   output
   
   strategies_excluded <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit < 0)) #strategies with ENB less than no screening
-  strategies_included <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit > 0)) #strategies with ENB less than no screening
+  strategies_included <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit > 0)) #strategies with ENB greater than no screening
 
   
   output$percentage_biopsy_IgAEMA 
@@ -84,6 +84,7 @@ set.seed(14143)
   output$percentage_biopsy_IgATTGplusHLA 
   
   # Simple graphical comparison of biospy proportions
+  par(mfrow=c(1,1))
   plot(output$percentage_biopsy_IgAEMA, col = 0, xlab = "Risk factor strategy", ylab = "Proportion Biospy")
   lines(output$percentage_biopsy_IgAEMA , col = 1)
   lines(output$percentage_biopsy_IgATTGplusEMA, col = 2)
@@ -99,99 +100,11 @@ set.seed(14143)
   
   write.csv(data.frame(output$test_costs, output$diagnosis_costs, output$fp_costs, output$cycle_costs, output$average_costs), "costs.csv")
   
-  #ICER_table <- as.data.frame(output$ICER[2:7])
-  plot(output$ICER[2:7],pch=19, ylim=c(0,80000), ylab = "ICER", main = "IGA EMA", )
-  text(output$ICER[2:7], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
-  abline(h=20000)
-  abline(h=30000)
-  points(output$ICER[8:13], col = 2)
-  text(output$ICER[8:13], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
-  points(output$ICER[14:19], col = 3)
-  text(output$ICER[14:19], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
-  points(output$ICER[20:25], col = 4)
-  text(output$ICER[20:25], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
-  points(output$ICER[26:31], col = 5)
-  text(output$ICER[26:31], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
-  points(output$ICER[32:37], col = 6)
-  text(output$ICER[32:37], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
-  
-  plot(output$ICER[38:43],pch=19, ylim=c(0,75000), ylab = "ICER", main = "IGA TTG plus EMA", )
-  text(output$ICER[38:43], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
-  abline(h=20000)
-  points(output$ICER[44:49], col = 2)
-  text(output$ICER[44:49], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
-  points(output$ICER[50:55], col = 3)
-  text(output$ICER[50:55], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
-  points(output$ICER[56:61], col = 4)
-  text(output$ICER[56:61], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
-  points(output$ICER[62:67], col = 5)
-  text(output$ICER[62:67], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
-  points(output$ICER[68:73], col = 6)
-  text(output$ICER[68:73], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
-  
-  plot(output$ICER[74:79],pch=19, ylim=c(0,75000), ylab = "ICER", main = "IGA TTG", )
-  text(output$ICER[74:79], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
-  abline(h=20000)
-  points(output$ICER[80:85], col = 2)
-  text(output$ICER[80:85], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
-  points(output$ICER[86:91], col = 3)
-  text(output$ICER[86:91], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
-  points(output$ICER[92:97], col = 4)
-  text(output$ICER[92:97], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
-  points(output$ICER[98:103], col = 5)
-  text(output$ICER[98:103], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
-  points(output$ICER[104:109], col = 6)
-  text(output$ICER[104:109], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
- 
-  plot(output$ICER[110:115],pch=19, ylim=c(800, 1100), ylab = "ICER", main = "Tests plus HLA")
-  legend(1, 940, legend=c("IgA TTG", "IgA EMA", "IgA TTGplusEMA"),
-       pch=c(2, 1,4))
-  text(output$ICER[110:115], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
-  abline(h=20000)
-  points(output$ICER[116:121], col = 2)
-  text(output$ICER[116:121], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
-  points(output$ICER[122:127], col = 3)
-  text(output$ICER[122:127], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
-  points(output$ICER[128:133], col = 4)
-  text(output$ICER[128:133], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
-  points(output$ICER[134:139], col = 5)
-  text(output$ICER[134:139], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
-  points(output$ICER[140:145], col = 6)
-  text(output$ICER[140:145], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
-  
-  points(output$ICER[146:151],pch=4)
-  text(output$ICER[146:151], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
-  abline(h=20000)
-  points(output$ICER[152:157], pch=4, col = 2)
-  text(output$ICER[152:157], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
-  points(output$ICER[158:163], pch=4, col = 3)
-  text(output$ICER[158:163], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
-  points(output$ICER[164:169], pch=4, col = 4)
-  text(output$ICER[164:169], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
-  points(output$ICER[170:175], pch=4, col = 5)
-  text(output$ICER[170:175], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
-  points(output$ICER[176:181], pch=4, col = 6)
-  text(output$ICER[176:181], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
-  
-  points(output$ICER[182:187],pch=2)
-  text(output$ICER[182:187], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
-  abline(h=20000)
-  points(output$ICER[188:193], pch=2, col = 2)
-  text(output$ICER[188:193], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
-  points(output$ICER[194:199], pch=2, col = 3)
-  text(output$ICER[194:199], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
-  points(output$ICER[200:205], pch=2, col = 4)
-  text(output$ICER[200:205], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
-  points(output$ICER[206:201], pch=2, col = 5)
-  text(output$ICER[206:211], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
-  points(output$ICER[212:217], pch=2, col = 6)
-  text(output$ICER[212:217], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
-  
   #plots of incremental net benefit
   par(mfrow=c(3,2))
   
   #IGA EMA
-  plot(output$incremental_net_benefit[2:7],pch=19, ylim=c(-1100,15000), ylab = "Incremental net benefit", xlab = "sensitivity", main = "IGA EMA", xaxt="n" )
+  plot(output$incremental_net_benefit[2:7],pch=19, ylim=c(-15000,15000), ylab = "Incremental net benefit", xlab = "sensitivity", main = "IGA EMA", xaxt="n" )
  # text(output$incremental_net_benefit[2:7], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
  lines(output$incremental_net_benefit[2:7], lwd=2)
    abline(h=0)
@@ -200,8 +113,8 @@ set.seed(14143)
        labels = c(0.5, 0.6, 0.7, 0.8, 0.9, 1))
   lines(output$incremental_net_benefit[8:13], col = 2, lwd=2, lty=2)
   #text(output$incremental_net_benefit[8:13], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
-  lines(output$incremental_net_benefit[14:19], col = 3, lwd=4, lty=3)
- # text(output$incremental_net_benefit[14:19], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
+  lines(output$incremental_net_benefit[14:19], col = 3, lwd=, lty=3)
+ # text(output$incremental_net_benefit[14:19], labels=c("0.5 0.7", "0.6 0.7"2, "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
   lines(output$incremental_net_benefit[20:25], col = 4, lwd=2, lty=4)
   #text(output$incremental_net_benefit[20:25], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
   lines(output$incremental_net_benefit[26:31], col = 5, lwd=2, lty=5)
@@ -213,19 +126,17 @@ set.seed(14143)
   
   
   #IGA TTG plus EMA
-  plot(output$incremental_net_benefit[38:43],pch=19, ylim=c(-1100,15000), ylab = "incremental_net_benefit", main = "IGA TTG plus EMA", )
-  text(output$incremental_net_benefit[38:43], labels=c("0.5 0.5", "0.6 0.5", "0.7 0.5", "0.8 0.5", "0.9 0.5", "1 0.5"),cex=0.7, font=1, pos=1)
+  plot(output$incremental_net_benefit[38:43],pch=19, ylim=c(-15000,15000), ylab = "Incremental net benefit", main = "IGA TTG plus EMA", )
+  lines(output$incremental_net_benefit[38:43], lwd=2)
   abline(h=0)
-  points(output$incremental_net_benefit[44:49], col = 2)
-  text(output$incremental_net_benefit[44:49], labels=c("0.5 0.6", "0.6 0.6", "0.7 0.6", "0.8 0.6", "0.9 0.6", "1 0.6"),cex=0.7, font=1, pos=1)
-  points(output$incremental_net_benefit[50:55], col = 3)
-  text(output$incremental_net_benefit[50:55], labels=c("0.5 0.7", "0.6 0.7", "0.7 0.7", "0.8 0.7", "0.9 0.7", "1 0.7"),cex=0.7, font=1, pos=1)
-  points(output$incremental_net_benefit[56:61], col = 4)
-  text(output$incremental_net_benefit[56:61], labels=c("0.5 0.8", "0.6 0.8", "0.7 0.8", "0.8 0.8", "0.9 0.8", "1 0.8"),cex=0.7, font=1, pos=1)
-  points(output$incremental_net_benefit[62:67], col = 5)
-  text(output$incremental_net_benefit[62:67], labels=c("0.5 0.9", "0.6 0.9", "0.7 0.9", "0.8 0.9", "0.9 0.9", "1 0.9"),cex=0.7, font=1, pos=1)
-  points(output$incremental_net_benefit[68:73], col = 6)
-  text(output$incremental_net_benefit[68:73], labels=c("0.5 1", "0.6 1", "0.7 1", "0.8 1", "0.9 1", "1 1"),cex=0.7, font=1, pos=1)
+  axis(1,                         # Define x-axis manually
+       at = 1:6,
+       labels = c(0.5, 0.6, 0.7, 0.8, 0.9, 1))
+  lines(output$incremental_net_benefit[44:49], col = 2, lwd = 2, lty = 2)
+  lines(output$incremental_net_benefit[50:55], col = 3, lwd = 2, lty = 3)
+  lines(output$incremental_net_benefit[56:61], col = 4, lwd = 2, lty = 4)
+  lines(output$incremental_net_benefit[62:67], col = 5, lwd = 2, lty = 5)
+
   
   #IGA TTG
   plot(output$incremental_net_benefit[74:79],pch=19, ylim=c(-1100,15000), ylab = "incremental_net_benefit", main = "IGA TTG", )

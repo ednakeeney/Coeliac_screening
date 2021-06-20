@@ -200,6 +200,17 @@ generate_net_benefit <- function(input_parameters) {
   test_costs_applied <- array(dim = c(n_samples, n_tests),
                               dimnames = list(NULL, t_names))
   
+  disutility_biopsy_screen <- array(dim=c(n_tests,n_samples),dimnames=list(t_names,NULL))
+  for (i in 1:n_combinations) {
+    disutility_biopsy_screen[1,] <- 0
+    disutility_biopsy_screen[i+1, ] <-  ifelse(post_test_probability_IgAEMA[,i] >= 0.9, 0, input_parameters$disutility_biopsy)
+    disutility_biopsy_screen[n_combinations+i+1, ] <-  ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9, 0, input_parameters$disutility_biopsy)
+    disutility_biopsy_screen[n_combinations+n_combinations+i+1, ] <-  ifelse(post_test_probability_IgATTG[,i] >= 0.9, 0, input_parameters$disutility_biopsy)
+    disutility_biopsy_screen[n_combinations+n_combinations+ n_combinations+i+1, ] <-  ifelse(post_test_probability_HLA[,i] >= 0.9, 0, input_parameters$disutility_biopsy)
+    disutility_biopsy_screen[n_combinations + n_combinations+ n_combinations + n_combinations +i+1, ] <-  ifelse(post_test_probability_HLA[,i+n_combinations] >= 0.9, 0, input_parameters$disutility_biopsy)
+    disutility_biopsy_screen[n_combinations + n_combinations+ n_combinations + n_combinations+ n_combinations+i+1, ] <-  ifelse(post_test_probability_HLA[,i+n_combinations+n_combinations] >= 0.9, 0, input_parameters$disutility_biopsy)
+  }
+  
   tp_riskfactor_table <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
   #ncol(tp_riskfactor_table)
   for (i in 1:n_combinations) {
@@ -346,7 +357,7 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
       # Apply the discount factor 
       # (1 in first year, 1.035 in second, 1.035^2 in third, and so on)
       # Each year acounts for two cycles so need to repeat the discount values
-      total_qalys[i_test, i_sample] <- cycle_qalys[i_test, i_sample, ] %*%
+      total_qalys[i_test, i_sample] <- (cycle_qalys[i_test, i_sample, ]  - disutility_biopsy_screen[i_test, i_sample]) %*%
         disc_vec
     }
     
@@ -430,7 +441,8 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   # Incremental net benefit at the ?20,000 willingness-to-pay
   
   output$incremental_net_benefit <- 20000*output$incremental_effects - output$incremental_costs
-  output$net_benefit <- 20000*output$average_effects - output$average_costs
+
+output$net_benefit<- 20000*output$average_effects - output$average_costs
  write.csv(output$incremental_effects, "inb.csv")
   
   output$test_costs <- colMeans(test_costs_applied) #costs of test and biopsies

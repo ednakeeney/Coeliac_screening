@@ -335,7 +335,7 @@ generate_model_parameters <- function(starting_age) {
   #E(logitSP) coef = 5.54022, SE = 1.556019
   #Covariance = -0.2689103
   
-  #random normal values with mean [1.993122, 5.54022] and variances [0.4508497, 1.556019], and covariance -0.2689103
+  #random normal values with mean [1.993122, 5.54022] and SEs [0.4508497, 1.556019], and covariance -0.2689103
   sigma_IgAEMA_adults <- matrix(c((0.4508497^2),-0.2689103,-0.2689103,(1.556019^2)), 2, 2)
   mu_IgAEMA_adults <- c(1.993122, 5.54022)
   x_IgAEMA_adults <- rmvnorm(n_samples, mu_IgAEMA_adults, sigma_IgAEMA_adults)
