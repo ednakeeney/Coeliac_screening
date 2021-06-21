@@ -10,7 +10,7 @@ generate_transition_matrices <- function(input_parameters) {
   # Store them in an array with (before filling in below) NA entries
   # Define transition matrices
   
-  starting_age_columnandrow <- read.csv("starting_age_column.csv")
+  starting_age_columnandrow <- read.csv("data/starting_age_column.csv")
   starting_age_columnandrow$starting_age_row <- c(1:11)
   starting_age_column <- starting_age_columnandrow[starting_age_columnandrow$Starting.age == starting_age, 2]
   
@@ -33,7 +33,7 @@ generate_transition_matrices <- function(input_parameters) {
   subfertility_probability_noGFD_all <- data.frame(input_parameters$subfertility_probability_noGFD_0, input_parameters$subfertility_probability_noGFD_10, input_parameters$subfertility_probability_noGFD_20, input_parameters$subfertility_probability_noGFD_30,
                                                    input_parameters$subfertility_probability_noGFD_40, input_parameters$subfertility_probability_noGFD_50, input_parameters$subfertility_probability_noGFD_60,
                                                    input_parameters$subfertility_probability_noGFD_70, input_parameters$subfertility_probability_noGFD_80, input_parameters$subfertility_probability_noGFD_90)
-  lifetables <- read.csv("lifetables.csv")
+  lifetables <- read.csv("data/lifetables.csv")
   percentage_male <- 0.5
   lifetables$Overall <- (percentage_male * lifetables$Males) + ((1-percentage_male) * lifetables$Females)
   death_probability_nocomplications	<- data.frame(lifetables$Age, lifetables$Overall)

@@ -27,7 +27,7 @@ generate_model_parameters <- function(starting_age) {
   }
   
   
-  prevalence <- read.csv("CPRD prevalence.csv")
+  prevalence <- read.csv("data/CPRD prevalence.csv")
   
   #Initial cohort at diagnosis - depends on age at diagnosis
   probability_subfertility <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, "Subfertility_r"], shape2 = prevalence[prevalence$Age.categories == starting_age, "N"] - prevalence[prevalence$Age.categories == starting_age, "Subfertility_r"])
@@ -49,7 +49,7 @@ generate_model_parameters <- function(starting_age) {
                                 ,probability_IDA_50 , probability_IDA_60 , probability_IDA_70 , probability_IDA_80 , probability_IDA_90)
   
   # Osteoporosis probabilities On GFD
-  osteoporosis_probability <- read.csv("osteoporosis_rate_nice.csv")
+  osteoporosis_probability <- read.csv("data/osteoporosis_rate_nice.csv")
   osteoporosis_probability_GFD_0	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[1]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[1]))
   osteoporosis_probability_GFD_10	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[2]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[2]))
   osteoporosis_probability_GFD_20	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[3]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[3]))
@@ -65,7 +65,7 @@ generate_model_parameters <- function(starting_age) {
                                                  osteoporosis_probability_GFD_70, osteoporosis_probability_GFD_80, osteoporosis_probability_GFD_90)
   
   # Subfertility probabilities on GFD
-  subfertility_probability <- read.csv("subfertility_rate_nice.csv")
+  subfertility_probability <- read.csv("data/subfertility_rate_nice.csv")
   subfertility_probability_GFD_0	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_GFD_alpha[1]), shape2 = as.numeric(subfertility_probability$subfertility_GFD_beta[1]))
   subfertility_probability_GFD_10	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_GFD_alpha[2]), shape2 = as.numeric(subfertility_probability$subfertility_GFD_beta[2]))
   subfertility_probability_GFD_20	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_GFD_alpha[3]), shape2 = as.numeric(subfertility_probability$subfertility_GFD_beta[3]))
@@ -81,7 +81,7 @@ generate_model_parameters <- function(starting_age) {
                                                  subfertility_probability_GFD_70, subfertility_probability_GFD_80, subfertility_probability_GFD_90)
   
   # NHL probabilities on GFD
-  NHL_probability <- read.csv("NHL_rate_nice.csv")
+  NHL_probability <- read.csv("data/NHL_rate_nice.csv")
   NHL_probability_GFD_18orless	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_GFD_alpha[1]), shape2 = as.numeric(NHL_probability$NHL_GFD_beta[1]))
   NHL_probability_GFD_18plus	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_GFD_alpha[2]), shape2 = as.numeric(NHL_probability$NHL_GFD_beta[2]))
   NHL_probability_GFD <- rep(0, times = n_samples)
@@ -199,6 +199,7 @@ generate_model_parameters <- function(starting_age) {
   disutility_NHL <- runif(n = n_samples, min = 0.036, max = 0.136)
   
   disutility_biopsy <- runif(n = n_samples, min = 0.003, max = 0.005)
+  disutility_biopsy_wait <- (utility_GFD - utility_undiagnosedCD) * 6/52
   #############################################################################
   ## Costs ####################################################################
   #############################################################################
@@ -335,7 +336,7 @@ generate_model_parameters <- function(starting_age) {
   #E(logitSP) coef = 5.54022, SE = 1.556019
   #Covariance = -0.2689103
   
-  #random normal values with mean [1.993122, 5.54022] and variances [0.4508497, 1.556019], and covariance -0.2689103
+  #random normal values with mean [1.993122, 5.54022] and SEs [0.4508497, 1.556019], and covariance -0.2689103
   sigma_IgAEMA_adults <- matrix(c((0.4508497^2),-0.2689103,-0.2689103,(1.556019^2)), 2, 2)
   mu_IgAEMA_adults <- c(1.993122, 5.54022)
   x_IgAEMA_adults <- rmvnorm(n_samples, mu_IgAEMA_adults, sigma_IgAEMA_adults)
@@ -462,7 +463,7 @@ generate_model_parameters <- function(starting_age) {
   return(data.frame(probability_late_diagnosis, probability_subfertility, probability_osteoporosis, probability_NHL, probability_nocomplications,
                     osteoporosis_probability_GFD_all, subfertility_probability_GFD_all, NHL_probability_GFD, osteoporosis_probability_noGFD_all, subfertility_probability_noGFD_all,
                     NHL_probability_noGFD, death_probability_NHL, 
-                    utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL, disutility_biopsy,
+                    utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL, disutility_biopsy, disutility_biopsy_wait,
                     cost_CDGFD, cost_osteoporosis, cost_undiagnosedCD, cost_IDA, cost_biopsy, probability_biopsy,
                     cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, test_cost_IgAEMA, test_cost_IgATTG, test_cost_HLA,
                     sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_IgAEMA, spec_IgAEMA, sens_IgATTG, spec_IgATTG, cost_gfp, sens_biopsy, spec_biopsy, 

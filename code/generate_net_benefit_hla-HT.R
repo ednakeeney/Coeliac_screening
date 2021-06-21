@@ -15,11 +15,12 @@ generate_net_benefit <- function(input_parameters) {
   post_test_probability_IgATTGplusEMA <- input_parameters %>% select(X0.5.0.5.1 : X0.9999.0.9999.1)
   post_test_probability_IgATTG <- input_parameters %>% select(X0.5.0.5.2 : X0.9999.0.9999.2)
   pre_test_probability <- input_parameters %>% select(X0.5.0.5.3 : X0.9999.0.9999.3)
-  fn_riskfactor <- input_parameters %>% select(X0.5.0.5.4 : X0.9999.0.9999.4)
+  tp_riskfactor <- input_parameters %>% select(X0.5.0.5.4 : X0.9999.0.9999.4)
+  fn_riskfactor <- input_parameters %>% select(X0.5.0.5.5 : X0.9999.0.9999.5)
+  fp_riskfactor <- input_parameters %>% select(X0.5.0.5.6 : X0.9999.0.9999.6)
   pre_test_probability_overall <- 0.01 #based on West 2014
   
- 
-  
+
   
    tp <- fn <- fp <- tn <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
   
@@ -37,6 +38,7 @@ generate_net_benefit <- function(input_parameters) {
   fp[,i+1] <- (1 - pre_test_probability[,i]) - tn[,i+1]
   }
   
+
   # Probabilities for IgATTG + IgAEMA
 
     for (i in 1:n_combinations) {
@@ -59,13 +61,44 @@ generate_net_benefit <- function(input_parameters) {
     fp[,i+1+n_combinations+n_combinations] <- (1 - pre_test_probability[,i]) - tn[,i+1+n_combinations+n_combinations]
   }
   
+   tp_nobiopsy <- fn_nobiopsy <- fp_nobiopsy <- tn_nobiopsy <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
+   
+   # Probabilities for IgAEMA without biopsy (to use for HLA strategies)
+   for (i in 1:n_combinations) {
+     tp_nobiopsy[,1] <- 0
+     tp_nobiopsy[,i+1] <- pre_test_probability[,i] * input_parameters$sens_IgAEMA
+     fn_nobiopsy[,1] <- pre_test_probability_overall  #in no screening all False Negatives
+     fn_nobiopsy[,i+1] <- pre_test_probability[,i] - tp_nobiopsy[,i+1]  
+     tn_nobiopsy[,1] <- 1 - pre_test_probability_overall
+     tn_nobiopsy[,i+1] <-  ((1 - pre_test_probability[,i]) * input_parameters$spec_IgAEMA)
+     fp_nobiopsy[,1] <- 0
+     fp_nobiopsy[,i+1] <- (1 - pre_test_probability[,i]) - tn_nobiopsy[,i+1]
+   }
+   
+   
+   # Probabilities for IgATTG + IgAEMA without biopsy
+   for (i in 1:n_combinations) {
+     tp_nobiopsy[,i+1+n_combinations] <- pre_test_probability[,i] * input_parameters$sens_IgATTGplusEMA
+     fn_nobiopsy[,i+1+n_combinations] <- pre_test_probability[,i] - tp_nobiopsy[,i+1+n_combinations] 
+     tn_nobiopsy[,i+1+n_combinations] <- (1 - pre_test_probability[,i]) * input_parameters$spec_IgATTGplusEMA
+     fp_nobiopsy[,i+1+n_combinations] <- (1 - pre_test_probability[,i]) - tn_nobiopsy[,i+1+n_combinations]
+   }
+   
+   # Probabilities for IgATTG without biopsy
+   for (i in 1:n_combinations) {
+     tp_nobiopsy[,i+1+n_combinations+n_combinations] <- pre_test_probability[,i] * input_parameters$sens_IgATTG
+     fn_nobiopsy[,i+1+n_combinations+n_combinations] <- pre_test_probability[,i] - tp_nobiopsy[,i+1+n_combinations+n_combinations] 
+     tn_nobiopsy[,i+1+n_combinations+n_combinations] <- (1 - pre_test_probability[,i]) * input_parameters$spec_IgATTG
+     fp_nobiopsy[,i+1+n_combinations+n_combinations] <- (1 - pre_test_probability[,i]) - tn_nobiopsy[,i+1+n_combinations+n_combinations]
+   }
+   
    
    pre_test_probability_HLA <- array(0, dim=c(n_samples, n_combinations*3), dimnames = list(NULL, t_names[2:109]))
    
    for (i in 1:n_combinations) {
-     pre_test_probability_HLA[,i] <- tp[,i+1] /(tp[,i+1] + fp[,i+1])
-     pre_test_probability_HLA[,i+n_combinations] <- tp[,i+1+n_combinations] /(tp[,i+1+n_combinations] + fp[,i+1+n_combinations])
-     pre_test_probability_HLA[,i+n_combinations+n_combinations] <- tp[,i+1+n_combinations+n_combinations] /(tp[,i+1+n_combinations+n_combinations] + fp[,i+1+n_combinations+n_combinations])
+     pre_test_probability_HLA[,i] <- tp_nobiopsy[,i+1] /(tp_nobiopsy[,i+1] + fp_nobiopsy[,i+1])
+     pre_test_probability_HLA[,i+n_combinations] <- tp_nobiopsy[,i+1+n_combinations] /(tp_nobiopsy[,i+1+n_combinations] + fp_nobiopsy[,i+1+n_combinations])
+     pre_test_probability_HLA[,i+n_combinations+n_combinations] <- tp_nobiopsy[,i+1+n_combinations+n_combinations] /(tp_nobiopsy[,i+1+n_combinations+n_combinations] + fp_nobiopsy[,i+1+n_combinations+n_combinations])
    }
    
    pre_test_probability_HLA <- replace(pre_test_probability_HLA, pre_test_probability_HLA == 1, 0.99999)
@@ -78,6 +111,8 @@ generate_net_benefit <- function(input_parameters) {
     post_test_odds_HLA[,i] <- pre_test_odds_HLA[,i] * input_parameters$LR_HLA
    post_test_probability_HLA[,i] <- post_test_odds_HLA[,i]/(1 + post_test_odds_HLA[,i])
    }
+   
+  
    
    # Probabilities for IgAEMA plus HLA
    for (i in 1:n_combinations) {
@@ -109,7 +144,16 @@ generate_net_benefit <- function(input_parameters) {
                                            ((1 - pre_test_probability_HLA[,i + n_combinations + n_combinations]) * input_parameters$spec_biopsy))
      fp[,i+1+(n_combinations*5)] <- (1 - pre_test_probability_HLA[,i + n_combinations + n_combinations]) - tn[,i+1+(n_combinations*5)]
    }
+ 
    
+   write.csv(colMeans(post_test_probability_IgAEMA), "posttestIgAema.csv")
+   write.csv(colMeans(post_test_probability_IgATTGplusEMA), "posttestIgAttgplusema.csv")
+   write.csv(colMeans(post_test_probability_IgATTG), "posttestIgAttg.csv")
+   write.csv(colMeans(pre_test_probability_HLA), "hlapretest.csv")
+   write.csv(colMeans(post_test_probability_HLA), "hlaposttest.csv")
+   write.csv(data.frame(colMeans(tp), colMeans(fn), colMeans(tn), colMeans(fp)), "test.csv")
+   
+  #Adding costs   
   fp_costs <- array(dim = c(n_samples, n_tests),
                     dimnames = list(NULL, t_names))
   
@@ -121,23 +165,40 @@ generate_net_benefit <- function(input_parameters) {
   diagnosis_costs[,] <- (tp[,] + fp[,]) * input_parameters$cost_diagnosis
   
   
-  treatment_costs <- array(dim=c(n_tests,n_samples),dimnames=list(t_names,NULL))
+  test_costs <- array(dim=c(n_samples, n_tests), dimnames=list(NULL, t_names))
   for (i in 1:n_combinations) {
-    treatment_costs[1,] <- 0
-    treatment_costs[i+1, ] <-  ifelse(post_test_probability_IgAEMA[,i] >= 0.9, input_parameters$treatment_cost_IgAEMA, 
-                                      input_parameters$treatment_cost_IgAEMA +  input_parameters$cost_biopsy)
-    treatment_costs[n_combinations+i+1, ] <-  ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9, (input_parameters$treatment_cost_IgATTG + input_parameters$treatment_cost_IgAEMA), 
-                                                     (input_parameters$treatment_cost_IgATTG + input_parameters$treatment_cost_IgAEMA + input_parameters$cost_biopsy))
-    treatment_costs[n_combinations+n_combinations+i+1, ] <-  ifelse(post_test_probability_IgATTG[,i] >= 0.9, input_parameters$treatment_cost_IgATTG, 
-                                                                    input_parameters$treatment_cost_IgATTG + input_parameters$cost_biopsy)
-    treatment_costs[n_combinations+n_combinations+ n_combinations+i+1, ] <-  ifelse(post_test_probability_HLA[,i] >= 0.9, input_parameters$treatment_cost_IgAEMA + input_parameters$treatment_cost_HLA, 
-                                                                    input_parameters$treatment_cost_IgAEMA + input_parameters$cost_biopsy)
-    treatment_costs[n_combinations + n_combinations+ n_combinations + n_combinations +i+1, ] <-  ifelse(post_test_probability_HLA[,i+n_combinations] >= 0.9, input_parameters$treatment_cost_IgAEMA + input_parameters$treatment_cost_IgATTG + input_parameters$treatment_cost_HLA, 
-                                                                                    input_parameters$treatment_cost_IgAEMA + input_parameters$cost_biopsy)
-    treatment_costs[n_combinations + n_combinations+ n_combinations + n_combinations+ n_combinations+i+1, ] <-  ifelse(post_test_probability_HLA[,i+n_combinations+n_combinations] >= 0.9, input_parameters$treatment_cost_IgATTG + input_parameters$treatment_cost_HLA, 
-                                                                                                        input_parameters$treatment_cost_IgAEMA + input_parameters$cost_biopsy)
+    test_costs[, 1] <- 0
+    test_costs[, i+1] <-  ifelse(post_test_probability_IgAEMA[,i] >= 0.9, input_parameters$test_cost_IgAEMA, 
+                                      input_parameters$test_cost_IgAEMA + input_parameters$cost_biopsy)
+    test_costs[, n_combinations+i+1] <-  ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9, (input_parameters$test_cost_IgATTG + input_parameters$test_cost_IgAEMA), 
+                                                     (input_parameters$test_cost_IgATTG + input_parameters$test_cost_IgAEMA + input_parameters$cost_biopsy))
+    test_costs[, n_combinations+n_combinations+i+1] <-  ifelse(post_test_probability_IgATTG[,i] >= 0.9, input_parameters$test_cost_IgATTG, 
+                                                                    input_parameters$test_cost_IgATTG + input_parameters$cost_biopsy)
+    test_costs[, n_combinations+n_combinations+ n_combinations+i+1] <- 
+      ifelse(post_test_probability_IgAEMA[,i] >= 0.9,
+        input_parameters$test_cost_IgAEMA,
+      ifelse(post_test_probability_IgAEMA[,i] < 0.9 & post_test_probability_HLA[,i] >= 0.9,
+          (input_parameters$test_cost_IgAEMA + input_parameters$test_cost_HLA),
+        (input_parameters$test_cost_IgAEMA + input_parameters$test_cost_HLA + input_parameters$cost_biopsy)))
+    
+    test_costs[, n_combinations + n_combinations+ n_combinations + n_combinations + i + 1] <-  
+      ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9,
+             input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG,
+      ifelse(post_test_probability_IgATTGplusEMA[,i] < 0.9 & post_test_probability_HLA[,i+n_combinations] >= 0.9, 
+             input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG + input_parameters$test_cost_HLA, 
+      input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG + input_parameters$test_cost_HLA + input_parameters$cost_biopsy))
+
+    test_costs[, n_combinations + n_combinations+ n_combinations + n_combinations+ n_combinations+i+1] <-  
+      ifelse(post_test_probability_IgATTG[,i] >= 0.9,
+             input_parameters$test_cost_IgATTG,
+      ifelse(post_test_probability_IgATTG[,i] < 0.9 & post_test_probability_HLA[,i+n_combinations+n_combinations] >= 0.9, 
+             input_parameters$test_cost_IgATTG + input_parameters$test_cost_HLA, 
+   input_parameters$test_cost_IgATTG + input_parameters$test_cost_HLA + input_parameters$cost_biopsy))
+  
   }
- 
+  
+
+  
   disutility_biopsy_screen <- array(dim=c(n_tests,n_samples),dimnames=list(t_names,NULL))
   for (i in 1:n_combinations) {
     disutility_biopsy_screen[1,] <- 0
@@ -149,15 +210,38 @@ generate_net_benefit <- function(input_parameters) {
     disutility_biopsy_screen[n_combinations + n_combinations+ n_combinations + n_combinations+ n_combinations+i+1, ] <-  ifelse(post_test_probability_HLA[,i+n_combinations+n_combinations] >= 0.9, 0, input_parameters$disutility_biopsy)
   }
   
-  # Build an array to store the cohort vector at each cycle
-  # Each cohort vector has n_states elements: probability of being in each state,
-  # There is one cohort vector for each treatment, for each PSA sample, for each cycle.
-  cohort_vectors<-array(dim=c(n_tests,n_samples,n_cycles,n_states),  
-                        dimnames=list(t_names,NULL,NULL, state_names))
+  
+  
+  tp_riskfactor_table <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
+  #ncol(tp_riskfactor_table)
+  for (i in 1:n_combinations) {
+    tp_riskfactor_table[,1] <- 1
+    tp_riskfactor_table[,i+1] <- tp_riskfactor[,i]
+    tp_riskfactor_table[,i+1+n_combinations] <- tp_riskfactor[,i]
+    tp_riskfactor_table[,i+1+n_combinations+n_combinations] <- tp_riskfactor[,i]
+    tp_riskfactor_table[,i+1+n_combinations*3] <- tp_riskfactor[,i]
+    tp_riskfactor_table[,i+1+n_combinations*4] <- tp_riskfactor[,i]
+    tp_riskfactor_table[,i+1+n_combinations*5] <- tp_riskfactor[,i]
+  }
+  
+  fp_riskfactor_table <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
+  #ncol(fp_riskfactor_table)
+  for (i in 1:n_combinations) {
+    fp_riskfactor_table[,1] <- 1
+    fp_riskfactor_table[,i+1] <- fp_riskfactor[,i]
+    fp_riskfactor_table[,i+1+n_combinations] <- fp_riskfactor[,i]
+    fp_riskfactor_table[,i+1+n_combinations+n_combinations] <- fp_riskfactor[,i]
+    fp_riskfactor_table[,i+1+n_combinations*3] <- fp_riskfactor[,i]
+    fp_riskfactor_table[,i+1+n_combinations*4] <- fp_riskfactor[,i]
+    fp_riskfactor_table[,i+1+n_combinations*5] <- fp_riskfactor[,i]
+  }
+  test_costs_applied <- array(dim = c(n_samples, n_tests),
+                              dimnames = list(NULL, t_names))
+  
+   test_costs_applied <- test_costs * (tp[,] + fp[,] + fn[,] + tn[,] + tp_riskfactor_table[,] + fp_riskfactor_table[,])
+  
   
  
- fn_riskfactor
- #ncol(fn_riskfactor)
 fn_riskfactor_table <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
   #ncol(fn_riskfactor_table)
   for (i in 1:n_combinations) {
@@ -171,30 +255,40 @@ fn_riskfactor_table <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_
   }
 fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
    fn_all <- fn + fn_riskfactor_table
+   
+
+   #fptntocoeliac_ratio <- (tn+fp)/(tp+fn_all)
   
   #scaling up true positives and false negatives 
   tp <- tp/(tp + fn_all)
   fn <- 1 - tp
   
-  for (i_treatment in c(1:n_tests)) { 
-    cohort_vectors[i_treatment, , 1, "CD GFD no complications"] <- tp[, i_treatment] * input_parameters$probability_nocomplications 
-    cohort_vectors[i_treatment, , 1, "CD GFD subfertility"] <- tp[, i_treatment] * input_parameters$probability_subfertility
-    cohort_vectors[i_treatment, , 1, "CD GFD osteoporosis"] <- tp[, i_treatment] * input_parameters$probability_osteoporosis 
-    cohort_vectors[i_treatment, , 1, "CD GFD NHL"] <- tp[, i_treatment] * input_parameters$probability_NHL
+  # Build an array to store the cohort vector at each cycle
+  # Each cohort vector has n_states elements: probability of being in each state,
+  # There is one cohort vector for each test, for each PSA sample, for each cycle.
+  cohort_vectors<-array(dim=c(n_tests,n_samples,n_cycles,n_states),  
+                        dimnames=list(t_names,NULL,NULL, state_names))
+  
+  
+  for (i_test in c(1:n_tests)) { 
+    cohort_vectors[i_test, , 1, "CD GFD no complications"] <- tp[, i_test] * input_parameters$probability_nocomplications 
+    cohort_vectors[i_test, , 1, "CD GFD subfertility"] <- tp[, i_test] * input_parameters$probability_subfertility
+    cohort_vectors[i_test, , 1, "CD GFD osteoporosis"] <- tp[, i_test] * input_parameters$probability_osteoporosis 
+    cohort_vectors[i_test, , 1, "CD GFD NHL"] <- tp[, i_test] * input_parameters$probability_NHL
     
-    cohort_vectors[i_treatment, , 1, "Undiagnosed CD no complications"] <- fn[, i_treatment] * input_parameters$probability_nocomplications 
-    cohort_vectors[i_treatment, , 1, "Undiagnosed CD subfertility"] <- fn[, i_treatment] * input_parameters$probability_subfertility 
-    cohort_vectors[i_treatment, , 1, "Undiagnosed CD osteoporosis"] <- fn[, i_treatment] * input_parameters$probability_osteoporosis 
-    cohort_vectors[i_treatment, , 1, "Undiagnosed CD NHL"] <- fn[, i_treatment] * input_parameters$probability_NHL 
+    cohort_vectors[i_test, , 1, "Undiagnosed CD no complications"] <- fn[, i_test] * input_parameters$probability_nocomplications 
+    cohort_vectors[i_test, , 1, "Undiagnosed CD subfertility"] <- fn[, i_test] * input_parameters$probability_subfertility 
+    cohort_vectors[i_test, , 1, "Undiagnosed CD osteoporosis"] <- fn[, i_test] * input_parameters$probability_osteoporosis 
+    cohort_vectors[i_test, , 1, "Undiagnosed CD NHL"] <- fn[, i_test] * input_parameters$probability_NHL 
     
-    cohort_vectors[i_treatment, , 1, "Death"] <- 0
+    cohort_vectors[i_test, , 1, "Death"] <- 0
   }
   
   cohort_vectors[, , , ] [is.na(cohort_vectors[, , , ] )] <- 0
   rowSums (cohort_vectors[, 2, , ], na.rm = FALSE, dims = 1)
   
   # Build an array to store the costs and QALYs accrued per cycle
-  # One for each treatment, for each PSA sample, for each cycle
+  # One for each test, for each PSA sample, for each cycle
   # These will be filled in below in the main model code
   # Then discounted and summed to contribute to total costs and total QALYs
   cycle_costs <- array(dim = c(n_tests, n_samples, n_cycles),
@@ -203,9 +297,9 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
                        dimnames = list(t_names, NULL, NULL))
   
   # Build arrays to store the total costs and total QALYs
-  # There is one for each treatment and each PSA sample
+  # There is one for each test and each PSA sample
   # These are filled in below using cycle_costs, 
-  # treatment_costs, and cycle_qalys
+  # test_costs, and cycle_qalys
   total_costs <- array(dim = c(n_tests, n_samples),
                        dimnames = list(t_names, NULL))
   total_qalys <- array(dim = c(n_tests, n_samples),
@@ -215,9 +309,9 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   disc_vec <- (1/1.035) ^ rep(c(0:(n_cycles/2-1)), each = 2)
   
   # Main model code
-  # Loop over the treatment options
+  # Loop over the test options
   
-  for (i_treatment in 1:n_tests)
+  for (i_test in 1:n_tests)
   {
     # Loop over the PSA samples
     for(i_sample in 1:n_samples)
@@ -231,35 +325,43 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
         # Markov update
         # Multiply previous cycle's cohort vector by transition matrix
         # i.e. pi_j = pi_(j-1)*P
-        cohort_vectors[i_treatment, i_sample, i_cycle, ] <-
-          cohort_vectors[i_treatment, i_sample, i_cycle-1, ] %*%
+        cohort_vectors[i_test, i_sample, i_cycle, ] <-
+          cohort_vectors[i_test, i_sample, i_cycle-1, ] %*%
           transition_matrices_sample[i_cycle, , ]
       }
       
-      cohort_vectors_tr_sample <- cohort_vectors[i_treatment, i_sample, , ]
+      cohort_vectors_tr_sample <- cohort_vectors[i_test, i_sample, , ]
       
       for (i_cycle in 1:n_cycles)
       {
+        # This was inside the loop, but overwrote cycle_costs[i_test, i_sample,] for
+        # each cycle so can't be right
         # Now use the cohort vectors to calculate the 
         # total costs for each cycle
-        cycle_costs[i_treatment, i_sample, ] <-
-          cohort_vectors_tr_sample %*% state_costs[i_sample, i_cycle, ]
+        #cycle_costs[i_test, i_sample, ] <-
+        #  cohort_vectors_tr_sample %*% state_costs[i_sample, i_cycle, ]
+        
+        # I think this needs to be cycle specific
+        # The below is from the intro to Markov modelling code
+        cycle_costs[i_test, i_sample, i_cycle] <-
+          cohort_vectors[i_test, i_sample, i_cycle, ] %*% state_costs[i_sample, i_cycle, ]
+        # And total QALYs for each cycle
+        cycle_qalys[i_test, i_sample, i_cycle] <-
+          cohort_vectors[i_test, i_sample, i_cycle, ]  %*% state_qalys[i_sample, i_cycle, ]
+        
       }
-      # And total QALYs for each cycle
-      cycle_qalys[i_treatment, i_sample, ] <-
-        cohort_vectors_tr_sample %*% state_qalys[i_sample, i_cycle, ]
       
       # Combine the cycle_costs and other costs to get total costs
       # Apply the discount factor 
       # (1 in first year, 1.035 in second, 1.035^2 in third, and so on)
       # Each year acounts for two cycles so need to repeat the discount values
-      total_costs[i_treatment, i_sample] <- treatment_costs[i_treatment, i_sample] + fp_costs[i_sample, i_treatment] + diagnosis_costs[i_sample, i_treatment] + cycle_costs[i_treatment, i_sample, ] %*% disc_vec
+      total_costs[i_test, i_sample] <- test_costs_applied[i_sample, i_test] + fp_costs[i_sample, i_test] + diagnosis_costs[i_sample, i_test] + cycle_costs[i_test, i_sample, ] %*% disc_vec
       
       # Combine the cycle_qalys to get total qalys
       # Apply the discount factor 
       # (1 in first year, 1.035 in second, 1.035^2 in third, and so on)
       # Each year acounts for two cycles so need to repeat the discount values
-      total_qalys[i_treatment, i_sample] <- (cycle_qalys[i_treatment, i_sample, ]  - disutility_biopsy_screen[i_treatment, i_sample]) %*%
+      total_qalys[i_test, i_sample] <- (cycle_qalys[i_test, i_sample, ]  - disutility_biopsy_screen[i_test, i_sample]) %*%
         disc_vec
     }
     
@@ -289,29 +391,43 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   names(sum_IgATTG) <- combinations_names
   
   sum_IgAEMAplusHLA <- rep(0, n_combinations)
+  sum_IgAEMAplusHLA_test <- rep(0, n_combinations)
   for (i in 1:n_combinations){
     sum_IgAEMAplusHLA[i] <- sum(post_test_probability_HLA[,i] <= 0.9)/n_samples  
+    sum_IgAEMAplusHLA_test[i] <- sum(post_test_probability_IgAEMA[,i] <= 0.9)/n_samples
   }
-  names(sum_IgAEMAplusHLA) <- t_names[110:145]
+  names(sum_IgAEMAplusHLA) <- names(sum_IgAEMAplusHLA_test) <- t_names[110:145]
   
   sum_IgATTGplusEMAplusHLA <- rep(0, n_combinations)
+  sum_IgATTGplusEMAplusHLA_test <- rep(0, n_combinations)
   for (i in 1:n_combinations){
-    sum_IgATTGplusEMAplusHLA[i] <- sum(post_test_probability_HLA[,i+n_combinations] <= 0.9)/n_samples  
+    sum_IgATTGplusEMAplusHLA[i] <- sum(post_test_probability_HLA[,i+n_combinations] <= 0.9)/n_samples 
+    sum_IgATTGplusEMAplusHLA_test[i] <- sum(post_test_probability_IgATTGplusEMA[,i] <= 0.9)/n_samples
   }
-  names(sum_IgATTGplusEMAplusHLA) <- t_names[146:181]
+  names(sum_IgATTGplusEMAplusHLA) <- names(sum_IgATTGplusEMAplusHLA_test) <- t_names[146:181]
   
   sum_IgATTGplusHLA <- rep(0, n_combinations)
-  for (i in 1:n_combinations){
+  sum_IgATTGplusHLA_test <- rep(0, n_combinations)
+   for (i in 1:n_combinations){
     sum_IgATTGplusHLA[i] <- sum(post_test_probability_HLA[,i+n_combinations+n_combinations] <= 0.9)/n_samples  
+    sum_IgATTGplusHLA_test[i] <- sum(post_test_probability_IgATTG[,i] <= 0.9)/n_samples  
+    
   }
-  names(sum_IgATTGplusHLA) <- t_names[182:217]
+  names(sum_IgATTGplusHLA) <-  names(sum_IgATTGplusHLA_test) <- t_names[182:217]
   
   output$percentage_biopsy_IgAEMA <- sum_IgAEMA
   output$percentage_biopsy_IgATTGplusEMA <- sum_IgATTGplusEMA
   output$percentage_biopsy_IgATTG <- sum_IgATTG
   output$percentage_biopsy_IgAEMAplusHLA <- sum_IgAEMAplusHLA
+  output$percentage_hla_IgAEMAplusHLA <- sum_IgAEMAplusHLA_test
   output$percentage_biopsy_IgATTGplusEMAplusHLA <- sum_IgATTGplusEMAplusHLA
+  output$percentage_hla_IgATTGplusEMAplusHLA <- sum_IgATTGplusEMAplusHLA_test
   output$percentage_biopsy_IgATTGplusHLA <- sum_IgATTGplusHLA
+  output$percentage_hla_IgATTGplusHLA <- sum_IgATTGplusHLA_test
+  
+  write.csv(sum_IgATTGplusEMAplusHLA_test, "x.csv")
+  write.csv(sum_IgAEMAplusHLA, "x.csv")
+  write.csv(sum_IgATTGplusEMAplusHLA, "x.csv")
   
   output$total_costs <- total_costs
   output$total_qalys <- total_qalys
@@ -329,9 +445,22 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   # Incremental net benefit at the ?20,000 willingness-to-pay
   
   output$incremental_net_benefit <- 20000*output$incremental_effects - output$incremental_costs
+
+output$net_benefit<- 20000*output$average_effects - output$average_costs
  write.csv(output$incremental_effects, "inb.csv")
   
-  # Average incremental net benefit
+ 
+ #cost breakdown
+  output$test_costs <- colMeans(test_costs_applied) #costs of test and biopsies
+  output$fp_costs <- colMeans(fp_costs)
+  output$diagnosis_costs <- colMeans(diagnosis_costs)
+  output$cycle_costs <- rowMeans(cycle_costs)
+  
+  #utility breakdown
+  output$cycle_qalys <- rowMeans(cycle_qalys)
+  output$disutility_biopsy <- rowMeans(disutility_biopsy_screen)
+ 
+ # Average incremental net benefit
   #output$average_inb_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA)
   #output$average_inb_doubletest_IgAEMA <- mean(output$incremental_net_benefit_doubletest_IgAEMA)
   

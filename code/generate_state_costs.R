@@ -3,7 +3,7 @@ generate_state_costs <- function(input_parameters) {
   n_cycles <- 90 - starting_age
   state_costs <- array(dim=c(n_samples, n_cycles, n_states), dimnames = list(NULL, NULL, state_names))
   
-  starting_age_columnandrow <- read.csv("starting_age_column.csv")
+  starting_age_columnandrow <- read.csv("data/starting_age_column.csv")
   starting_age_columnandrow$starting_age_row <- c(1:11)
   starting_age_column <- starting_age_columnandrow[starting_age_columnandrow$Starting.age == starting_age, 2]
   
