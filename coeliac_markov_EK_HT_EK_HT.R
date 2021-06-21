@@ -1,5 +1,6 @@
 # Coeliac disease Markov model
 # Edna Keeney
+tic()
 rm(list=ls())
 set.seed(14143)
   
@@ -60,13 +61,10 @@ set.seed(14143)
     prevalence <- read.csv("CPRD prevalence.csv")
   
   #Initial cohort at diagnosis - depends on age at diagnosis
-    # HT: When accessing named matrices, try to use the column names to avoid errors and improve readability (like you do for osteoporosis_probability)
-    # EK: I'm not sure how to do this and still choose the row relating to the starting age
-    # HT: Example below
  probability_subfertility <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, "Subfertility_r"], shape2 = prevalence[prevalence$Age.categories == starting_age, "N"] - prevalence[prevalence$Age.categories == starting_age, "Subfertility_r"])
- probability_osteoporosis <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, 4], shape2 = prevalence[prevalence$Age.categories == starting_age, 2] - prevalence[prevalence$Age.categories == starting_age, 4])
- probability_NHL <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, 3], shape2 = prevalence[prevalence$Age.categories == starting_age, 2] - prevalence[prevalence$Age.categories == starting_age, 3])
- probability_nocomplications <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, 7], shape2 = prevalence[prevalence$Age.categories == starting_age, 2] - prevalence[prevalence$Age.categories == starting_age, 7])
+ probability_osteoporosis <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, "Osteoporosis_r"], shape2 = prevalence[prevalence$Age.categories == starting_age, "N"] - prevalence[prevalence$Age.categories == starting_age, "Osteoporosis_r"])
+ probability_NHL <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, "NHL_r"], shape2 = prevalence[prevalence$Age.categories == starting_age, "N"] - prevalence[prevalence$Age.categories == starting_age, "NHL_r"])
+ probability_nocomplications <- 1 - probability_subfertility - probability_osteoporosis - probability_NHL
   
   # Osteoporosis probabilities On GFD
  osteoporosis_probability <- read.csv("osteoporosis_rate_nice.csv")
@@ -143,12 +141,6 @@ set.seed(14143)
   NHL_probability_noGFD <- NHL_probability_noGFD_18plus
   
   lifetables <- read.csv("lifetables.csv")
-  # HT: I had an error trying to read the above file
-  # Error in read.table(file = file, header = header, sep = sep, quote = quote,  : 
-  # more columns than column names
-  # ek: Not sure why this is happening 
-  # HT: I just deleted the line at the top >>>>>>HEAD
-  
   percentage_male <- 0.5
   lifetables$Overall <- (percentage_male * lifetables$Males) + ((1-percentage_male) * lifetables$Females)
   death_probability_nocomplications	<- data.frame(lifetables$Age, lifetables$Overall)
@@ -158,13 +150,11 @@ set.seed(14143)
   # HT: I fixed the file by removing >>>>>HEAD
   # HT: I'll do the synthesis this week to give a rate of NHL mortality
   mortality_NHL <- read.csv("NHL mortality.csv")
-  
-   death_probability_NHL <-	0.006 #will relate to table above
+  death_probability_NHL <-	0.006 #will relate to table above
  
    #During the total study period, the hazard ratio for one-year all-cause mortality was 3.5 times (95% CI: 3.28–3.74) 
    #greater for male hip fracture patients than control subjects and 2.4 times (95% CI: 2.31–2.50) greater than 
    #controls for females. 
-    
    death_probability_osteoporosis <-	lifetables
    death_probability_osteoporosis$Males <- death_probability_osteoporosis$Males*3.5   #Currently  not probabilistic as lifetables are not probabilistic
    death_probability_osteoporosis$Females <- death_probability_osteoporosis$Females*2.4
@@ -183,11 +173,6 @@ set.seed(14143)
   transition_matrices <- array(dim = c(n_samples, n_cycles, n_states, n_states),
                              dimnames = list(NULL, NULL, state_names, state_names))
 
-  
-  # HT: Are we going to use QALY norms so that the QALYs decrease with age? You'd multiple all
-  # state QALYs by their norms to reduce with age.
-  # HT: If yes, we'll need state_qalys to be cycle specific and include it in the protocol.
-  # EK: Have now included QALY norms
   # Now define the QALYS associated with the states per cycle
   # There is one for each PSA sample and each state
   # Store in an NA array and then fill in below
@@ -202,9 +187,6 @@ set.seed(14143)
   
   # Define transition matrices, state utilities and costs 
 
-  # HT: The lines below should instead go in this for loop. I've added it elsewhere and they can probably
-  # all be combined into a single loop
-  # HT: Use this idea whereever possible to reduce script length
   #CD GFD 
   for(i_age_category in c(0:4)) {
     transition_matrices[, (c(1:10) + i_age_category * 10), "CD GFD no complications", "CD GFD subfertility"] <- subfertility_probability_GFD_all[, starting_age_column + i_age_category]  
@@ -230,38 +212,33 @@ set.seed(14143)
     transition_matrices[, i_age, "Undiagnosed CD osteoporosis", "Death"] <- death_probability_osteoporosis[starting_age + i_age, 2]
     }
       
-      transition_matrices[, , "CD GFD no complications", "CD GFD NHL"] <- NHL_probability_GFD
-      transition_matrices[, ,"CD GFD subfertility", "CD GFD NHL"] <- NHL_probability_GFD
-      transition_matrices[, ,"CD GFD osteoporosis", "CD GFD NHL"] <- NHL_probability_GFD
-      transition_matrices[, , "CD no GFD no complications", "CD no GFD NHL"] <- NHL_probability_noGFD
-      transition_matrices[, ,"CD no GFD subfertility", "CD no GFD NHL"] <- NHL_probability_noGFD
-      transition_matrices[, ,"CD no GFD osteoporosis", "CD no GFD NHL"] <- NHL_probability_noGFD
-      transition_matrices[, , "Undiagnosed CD no complications", "Undiagnosed CD NHL"] <- NHL_probability_noGFD
-      transition_matrices[, ,"Undiagnosed CD subfertility", "Undiagnosed CD NHL"] <- NHL_probability_noGFD
+      transition_matrices[, , "CD GFD no complications", "CD GFD NHL"] <-  
+      transition_matrices[, ,"CD GFD subfertility", "CD GFD NHL"] <- 
+      transition_matrices[, ,"CD GFD osteoporosis", "CD GFD NHL"] <-
+      transition_matrices[, , "CD no GFD no complications", "CD no GFD NHL"] <- 
+      transition_matrices[, ,"CD no GFD subfertility", "CD no GFD NHL"] <- 
+      transition_matrices[, ,"CD no GFD osteoporosis", "CD no GFD NHL"] <- 
+      transition_matrices[, , "Undiagnosed CD no complications", "Undiagnosed CD NHL"] <- 
+      transition_matrices[, ,"Undiagnosed CD subfertility", "Undiagnosed CD NHL"] <- 
       transition_matrices[, ,"Undiagnosed CD osteoporosis", "Undiagnosed CD NHL"] <- NHL_probability_noGFD
       
    
-    transition_matrices[, , "CD GFD NHL", "Death"] <- death_probability_NHL
-    transition_matrices[, , "CD no GFD NHL", "Death"] <- death_probability_NHL
+    transition_matrices[, , "CD GFD NHL", "Death"] <- 
+    transition_matrices[, , "CD no GFD NHL", "Death"] <- 
     transition_matrices[, , "Undiagnosed CD NHL", "Death"] <- death_probability_NHL
     
     #Undiagnosed CD  
-    transition_matrices[, ,"Undiagnosed CD no complications", "CD GFD no complications"] <- adherence * probability_late_diagnosis
-    transition_matrices[, ,"Undiagnosed CD no complications", "CD no GFD no complications"] <- (1-adherence) * probability_late_diagnosis
-    transition_matrices[, ,"Undiagnosed CD subfertility", "CD GFD subfertility"] <- adherence * probability_late_diagnosis
-    transition_matrices[, ,"Undiagnosed CD subfertility", "CD no GFD subfertility"] <- (1-adherence) * probability_late_diagnosis
-    transition_matrices[, ,"Undiagnosed CD osteoporosis", "CD GFD osteoporosis"] <- adherence * probability_late_diagnosis
-    transition_matrices[, ,"Undiagnosed CD osteoporosis", "CD no GFD osteoporosis"] <- (1-adherence) * probability_late_diagnosis
+    transition_matrices[, ,"Undiagnosed CD no complications", "CD GFD no complications"] <- 
+    transition_matrices[, ,"Undiagnosed CD subfertility", "CD GFD subfertility"] <- 
+    transition_matrices[, ,"Undiagnosed CD osteoporosis", "CD GFD osteoporosis"] <- 
     transition_matrices[, ,"Undiagnosed CD NHL", "CD GFD NHL"] <- adherence * probability_late_diagnosis
+    
+    transition_matrices[, ,"Undiagnosed CD no complications", "CD no GFD no complications"] <- 
+    transition_matrices[, ,"Undiagnosed CD subfertility", "CD no GFD subfertility"] <- 
+    transition_matrices[, ,"Undiagnosed CD osteoporosis", "CD no GFD osteoporosis"] <- 
     transition_matrices[, ,"Undiagnosed CD NHL", "CD no GFD NHL"] <- (1-adherence) * probability_late_diagnosis
    
-     # HT: This is setting the probability of staying in the same state to be 1 minus the probability
-    # of going to any other state. It would be better practice if this were done at the end for every state.
-    # At the end (when every probability has been defined) you also wouldn't need to write out the probabilities one by one. 
-    #EK: Can we talk through how to make the following neater?
-    # HT: I've changed it to a for loop with an apply statement and checked it gave the same answer. 
-  
-    
+   
     for(i_state in 1:length(state_names)) {
       transition_matrices[, , i_state, i_state] <- 1 - 
         apply(transition_matrices[, , i_state, -i_state], c(1,2), sum, na.rm=TRUE)
@@ -282,7 +259,7 @@ set.seed(14143)
     # State utilities
     # Anything between 0 and 1
     eq5d_norms <- read.csv("eq5d_norms.csv")
-    eq5d_norms$age <- c(0,10,20,30,40,50,60,70, 80)
+    eq5d_norms$age <- c(0, 10, 20, 30, 40, 50, 60, 70, 80)
    
     utility_GFD <- 0.85
     utility_GFdse <- ((0.86-0.84)/3.92)
@@ -386,9 +363,20 @@ set.seed(14143)
     cost_NHL_sd <- sqrt(271) * ((18415 - 18377)/3.92)
     cost_NHL_location <- log(cost_NHL^2 / sqrt(cost_NHL_sd^2 + cost_NHL^2))
     cost_NHL_shape <- sqrt(log(1 + (cost_NHL_sd^2 / cost_NHL^2)))
-    state_costs[, 1, "CD GFD NHL"] <-  state_costs[, 1, "CD no GFD NHL"] <-       transition_matrices[, i_age, "CD no GFD no complications", "Death"] <- death_probability_nocomplications[i_age, 2]
+    cost_NHL <- rlnorm(n = n_samples, cost_NHL_location,  cost_NHL_shape)
     state_costs[, 1, "CD GFD NHL"] <-  state_costs[, 1, "CD no GFD NHL"] <- rlnorm(n = n_samples, cost_NHL_location,  cost_NHL_shape) + rgamma(n = n_samples, shape = cost_CDGFD_alpha, scale = cost_CDGFD_beta)
     state_costs[, 2:n_cycles, "CD GFD NHL"] <-  state_costs[, 2:n_cycles, "CD no GFD NHL"] <- rlnorm(n = n_samples, cost_NHL_location,  cost_NHL_shape) + rgamma(n = n_samples, shape = cost_CDGFD_alpha, scale = cost_CDGFD_beta)
+    
+    cost_NHL <- (transition_matrices[, , "CD GFD no complications", "CD GFD NHL"] + 
+      transition_matrices[, ,"CD GFD subfertility", "CD GFD NHL"] + 
+      transition_matrices[, ,"CD GFD osteoporosis", "CD GFD NHL"] +
+      transition_matrices[, , "CD no GFD no complications", "CD no GFD NHL"] + 
+      transition_matrices[, ,"CD no GFD subfertility", "CD no GFD NHL"] + 
+      transition_matrices[, ,"CD no GFD osteoporosis", "CD no GFD NHL"] + 
+      transition_matrices[, , "Undiagnosed CD no complications", "Undiagnosed CD NHL"] + 
+      transition_matrices[, ,"Undiagnosed CD subfertility", "Undiagnosed CD NHL"] +
+      transition_matrices[, ,"Undiagnosed CD osteoporosis", "Undiagnosed CD NHL"]) * 
+    
     
     
     cost_undiagnosedCD <- 340
@@ -403,7 +391,11 @@ set.seed(14143)
     state_costs[, , "Death"] <- 0
     
   #How to add costs and disutilities for anemia and biopsy?
-  
+    cost_anemia <- 17.89 #annual cost of iron supplements
+    #use prevalence from CPRD by age and add to baseline costs of diagnosed/undiagnosed CD?
+    cost_biopsy <- 530
+    #apply probability late diagnosis * probability biopsy * cost to everyone in undiagnosed CD state?
+    
   
   # Define the treatment costs
   # One for each PSA sample and each treatment
@@ -468,55 +460,29 @@ set.seed(14143)
   cohort_vectors<-array(dim=c(n_treatments,n_samples,n_cycles,n_states),  #do I need to add another n_states? # HT: No.
                         dimnames=list(t_names,NULL,NULL, state_names))
   
-  # This will be related to decision tree accuracy
-  # HT: I don't know how the final code will work with the decision tree but the below could be made 3 times short with a for loop
-  cohort_vectors[1, , 1,"CD GFD no complications"] <- tp[, 1] * probability_nocomplications * adherence
-  cohort_vectors[2, , 1,"CD GFD no complications"] <- tp[, 2] * probability_nocomplications * adherence
-  cohort_vectors[3, , 1,"CD GFD no complications"] <- tp[, 3] * probability_nocomplications * adherence
-  cohort_vectors[1, , 1,"CD GFD subfertility"] <- tp[, 1] * probability_subfertility * adherence
-  cohort_vectors[2, , 1,"CD GFD subfertility"] <- tp[, 2] * probability_subfertility * adherence
-  cohort_vectors[3, , 1,"CD GFD subfertility"] <- tp[, 3] * probability_subfertility * adherence
-  cohort_vectors[1, , 1,"CD GFD osteoporosis"] <- tp[, 1] * probability_osteoporosis * adherence
-  cohort_vectors[2, , 1,"CD GFD osteoporosis"] <- tp[, 2] * probability_osteoporosis * adherence
-  cohort_vectors[3, , 1,"CD GFD osteoporosis"] <- tp[, 3] * probability_osteoporosis * adherence
-  cohort_vectors[1, , 1,"CD GFD NHL"] <- tp[, 1] * probability_NHL * adherence
-  cohort_vectors[2, , 1,"CD GFD NHL"] <- tp[, 2] * probability_NHL * adherence
-  cohort_vectors[3, , 1,"CD GFD NHL"] <- tp[, 3] * probability_NHL * adherence
+
+  for (i_treatment in c(1:3)) { 
+  cohort_vectors[i_treatment, , 1, "CD GFD no complications"] <- tp[, i_treatment] * probability_nocomplications * adherence
+  cohort_vectors[i_treatment, , 1, "CD GFD subfertility"] <- tp[, i_treatment] * probability_subfertility * adherence
+  cohort_vectors[i_treatment, , 1, "CD GFD osteoporosis"] <- tp[, i_treatment] * probability_osteoporosis * adherence
+  cohort_vectors[i_treatment, , 1,"CD GFD NHL"] <- tp[, i_treatment] * probability_NHL * adherence
+ 
+  cohort_vectors[i_treatment, , 1,"CD no GFD no complications"] <- tp[, i_treatment] * probability_nocomplications * (1-adherence)
+  cohort_vectors[i_treatment, , 1,"CD no GFD subfertility"] <- tp[, i_treatment] * probability_subfertility * (1-adherence)
+  cohort_vectors[i_treatment, , 1,"CD no GFD osteoporosis"] <- tp[, i_treatment] * probability_osteoporosis * (1-adherence)
+  cohort_vectors[i_treatment, , 1,"CD no GFD NHL"] <- tp[, i_treatment] * probability_NHL * (1-adherence)
   
-  cohort_vectors[1, , 1,"CD no GFD no complications"] <- tp[, 1] * probability_nocomplications * (1-adherence)
-  cohort_vectors[2, , 1,"CD no GFD no complications"] <- tp[, 2] * probability_nocomplications * (1-adherence)
-  cohort_vectors[3, , 1,"CD no GFD no complications"] <- tp[, 3] * probability_nocomplications * (1-adherence)
-  cohort_vectors[1, , 1,"CD no GFD subfertility"] <- tp[, 1] * probability_subfertility * (1-adherence)
-  cohort_vectors[2, , 1,"CD no GFD subfertility"] <- tp[, 2] * probability_subfertility * (1-adherence)
-  cohort_vectors[3, , 1,"CD no GFD subfertility"] <- tp[, 3] * probability_subfertility * (1-adherence)
-  cohort_vectors[1, , 1,"CD no GFD osteoporosis"] <- tp[, 1] * probability_osteoporosis * (1-adherence)
-  cohort_vectors[2, , 1,"CD no GFD osteoporosis"] <- tp[, 2] * probability_osteoporosis * (1-adherence)
-  cohort_vectors[3, , 1,"CD no GFD osteoporosis"] <- tp[, 3] * probability_osteoporosis * (1-adherence)
-  cohort_vectors[1, , 1,"CD no GFD NHL"] <- tp[, 1] * probability_NHL * (1-adherence)
-  cohort_vectors[2, , 1,"CD no GFD NHL"] <- tp[, 2] * probability_NHL * (1-adherence)
-  cohort_vectors[3, , 1,"CD no GFD NHL"] <- tp[, 3] * probability_NHL * (1-adherence)
-  
-  cohort_vectors[1, , 1,"Undiagnosed CD no complications"] <- fn[, 1] * probability_nocomplications 
-  cohort_vectors[2, , 1,"Undiagnosed CD no complications"] <- fn[, 2] * probability_nocomplications 
-  cohort_vectors[3, , 1,"Undiagnosed CD no complications"] <- fn[, 3] * probability_nocomplications 
-  cohort_vectors[1, , 1,"Undiagnosed CD subfertility"] <- fn[, 1] * probability_subfertility 
-  cohort_vectors[2, , 1,"Undiagnosed CD subfertility"] <- fn[, 2] * probability_subfertility 
-  cohort_vectors[3, , 1,"Undiagnosed CD subfertility"] <- fn[, 3] * probability_subfertility 
-  cohort_vectors[1, , 1,"Undiagnosed CD osteoporosis"] <- fn[, 1] * probability_osteoporosis 
-  cohort_vectors[2, , 1,"Undiagnosed CD osteoporosis"] <- fn[, 2] * probability_osteoporosis 
-  cohort_vectors[3, , 1,"Undiagnosed CD osteoporosis"] <- fn[, 3] * probability_osteoporosis 
-  cohort_vectors[1, , 1,"Undiagnosed CD NHL"] <- fn[, 1] * probability_NHL 
-  cohort_vectors[2, , 1,"Undiagnosed CD NHL"] <- fn[, 2] * probability_NHL 
-  cohort_vectors[3, , 1,"Undiagnosed CD NHL"] <- fn[, 3] * probability_NHL 
+  cohort_vectors[i_treatment, , 1,"Undiagnosed CD no complications"] <- fn[, i_treatment] * probability_nocomplications 
+  cohort_vectors[i_treatment, , 1,"Undiagnosed CD subfertility"] <- fn[, i_treatment] * probability_subfertility 
+  cohort_vectors[i_treatment, , 1,"Undiagnosed CD osteoporosis"] <- fn[, i_treatment] * probability_osteoporosis 
+  cohort_vectors[i_treatment, , 1,"Undiagnosed CD NHL"] <- fn[, i_treatment] * probability_NHL 
+  }
   
   cohort_vectors[, , , ] [is.na(cohort_vectors[, , , ] )] <- 0
-  # HT: Cohort vectors aren't adding to one.
-  # This is because the probabilities don't sum to 1:
-  # probability_nocomplications+probability_subfertility+probability_osteoporosis+probability_NHL
-  # When I defined probability no complications as follows they did sum to 1:
-  # probability_nocomplications <- 1 -(probability_subfertility+probability_osteoporosis+probability_NHL)
+ 
   rowSums (cohort_vectors[, 2, , ], na.rm = FALSE, dims = 1)
-  # Build an array to store the costs and QALYs accrued per cycle
+ 
+   # Build an array to store the costs and QALYs accrued per cycle
   # One for each treatment, for each PSA sample, for each cycle
   # These will be filled in below in the main model code
   # Then discounted and summed to contribute to total costs and total QALYs
@@ -534,10 +500,6 @@ set.seed(14143)
   total_qalys <- array(dim = c(n_treatments, n_samples),
                      dimnames = list(t_names, NULL))
   
-  #i_treatment <- 1
-  #i_sample <- 1
-  #i_cycle <- 2
-  
   disc_vec <- (1/1.035) ^ rep(c(0:(n_cycles/2-1)), each = 2)
   
   # The remainder of the cohort_vectors will be filled in by Markov updating below
@@ -545,7 +507,6 @@ set.seed(14143)
   # Main model code
   # Loop over the treatment options
   
-
     for (i_treatment in 1:n_treatments)
     {
     # Loop over the PSA samples
@@ -606,12 +567,8 @@ set.seed(14143)
   #############################################################################
   output <- list()
   # Average costs
-  # These are ?50 on the website and 0 on standard of care as there are no
-  # costs other than the website subscription cost
   output$average_costs <- rowMeans(total_costs)
   # Average effects (in QALY units)
-  # These are slightly higher on the website as higher probability of 
-  # quitting smoking
   output$average_effects <- rowMeans(total_qalys)
   
  
@@ -643,4 +600,5 @@ set.seed(14143)
   # Now use the BCEA package to analyse the results___
   output
 
-
+toc()
+library(tictoc)
