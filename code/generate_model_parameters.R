@@ -311,7 +311,10 @@ generate_model_parameters <- function(starting_age) {
 
   
   pre_test_probability_overall <- 0.01 #based on West 2014
-  tp_riskfactor <- fn_riskfactor <- fp_riskfactor <- tn_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, combinations_names))
+  tp_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, paste(combinations_names, "tp_riskfactor")))
+    fn_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, paste(combinations_names, "fn_riskfactor")))
+      fp_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, paste(combinations_names, "fp_riskfactor")))
+        tn_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, paste(combinations_names, "tn_riskfactor")))
   
   for (i in 1:n_combinations) {
     tp_riskfactor[,i] <- pre_test_probability_overall * combinations$sens_riskfactor[i]
@@ -322,6 +325,7 @@ generate_model_parameters <- function(starting_age) {
   
  write.csv(data.frame(tp_riskfactor[1,], fn_riskfactor[1,], tn_riskfactor[1,], fp_riskfactor[1,]), "risk_factor.csv")
   pre_test_probability <- tp_riskfactor/(tp_riskfactor+fp_riskfactor)
+  colnames(pre_test_probability) <- paste(combinations_names, "pre_test_probability")
   write.csv(colMeans(pre_test_probability), "pretestprob.csv")
   
   pre_test_odds <- array(0, dim=c(n_samples, n_combinations), dimnames = list(NULL, combinations_names))
@@ -379,7 +383,7 @@ generate_model_parameters <- function(starting_age) {
   }
 
   
-  post_test_probability_IgAEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  post_test_probability_IgAEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgAEMA")))
   sens_IgAEMA <- rep(0, times = n_samples)
   spec_IgAEMA <- rep(0, times = n_samples)
   for(i_sample in 1:n_samples){
@@ -409,7 +413,7 @@ generate_model_parameters <- function(starting_age) {
   LR_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,1]/ (1 - SensSpec_IgATTGplusEMA[,2])
   
   post_test_odds_IgATTGplusEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  post_test_probability_IgATTGplusEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  post_test_probability_IgATTGplusEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTGplusEMA")))
   
   for (i in 1:n_combinations){
     post_test_odds_IgATTGplusEMA[,i] <- pre_test_odds[,i] * LR_IgATTGplusEMA[1:n_samples]
@@ -432,7 +436,7 @@ generate_model_parameters <- function(starting_age) {
   LR_IgATTG <- SensSpec_IgATTG[,1]/ (1 - SensSpec_IgATTG[,2])
   
   post_test_odds_IgATTG <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  post_test_probability_IgATTG <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  post_test_probability_IgATTG <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTG")))
   
   for (i in 1:n_combinations){
     post_test_odds_IgATTG[,i] <- pre_test_odds[,i] * LR_IgATTG

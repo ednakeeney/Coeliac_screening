@@ -66,7 +66,7 @@ set.seed(14143)
   #generate input parameters
   input_parameters <- generate_model_parameters(starting_age)
   
-  transition_matrices <- generate_transition_matrices(input_parameters)
+ transition_matrices <- generate_transition_matrices(input_parameters)
   
   #generate results
   output <- generate_net_benefit(input_parameters)

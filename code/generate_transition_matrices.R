@@ -51,10 +51,12 @@ generate_transition_matrices <- function(input_parameters) {
     transition_matrices[, ,"CD GFD osteoporosis", "CD GFD NHL"] <- input_parameters$NHL_probability_GFD
   transition_matrices[, , "Undiagnosed CD no complications", "Undiagnosed CD NHL"] <- 
     transition_matrices[, ,"Undiagnosed CD subfertility", "Undiagnosed CD NHL"] <- 
-    transition_matrices[, ,"Undiagnosed CD osteoporosis", "Undiagnosed CD NHL"] <- (1 - input_parameters$probability_late_diagnosis) * input_parameters$NHL_probability_noGFD
+    transition_matrices[, ,"Undiagnosed CD osteoporosis", "Undiagnosed CD NHL"] <- (1 - input_parameters$probability_late_diagnosis) * 
+    input_parameters$NHL_probability_noGFD
   transition_matrices[, , "Undiagnosed CD no complications", "CD GFD NHL"] <- 
     transition_matrices[, ,"Undiagnosed CD subfertility", "CD GFD NHL"] <- 
-    transition_matrices[, ,"Undiagnosed CD osteoporosis", "CD GFD NHL"] <- input_parameters$probability_late_diagnosis * input_parameters$NHL_probability_noGFD
+    transition_matrices[, ,"Undiagnosed CD osteoporosis", "CD GFD NHL"] <- input_parameters$probability_late_diagnosis * 
+    input_parameters$NHL_probability_noGFD
   transition_matrices[, ,"Undiagnosed CD NHL", "CD GFD NHL"] <- input_parameters$probability_late_diagnosis 
 
   
