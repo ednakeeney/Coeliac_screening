@@ -16,6 +16,7 @@ generate_state_qalys <- function(input_parameters) {
   eq5d_norms <- read.csv("data/eq5d_norms.csv")
   eq5d_norms$age <- c(0, 10, 20, 30, 40, 50, 60, 70, 80)
   
+
   n_agecategories <- (n_cycles/10) - 1
   
   for(i_age_category in c(0:n_agecategories)) {
@@ -23,7 +24,8 @@ generate_state_qalys <- function(input_parameters) {
     state_qalys[, (c(1:10) + i_age_category * 10), "Undiagnosed CD no complications"] <- eq5d_norms[starting_age_row + i_age_category, 2] * input_parameters$utility_undiagnosedCD - (input_parameters$probability_late_diagnosis * input_parameters$probability_biopsy * input_parameters$disutility_biopsy)
   }
   
-  state_qalys[, , "CD GFD subfertility"] <- state_qalys[, , "CD GFD no complications"] - input_parameters$disutility_subfertility
+  state_qalys[, , "CD GFD subfertility"] <- state_qalys[, , "CD GFD no complications"]
+if(population == "children") { state_qalys[, 10:40, "CD GFD subfertility"] <- state_qalys[,10:40 , "CD GFD no complications"] - input_parameters$disutility_subfertility} #disutility of subfertilty only applies between ages of 20 and 50. Children start at age 10, adults at age 50
   state_qalys[, , "CD GFD osteoporosis"] <- state_qalys[, , "CD GFD no complications"] - input_parameters$disutility_osteoporosis 
   state_qalys[, , "CD GFD NHL"] <- state_qalys[, , "CD GFD no complications"] - input_parameters$disutility_NHL
   state_qalys[, , "Undiagnosed CD subfertility"] <-  state_qalys[, , "Undiagnosed CD no complications"] - input_parameters$disutility_subfertility
