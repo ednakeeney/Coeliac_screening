@@ -199,7 +199,7 @@ generate_model_parameters <- function(starting_age) {
   disutility_NHL <- runif(n = n_samples, min = 0.036, max = 0.136)
   
   disutility_biopsy <- runif(n = n_samples, min = 0.003, max = 0.005)
-  disutility_biopsy_wait <- (utility_GFD - utility_undiagnosedCD) * 6/52
+  disutility_biopsy_wait <- (utility_GFD - utility_undiagnosedCD) * 6/52 
   #############################################################################
   ## Costs ####################################################################
   #############################################################################
@@ -310,7 +310,7 @@ generate_model_parameters <- function(starting_age) {
   spec_biopsy <- 1 #assumption to be varied in sensitivity analysis
 
   
-  pre_test_probability_overall <- 0.01 #based on West 2014
+  pre_test_probability_overall <- rbeta(n = n_samples, shape1 = 10872, shape2 = 4519128) #based on West 2014
   tp_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, paste(combinations_names, "tp_riskfactor")))
     fn_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, paste(combinations_names, "fn_riskfactor")))
       fp_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, paste(combinations_names, "fp_riskfactor")))
