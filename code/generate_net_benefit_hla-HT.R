@@ -246,7 +246,8 @@ generate_net_benefit <- function(input_parameters) {
                               dimnames = list(NULL, t_names))
   
    test_costs_applied <- test_costs * (tp[,] + fp[,] + fn[,] + tn[,] + tp_riskfactor_table[,] + fp_riskfactor_table[,])
-  biopsy_disutility_applied <- disutility_biopsy_screen * (tp[,] + fp[,] + fn[,] + tn[,] + tp_riskfactor_table[,] + fp_riskfactor_table[,])
+  false_positive_costs_applied <- test_costs * (fn[,] + tn[,]) #cost of testing in those without CD after risk factor test
+   biopsy_disutility_applied <- disutility_biopsy_screen * (tp[,] + fp[,] + fn[,] + tn[,] + tp_riskfactor_table[,] + fp_riskfactor_table[,])
   biopsy_Wait_disutility_applied <- disutility_biopsy_screen_wait * (tp[,] + fn[,])
  
 fn_riskfactor_table <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
@@ -447,7 +448,7 @@ output$net_benefit<- 20000*output$average_effects - output$average_costs
  
  #cost breakdown
   output$test_costs <- colMeans(test_costs_applied) #costs of test and biopsies
-  output$fp_costs <- colMeans(fp_costs)
+  output$fp_costs <- colMeans(false_positive_costs_applied)
   output$diagnosis_costs <- colMeans(diagnosis_costs)
   output$cycle_costs <- rowMeans(cycle_costs)
   
