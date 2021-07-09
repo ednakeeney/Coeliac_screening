@@ -467,10 +467,15 @@ output$probability_best <- rowMeans(output$ceac_calculation)
   output$fp_costs <- colMeans(false_positive_costs_applied)
   output$diagnosis_costs <- colMeans(diagnosis_costs)
   output$cycle_costs <- rowMeans(cycle_costs)
+  output$cost_breakdown <- data.frame(output$test_costs, output$fp_costs, output$diagnosis_costs, output$cycle_costs)
   
   #utility breakdown
   output$cycle_qalys <- rowMeans(cycle_qalys)
-  output$disutility_biopsy <- rowMeans(disutility_biopsy_screen)
+  output$disutility_fp <- colMeans(disutility_fp)
+  output$disutility_biopsy <- colMeans(biopsy_disutility_applied)
+  output$disutility_biopsy_wait <- colMeans(biopsy_Wait_disutility_applied)
+  output$utility_breakdown <- data.frame(output$cycle_qalys, output$disutility_fp,  output$disutility_biopsy,   output$disutility_biopsy_wait)
+  
  
  # Average incremental net benefit
   #output$average_inb_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA)
