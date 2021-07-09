@@ -196,10 +196,17 @@ generate_model_parameters <- function(starting_age) {
   disutility_vertebralfracture <- rbeta(n = n_samples, shape1 = disutility_vertebralfracture_alpha, shape2 = disutility_vertebralfracture_beta)
   disutility_osteoporosis <- (probability_hipfracture * disutility_hipfracture) + (probability_wristfracture * disutility_wristfracture) + (probability_vertebralfracture * disutility_vertebralfracture)
   
-  disutility_NHL <- runif(n = n_samples, min = 0.036, max = 0.136)
+  disutility_NHL <- runif(n = n_samples, min = 0, max = 0.005)
   
-  disutility_biopsy <- runif(n = n_samples, min = 0.003, max = 0.005)
+  disutility_biopsy_adults <- rtri(n = n_samples, min = 0, max = 0.005, mode = 0.003)
+  disutility_biopsy_children <- rtri(n = n_samples, min = 0, max = 0.010, mode = 0.006)
+  disutility_biopsy <- rep(0, times = n_samples)
+  for (i_sample in 1:n_samples) {
+    disutility_biopsy[i_sample] <- ifelse(population == "adults", disutility_biopsy_adults[i_sample], disutility_biopsy_children[i_sample])
+  }
+  
   disutility_biopsy_wait <- (utility_GFD - utility_undiagnosedCD) * 6/52 
+  disutility_fp <- -0.009 #from NICE guideline
   #############################################################################
   ## Costs ####################################################################
   #############################################################################
@@ -303,6 +310,7 @@ generate_model_parameters <- function(starting_age) {
   test_cost_HLA_beta <- (test_cost_HLA_se^2)/test_cost_HLA
   test_cost_HLA <- rgamma(n = n_samples, shape = test_cost_HLA_alpha, scale = test_cost_HLA_beta)
   
+  capital_cost_double_test <- 0.44 #based on NICE guideline capital cost for IgATTG + IgAEMA inflated to 2021 prices
   #############################################################################
   ## Accuracy of tests ########################################################
   #############################################################################
@@ -467,9 +475,9 @@ generate_model_parameters <- function(starting_age) {
   return(data.frame(probability_late_diagnosis, probability_subfertility, probability_osteoporosis, probability_NHL, probability_nocomplications,
                     osteoporosis_probability_GFD_all, subfertility_probability_GFD_all, NHL_probability_GFD, osteoporosis_probability_noGFD_all, subfertility_probability_noGFD_all,
                     NHL_probability_noGFD, death_probability_NHL, 
-                    utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL, disutility_biopsy, disutility_biopsy_wait,
+                    utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL, disutility_biopsy, disutility_biopsy_wait, disutility_fp,
                     cost_CDGFD, cost_osteoporosis, cost_undiagnosedCD, cost_IDA, cost_biopsy, probability_biopsy,
-                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, test_cost_IgAEMA, test_cost_IgATTG, test_cost_HLA,
+                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, test_cost_IgAEMA, test_cost_IgATTG, test_cost_HLA, capital_cost_double_test,
                     sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_IgAEMA, spec_IgAEMA, sens_IgATTG, spec_IgATTG, cost_gfp, sens_biopsy, spec_biopsy, 
                     post_test_probability_IgAEMA, post_test_probability_IgATTGplusEMA, post_test_probability_IgATTG, pre_test_probability, pre_test_probability_overall,
                    tp_riskfactor, fn_riskfactor, fp_riskfactor, LR_HLA, sens_HLA, spec_HLA))

@@ -168,8 +168,8 @@ generate_net_benefit <- function(input_parameters) {
     test_costs[, 1] <- 0
     test_costs[, i+1] <-  ifelse(post_test_probability_IgAEMA[,i] >= 0.9, input_parameters$test_cost_IgAEMA, 
                                       input_parameters$test_cost_IgAEMA + input_parameters$cost_biopsy)
-    test_costs[, n_combinations+i+1] <-  ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9, (input_parameters$test_cost_IgATTG + input_parameters$test_cost_IgAEMA), 
-                                                     (input_parameters$test_cost_IgATTG + input_parameters$test_cost_IgAEMA + input_parameters$cost_biopsy))
+    test_costs[, n_combinations+i+1] <-  ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9, (input_parameters$test_cost_IgATTG + input_parameters$test_cost_IgAEMA + input_parameters$capital_cost_double_test), 
+                                                     (input_parameters$test_cost_IgATTG + input_parameters$test_cost_IgAEMA + input_parameters$capital_cost_double_test + input_parameters$cost_biopsy))
     test_costs[, n_combinations+n_combinations+i+1] <-  ifelse(post_test_probability_IgATTG[,i] >= 0.9, input_parameters$test_cost_IgATTG, 
                                                                     input_parameters$test_cost_IgATTG + input_parameters$cost_biopsy)
     test_costs[, n_combinations+n_combinations+ n_combinations+i+1] <- 
@@ -181,10 +181,10 @@ generate_net_benefit <- function(input_parameters) {
     
     test_costs[, n_combinations + n_combinations+ n_combinations + n_combinations + i + 1] <-  
       ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9,
-             input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG,
+             input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG + input_parameters$capital_cost_double_test,
       ifelse(post_test_probability_IgATTGplusEMA[,i] < 0.9 & post_test_probability_HLA[,i+n_combinations] >= 0.9, 
-             input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG + input_parameters$test_cost_HLA, 
-      input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG + input_parameters$test_cost_HLA + input_parameters$cost_biopsy))
+             input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG +input_parameters$capital_cost_double_test + input_parameters$test_cost_HLA, 
+      input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG + input_parameters$capital_cost_double_test + input_parameters$test_cost_HLA + input_parameters$cost_biopsy))
 
     test_costs[, n_combinations + n_combinations+ n_combinations + n_combinations+ n_combinations+i+1] <-  
       ifelse(post_test_probability_IgATTG[,i] >= 0.9,
@@ -220,6 +220,10 @@ generate_net_benefit <- function(input_parameters) {
     disutility_biopsy_screen_wait[, n_combinations + n_combinations+ n_combinations + n_combinations+ n_combinations+i+1] <-  ifelse(post_test_probability_HLA[,i+n_combinations+n_combinations] >= 0.9, 0, input_parameters$disutility_biopsy_wait)
   }
   
+  disutility_fp <- array(dim = c(n_samples, n_tests),
+                    dimnames = list(NULL, t_names))
+  
+  disutility_fp[,] <- (fp[,] * input_parameters$disutility_fp) 
   
   tp_riskfactor_table <- array(dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
   for (i in 1:n_combinations) {
@@ -356,7 +360,7 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
       # Combine the cycle_qalys to get total qalys
       # Apply the discount factor 
       # (1 in first year, 1.035 in second, 1.035^2 in third, and so on)
-      total_qalys[i_test, i_sample] <- (cycle_qalys[i_test, i_sample, ]  - biopsy_disutility_applied[i_sample, i_test] - biopsy_Wait_disutility_applied[i_sample, i_test]) %*%
+      total_qalys[i_test, i_sample] <- (cycle_qalys[i_test, i_sample, ]  - disutility_fp[i_sample, i_test] - biopsy_disutility_applied[i_sample, i_test] - biopsy_Wait_disutility_applied[i_sample, i_test]) %*%
         disc_vec
     }
     
@@ -368,6 +372,8 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   ## Analysis of results ######################################################
   #############################################################################
   output <- list()
+  
+  #Percentage having biopsy
   sum_IgAEMA <- rep(0, n_combinations)
   for (i in 1:n_combinations){
     sum_IgAEMA[i] <- sum(post_test_probability_IgAEMA[,i] <= 0.9)/n_samples  
@@ -425,6 +431,7 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   write.csv(sum_IgAEMAplusHLA, "x.csv")
   write.csv(sum_IgATTGplusEMAplusHLA, "x.csv")
   
+  #Costs and QALYs
   output$total_costs <- total_costs
   output$total_qalys <- total_qalys
   # Average costs
@@ -432,7 +439,6 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   # Average effects (in QALY units)
   output$average_effects <- rowMeans(total_qalys)
   
- 
   output$incremental_costs <-  output$average_costs - output$average_costs["No screening"]
   output$incremental_effects <-  output$average_effects -  output$average_effects["No screening"]
   
@@ -443,9 +449,19 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   output$incremental_net_benefit <- 20000*output$incremental_effects - output$incremental_costs
 
 output$net_benefit<- 20000*output$average_effects - output$average_costs
- write.csv(output$incremental_effects, "inb.csv")
-  
- 
+output$all_net_benefit <- 20000*total_qalys - total_costs
+
+output$ceac_calculation <- array(dim=c(n_tests,n_samples),  
+                                 dimnames=list(t_names,NULL))
+                                 
+for (i_sample in 1:n_samples) {
+for (i_test in 1:n_tests) {
+output$ceac_calculation[i_test,i_sample] <- ifelse(output$all_net_benefit[i_test,i_sample] == max(output$all_net_benefit[,i_sample]), 1, 0)
+}}
+
+output$probability_best <- rowMeans(output$ceac_calculation)
+
+
  #cost breakdown
   output$test_costs <- colMeans(test_costs_applied) #costs of test and biopsies
   output$fp_costs <- colMeans(false_positive_costs_applied)
