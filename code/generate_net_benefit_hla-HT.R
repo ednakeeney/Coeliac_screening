@@ -442,6 +442,9 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   output$incremental_costs <-  output$average_costs - output$average_costs["No screening"]
   output$incremental_effects <-  output$average_effects -  output$average_effects["No screening"]
   
+  output$all_incremental_costs <-  output$total_costs - output$total_costs["No screening",]
+  output$all_incremental_effects <-  output$total_qalys -  output$total_qalys["No screening",]
+  
   output$ICER <- output$incremental_costs/output$incremental_effects
 
   # Incremental net benefit at the ?20,000 willingness-to-pay
@@ -467,24 +470,28 @@ output$probability_best <- rowMeans(output$ceac_calculation)
   output$fp_costs <- colMeans(false_positive_costs_applied)
   output$diagnosis_costs <- colMeans(diagnosis_costs)
   output$cycle_costs <- rowMeans(cycle_costs)
-  output$cost_breakdown <- data.frame(output$test_costs, output$fp_costs, output$diagnosis_costs, output$cycle_costs)
   
   #utility breakdown
   output$cycle_qalys <- rowMeans(cycle_qalys)
-  output$disutility_fp <- colMeans(disutility_fp)
-  output$disutility_biopsy <- colMeans(biopsy_disutility_applied)
-  output$disutility_biopsy_wait <- colMeans(biopsy_Wait_disutility_applied)
-  output$utility_breakdown <- data.frame(output$cycle_qalys, output$disutility_fp,  output$disutility_biopsy,   output$disutility_biopsy_wait)
-  
+  output$disutility_biopsy <- rowMeans(disutility_biopsy_screen)
  
  # Average incremental net benefit
   #output$average_inb_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA)
   #output$average_inb_doubletest_IgAEMA <- mean(output$incremental_net_benefit_doubletest_IgAEMA)
   
-  # Probability cost-effective
+ # Probability cost-effective
   # This is the proportion of samples for which the incremental net benefit is positive
+  output$all_incremental_net_benefit <- 20000*output$all_incremental_effects - output$all_incremental_costs
+
+  output$pce_calculation <- array(dim=c(n_tests,n_samples),  
+                                   dimnames=list(t_names,NULL))
   
-  #output$probability_cost_effective_IgATTGplusIgAEMA_IgAEMA <- sum(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA > 0)/n_samples
+  for (i_sample in 1:n_samples) {
+    for (i_test in 1:n_tests) {
+      output$pce_calculation[i_test,i_sample] <- sum(output$all_incremental_net_benefit[i_test,i_sample] > 0)/n_samples
+    }}
+  
+  output$probability_cost_effective <- rowMeans(output$pce_calculation)
   #output$probability_cost_effective_doubletest_IgAEMA <- sum(output$incremental_net_benefit_doubletest_IgAEMA > 0)/n_samples
   return(output)
 }

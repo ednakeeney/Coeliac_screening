@@ -196,7 +196,8 @@ generate_model_parameters <- function(starting_age) {
   disutility_vertebralfracture <- rbeta(n = n_samples, shape1 = disutility_vertebralfracture_alpha, shape2 = disutility_vertebralfracture_beta)
   disutility_osteoporosis <- (probability_hipfracture * disutility_hipfracture) + (probability_wristfracture * disutility_wristfracture) + (probability_vertebralfracture * disutility_vertebralfracture)
   
-  disutility_NHL <- runif(n = n_samples, min = 0, max = 0.005)
+
+  disutility_NHL <- runif(n = n_samples, min = 0.036, max = 0.136) 
   
   disutility_biopsy_adults <- rtri(n = n_samples, min = 0, max = 0.005, mode = 0.003)
   disutility_biopsy_children <- rtri(n = n_samples, min = 0, max = 0.010, mode = 0.006)
