@@ -208,6 +208,29 @@ write.csv(t(output$total_costs), "results/total costs.csv")
 m <- bcea(e = t(output$total_qalys), c = t(output$total_costs), ref = 1, interventions = t_names)
 summary(m)
 
+m_feasible <- bcea(e = t(output$total_qalys[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                     "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                     "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                     "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]), 
+                   c = t(output$total_costs[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", 
+                                              "0.6 0.99 IgATTG plus HLA", 
+                                            "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                             "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                           "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]), ref=1, interventions = c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                                                                                                        "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                                                                                                       "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                                                                                                       "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"))
+summary(m_feasible) 
+
+ICER_table <- data.frame(output$average_effects[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")],
+                         output$average_costs[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", 
+                                                    "0.6 0.99 IgATTG plus HLA", 
+                                                    "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                    "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                    "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")])
 eib.plot(m, comparison = NULL, pos =
            c(1, 0), size = NULL, plot.cri = NULL, graph
          = c("ggplot2"))
@@ -215,13 +238,13 @@ evi.plot(m, graph = c("base", "ggplot2",
                        "plotly"))
 ceac.plot(m, comparison = NULL,
           pos = FALSE, graph = c("ggplot2"))
-
-mce <- multi.ce(m)
+par(mfrow = c(1,1))
+mce <- multi.ce(m_feasible)
 ceaf.plot(mce, graph = c("ggplot2"))
+mce.plot(mce, color = c(1:13))
 
-
-ceplane.plot(m, comparison =
-               NULL, pos = c(1, 0), graph = c("ggplot2"), point_colors = c(1:36))
+ceplane.plot(m_feasible, comparison =
+               NULL, pos = c(1, 0), graph = c("ggplot2"), point_colors = c(1:13))
 sim.table(m)
 toc()
 
