@@ -367,6 +367,14 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
     
   }
 
+  dim(apply(cohort_vectors, c(1, 2, 4), sum))
+  x<-apply(cohort_vectors, c(1, 2, 4), sum)
+  x[1,1,]/30 #total time spent in each state over all cycles
+  apply(x, c(1 , 3), mean)/n_cycles
+  apply(x, c(1, 3), quantile, probs = 0.025)
+  
+  
+  
   
 
   #############################################################################
