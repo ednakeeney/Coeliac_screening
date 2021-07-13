@@ -17,7 +17,7 @@ set.seed(14143)
  
   
   tests <- c("IgAEMA", "IgATTGplusEMA", "IgATTG", "IgAEMA plus HLA", "IgATTGplusEMA plus HLA", "IgATTG plus HLA")
-  n_tests <- length(tests)
+  n_sero_tests <- length(tests)
   
   #pre-test probabilities of coeliac disease 
   sens_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.99, 0.9999)
@@ -194,8 +194,111 @@ legend("topleft", legend =c('Specificity 0.5', '0.6', '0.7',
        col = c(1:5), lty = (1:5))
 dev.off
 
+#plots of probability CE
+jpeg("results/inbplot.jpeg")
+par(mfrow=c(3,2))
+par(mar = c(2, 1, 1, 1))
+
+#IGA EMA
+plot(output$probability_cost_effective[2:7],pch=19, ylim=c(0,1), ylab = "Incremental net benefit", xlab = "sensitivity", main = "IGA EMA", xaxt="n" )
+lines(output$probability_cost_effective[2:7], lwd=2)
+abline(h=0)
+axis(1,                         # Define x-axis manually
+     at = 1:6,
+     labels = c(0.5, 0.6, 0.7, 0.8, 0.9, 1))
+lines(output$probability_cost_effective[8:13], col = 2, lwd=2, lty=2)
+lines(output$probability_cost_effective[14:19], col = 3, lwd=, lty=3)
+lines(output$probability_cost_effective[20:25], col = 4, lwd=2, lty=4)
+lines(output$probability_cost_effective[26:31], col = 5, lwd=2, lty=5)
+
+#IGA TTG plus EMA
+plot(output$probability_cost_effective[38:43],pch=19, ylim=c(0,1), ylab = "Incremental net benefit", main = "IGA TTG plus EMA",xlab = "sensitivity", xaxt="n" )
+lines(output$probability_cost_effective[38:43], lwd=2)
+abline(h=0)
+axis(1,                         # Define x-axis manually
+     at = 1:6,
+     labels = c(0.5, 0.6, 0.7, 0.8, 0.9, 1))
+lines(output$probability_cost_effective[44:49], col = 2, lwd = 2, lty = 2)
+lines(output$probability_cost_effective[50:55], col = 3, lwd = 2, lty = 3)
+lines(output$probability_cost_effective[56:61], col = 4, lwd = 2, lty = 4)
+lines(output$probability_cost_effective[62:67], col = 5, lwd = 2, lty = 5)
+
+#IGA TTG
+plot(output$probability_cost_effective[74:79],pch=19, ylim=c(0,1), ylab = "Incremental net benefit", main = "IGA TTG", xlab = "sensitivity", xaxt="n" )
+lines(output$probability_cost_effective[74:79], lwd = 2)
+abline(h=0)
+axis(1,                         # Define x-axis manually
+     at = 1:6,
+     labels = c(0.5, 0.6, 0.7, 0.8, 0.9, 1))
+lines(output$probability_cost_effective[80:85], col = 2, lwd = 2, lty = 2)
+lines(output$probability_cost_effective[86:91], col = 3, lwd = 2, lty = 3)
+lines(output$probability_cost_effective[92:97], col = 4, lwd = 2, lty = 4)
+lines(output$probability_cost_effective[98:103], col = 5, lwd = 2, lty = 5)
+
+#IgA EMA plus HLA 
+plot(output$probability_cost_effective[110:115],pch=19, ylim=c(0, 1),ylab = "Incremental net benefit", main = "IgA EMA plus HLA", xlab = "sensitivity", xaxt="n" )
+lines(output$probability_cost_effective[110:115], lwd = 2)
+abline(h=0)
+axis(1,                         # Define x-axis manually
+     at = 1:6,
+     labels = c(0.5, 0.6, 0.7, 0.8, 0.9, 1))
+lines(output$probability_cost_effective[116:121], col = 2, lwd = 2, lty = 2)
+lines(output$probability_cost_effective[122:127], col = 3, lwd = 2, lty = 3)
+lines(output$probability_cost_effective[128:133], col = 4, lwd = 2, lty = 4)
+lines(output$probability_cost_effective[134:139], col = 5, lwd = 2, lty = 5)
+
+#IgA TTG plus EMA plus HLA
+plot(output$probability_cost_effective[146:151],pch=19, ylim=c(0, 1),ylab = "Incremental net benefit", main = "IgATTG plus EMA plus HLA", xlab = "sensitivity", xaxt="n" )
+lines(output$probability_cost_effective[146:151], lwd = 2)
+abline(h=0)
+axis(1,                         # Define x-axis manually
+     at = 1:6,
+     labels = c(0.5, 0.6, 0.7, 0.8, 0.9, 1))
+lines(output$probability_cost_effective[152:157], col = 2, lwd = 2, lty = 2)
+lines(output$probability_cost_effective[158:163], col = 3, lwd = 2, lty = 3)
+lines(output$probability_cost_effective[164:169], col = 4, lwd = 2, lty = 4)
+lines(output$probability_cost_effective[170:175], col = 5, lwd = 2, lty = 5)
+
+#IgA TTG plus HLA
+plot(output$probability_cost_effective[182:187],pch=2, ylim=c(0, 1),ylab = "Incremental net benefit", main = "IgA TTG plus HLA", xlab = "sensitivity", xaxt="n" )
+lines(output$probability_cost_effective[182:187], lwd = 2)
+abline(h=0)
+axis(1,                         # Define x-axis manually
+     at = 1:6,
+     labels = c(0.5, 0.6, 0.7, 0.8, 0.9, 1))
+lines(output$probability_cost_effective[188:193], col = 2, lwd = 2, lty = 2)
+lines(output$probability_cost_effective[194:199], col = 3, lwd = 2, lty = 3)
+lines(output$probability_cost_effective[200:205], col = 4, lwd = 2, lty = 4)
+lines(output$probability_cost_effectivet[206:211], col = 5, lwd = 2, lty = 5)
+
+dev.off()
+
 write.csv(t(output$total_qalys), "results/total qalys.csv")
 write.csv(t(output$total_costs), "results/total costs.csv")
+
+
+pCE <- as.data.frame(output$probability_cost_effective)
+pCE$sens <- c(0,rep(sens_riskfactor, n_sero_tests*6))
+pCE$spec <- c(0,rep(rep(spec_riskfactor, each=n_sero_tests),6))
+  
+#heat plot of cost-effectiveness
+  ggplot(data = pCE, aes(x = spec,
+             
+             y = sens)) +
+  
+  geom_tile(aes(fill=output$probability_cost_effective)) +
+  
+  scale_fill_gradient2(high     = "red4",
+                       
+                       mid      = "white",
+                       
+                       low      = "midnightblue",
+                       
+                       midpoint = 0.5) +
+  
+  scale_x_reverse(expand = c(0, 0)) +
+  
+  scale_y_continuous(expand = c(0, 0)) 
 
 
   # Now use the BCEA package to analyse the results
@@ -222,15 +325,7 @@ m_feasible <- bcea(e = t(output$total_qalys[c("No screening", "0.6 0.99 IgATTG",
                                                                                                                                        "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"))
 summary(m_feasible) 
 
-ICER_table <- data.frame(output$average_effects[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
-                                                "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
-                                                "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
-                                                "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")],
-                         output$average_costs[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", 
-                                                    "0.6 0.99 IgATTG plus HLA", 
-                                                    "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
-                                                    "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
-                                                    "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")])
+
 eib.plot(m, comparison = NULL, pos =
            c(1, 0), size = NULL, plot.cri = NULL, graph
          = c("ggplot2"))
@@ -241,7 +336,7 @@ ceac.plot(m, comparison = NULL,
 par(mfrow = c(1,1))
 mce <- multi.ce(m_feasible)
 ceaf.plot(mce, graph = c("ggplot2"))
-mce.plot(mce, color = c(1:13))
+mce.plot(mce, color = c(1:13), graph="ggplot2")
 
 ceplane.plot(m_feasible, comparison =
                NULL, pos = c(1, 0), graph = c("ggplot2"), point_colors = c(1:13))

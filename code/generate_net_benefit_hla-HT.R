@@ -294,6 +294,7 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   }
   
   cohort_vectors[, , , ] [is.na(cohort_vectors[, , , ] )] <- 0
+  colSums (cohort_vectors[, 2, , ], na.rm = FALSE, dims = 1)
   rowSums (cohort_vectors[, 2, , ], na.rm = FALSE, dims = 1)
   
   # Build an array to store the costs and QALYs accrued per cycle
@@ -488,7 +489,7 @@ output$probability_best <- rowMeans(output$ceac_calculation)
   
   for (i_sample in 1:n_samples) {
     for (i_test in 1:n_tests) {
-      output$pce_calculation[i_test,i_sample] <- sum(output$all_incremental_net_benefit[i_test,i_sample] > 0)/n_samples
+      output$pce_calculation[i_test,i_sample] <- sum(output$all_incremental_net_benefit[i_test,] > 0)/n_samples
     }}
   
   output$probability_cost_effective <- rowMeans(output$pce_calculation)
