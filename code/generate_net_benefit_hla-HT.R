@@ -168,8 +168,8 @@ generate_net_benefit <- function(input_parameters) {
     test_costs[, 1] <- 0
     test_costs[, i+1] <-  ifelse(post_test_probability_IgAEMA[,i] >= 0.9, input_parameters$test_cost_IgAEMA, 
                                       input_parameters$test_cost_IgAEMA + input_parameters$cost_biopsy)
-    test_costs[, n_combinations+i+1] <-  ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9, (input_parameters$test_cost_IgATTG + input_parameters$test_cost_IgAEMA + input_parameters$capital_cost_double_test), 
-                                                     (input_parameters$test_cost_IgATTG + input_parameters$test_cost_IgAEMA + input_parameters$capital_cost_double_test + input_parameters$cost_biopsy))
+    test_costs[, n_combinations+i+1] <-  ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9, (input_parameters$test_cost_IgATTG + input_parameters$test_cost_IgAEMA), 
+                                                     (input_parameters$test_cost_IgATTG + input_parameters$test_cost_IgAEMA + input_parameters$cost_biopsy))
     test_costs[, n_combinations+n_combinations+i+1] <-  ifelse(post_test_probability_IgATTG[,i] >= 0.9, input_parameters$test_cost_IgATTG, 
                                                                     input_parameters$test_cost_IgATTG + input_parameters$cost_biopsy)
     test_costs[, n_combinations+n_combinations+ n_combinations+i+1] <- 
@@ -181,10 +181,10 @@ generate_net_benefit <- function(input_parameters) {
     
     test_costs[, n_combinations + n_combinations+ n_combinations + n_combinations + i + 1] <-  
       ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9,
-             input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG + input_parameters$capital_cost_double_test,
+             input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG ,
       ifelse(post_test_probability_IgATTGplusEMA[,i] < 0.9 & post_test_probability_HLA[,i+n_combinations] >= 0.9, 
-             input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG +input_parameters$capital_cost_double_test + input_parameters$test_cost_HLA, 
-      input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG + input_parameters$capital_cost_double_test + input_parameters$test_cost_HLA + input_parameters$cost_biopsy))
+             input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG  + input_parameters$test_cost_HLA, 
+      input_parameters$test_cost_IgAEMA + input_parameters$test_cost_IgATTG + input_parameters$test_cost_HLA + input_parameters$cost_biopsy))
 
     test_costs[, n_combinations + n_combinations+ n_combinations + n_combinations+ n_combinations+i+1] <-  
       ifelse(post_test_probability_IgATTG[,i] >= 0.9,
@@ -271,7 +271,9 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   #scaling up true positives and false negatives 
   tp <- tp/(tp + fn_all)
   fn <- 1 - tp
-  
+  # tp <- array(1, dim=c(n_samples, n_tests), dimnames = list(NULL, t_names)) #not giving universal costs and QALYs for TP as markov model also includes costs and utilities for fps, biopsy, diagnosis
+  #fn <- array(0, dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
+   
   # Build an array to store the cohort vector at each cycle
   # Each cohort vector has n_states elements: probability of being in each state,
   # There is one cohort vector for each test, for each PSA sample, for each cycle.
@@ -370,7 +372,7 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   dim(apply(cohort_vectors, c(1, 2, 4), sum))
   x<-apply(cohort_vectors, c(1, 2, 4), sum)
   x[1,1,]/30 #total time spent in each state over all cycles
-  apply(x, c(1 , 3), mean)/n_cycles
+  apply(x, c(1, 3), mean)/n_cycles
   apply(x, c(1, 3), quantile, probs = 0.025)
   
   
@@ -451,8 +453,15 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   output$incremental_costs <-  output$average_costs - output$average_costs["No screening"]
   output$incremental_effects <-  output$average_effects -  output$average_effects["No screening"]
   
-  output$all_incremental_costs <-  output$total_costs - output$total_costs["No screening",]
-  output$all_incremental_effects <-  output$total_qalys -  output$total_qalys["No screening",]
+  output$all_incremental_costs <-   output$all_incremental_effects <- array(dim=c(n_tests,n_samples),  
+                                  dimnames=list(t_names,NULL))
+  
+  for (i_sample in 1:n_samples) {
+    for (i_test in 1:n_tests) {
+  output$all_incremental_costs[i_test, ] <-  output$total_costs[i_test,] - output$total_costs["No screening",]
+  output$all_incremental_effects[i_test, ] <-  output$total_qalys[i_test,] -  output$total_qalys["No screening",]
+    }}
+ 
   
   output$ICER <- output$incremental_costs/output$incremental_effects
 
@@ -491,8 +500,25 @@ output$probability_best <- rowMeans(output$ceac_calculation)
  # Probability cost-effective
   # This is the proportion of samples for which the incremental net benefit is positive
   output$all_incremental_net_benefit <- 20000*output$all_incremental_effects - output$all_incremental_costs
-
-  output$pce_calculation <- array(dim=c(n_tests,n_samples),  
+  output$incremental_net_benefit <- rowMeans(output$all_incremental_net_benefit)
+  
+  
+  output$inb_lci <-   output$inb_uci <- array(dim=c(n_tests,n_samples),  
+                                  dimnames=list(t_names,NULL))
+  
+  for (i_sample in 1:n_samples) {
+    for (i_test in 1:n_tests) {
+  output$inb_lci[i_test, i_sample] <- quantile(output$all_incremental_net_benefit[i_test,], 0.025)
+  output$inb_uci[i_test, i_sample] <- quantile(output$all_incremental_net_benefit[i_test,], 0.975)
+  
+    }
+  }
+  
+  output$inb_lci <- rowMeans(output$inb_lci)
+ 
+  output$inb_uci <- rowMeans(output$inb_uci)
+  
+   output$pce_calculation <- array(dim=c(n_tests,n_samples),  
                                    dimnames=list(t_names,NULL))
   
   for (i_sample in 1:n_samples) {

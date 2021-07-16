@@ -207,7 +207,8 @@ generate_model_parameters <- function(starting_age) {
   }
   
   disutility_biopsy_wait <- (utility_GFD - utility_undiagnosedCD) * 6/52 
-  disutility_fp <- -0.009 #from NICE guideline
+ 
+   disutility_fp <- ifelse(disutility_fp_diagnosis == "Yes", 0.009, 0) #from NICE guideline
   #############################################################################
   ## Costs ####################################################################
   #############################################################################
@@ -311,7 +312,7 @@ generate_model_parameters <- function(starting_age) {
   test_cost_HLA_beta <- (test_cost_HLA_se^2)/test_cost_HLA
   test_cost_HLA <- rgamma(n = n_samples, shape = test_cost_HLA_alpha, scale = test_cost_HLA_beta)
   
-  capital_cost_double_test <- 0.44 #based on NICE guideline capital cost for IgATTG + IgAEMA inflated to 2021 prices
+  #capital_cost_double_test <- 0.44 #based on NICE guideline capital cost for IgATTG + IgAEMA inflated to 2021 prices
   #############################################################################
   ## Accuracy of tests ########################################################
   #############################################################################
@@ -478,7 +479,7 @@ generate_model_parameters <- function(starting_age) {
                     NHL_probability_noGFD, death_probability_NHL, 
                     utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL, disutility_biopsy, disutility_biopsy_wait, disutility_fp,
                     cost_CDGFD, cost_osteoporosis, cost_undiagnosedCD, cost_IDA, cost_biopsy, probability_biopsy,
-                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, test_cost_IgAEMA, test_cost_IgATTG, test_cost_HLA, capital_cost_double_test,
+                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, test_cost_IgAEMA, test_cost_IgATTG, test_cost_HLA, 
                     sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_IgAEMA, spec_IgAEMA, sens_IgATTG, spec_IgATTG, cost_gfp, sens_biopsy, spec_biopsy, 
                     post_test_probability_IgAEMA, post_test_probability_IgATTGplusEMA, post_test_probability_IgATTG, pre_test_probability, pre_test_probability_overall,
                    tp_riskfactor, fn_riskfactor, fp_riskfactor, LR_HLA, sens_HLA, spec_HLA))

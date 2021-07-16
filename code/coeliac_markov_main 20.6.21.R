@@ -29,7 +29,7 @@ set.seed(14143)
   
   # Define the number and names of tests
   
-  n_tests <- (n_tests * n_combinations) + 1
+  n_tests <- (n_sero_tests * n_combinations) + 1
   
   t_names <-  c("No screening", outer(combinations_names, tests, FUN = "paste")[1:n_tests-1])
 
@@ -54,7 +54,9 @@ set.seed(14143)
   perspective <- "NHS" #Options are "NHS" or "NHS+OOP" if out-of-pocket costs for iron supplements and gluten free products are to be included
   
   population <- "adults" #Options are "adults" or "children"
-
+  
+  #sensitivity analyses
+disutility_fp_diagnosis <- "Yes" #Options are "Yes" or "No". Relates to long term annual disutility of -0.009 for people falsely diagnosed from NICE guideline
 
   
   #########################################################################################################################
@@ -113,16 +115,28 @@ set.seed(14143)
   par(mar = c(2, 1, 1, 1))
   
   #IGA EMA
-  plot(output$incremental_net_benefit[2:7],pch=19, ylim=c(-15000,20000), ylab = "Incremental net benefit", xlab = "sensitivity", main = "IGA EMA", xaxt="n" )
+  plot(output$incremental_net_benefit[2:7],pch=19, ylim=c(-15000,50000), ylab = "Incremental net benefit", xlab = "sensitivity", main = "IGA EMA", xaxt="n" )
  lines(output$incremental_net_benefit[2:7], lwd=2)
    abline(h=0)
   axis(1,                         # Define x-axis manually
        at = 1:6,
        labels = c(0.5, 0.6, 0.7, 0.8, 0.9, 1))
   lines(output$incremental_net_benefit[8:13], col = 2, lwd=2, lty=2)
-  lines(output$incremental_net_benefit[14:19], col = 3, lwd=, lty=3)
+  lines(output$incremental_net_benefit[14:19], col = 3, lwd=2, lty=3)
   lines(output$incremental_net_benefit[20:25], col = 4, lwd=2, lty=4)
   lines(output$incremental_net_benefit[26:31], col = 5, lwd=2, lty=5)
+  
+  lines(output$inb_lci[2:7], lwd=1)
+  lines(output$inb_lci[8:13], col = 2, lwd=1, lty=2)
+  lines(output$inb_lci[14:19], col = 3, lwd=1, lty=3)
+  lines(output$inb_lci[20:25], col = 4, lwd=1, lty=4)
+  lines(output$inb_lci[26:31], col = 5, lwd=1, lty=5)
+  
+  lines(output$inb_uci[2:7], lwd=1)
+  lines(output$inb_uci[8:13], col = 2, lwd=1, lty=2)
+  lines(output$inb_uci[14:19], col = 3, lwd=1, lty=3)
+  lines(output$inb_uci[20:25], col = 4, lwd=1, lty=4)
+  lines(output$inb_uci[26:31], col = 5, lwd=1, lty=5)
 
   #IGA TTG plus EMA
   plot(output$incremental_net_benefit[38:43],pch=19, ylim=c(-15000,20000), ylab = "Incremental net benefit", main = "IGA TTG plus EMA",xlab = "sensitivity", xaxt="n" )
