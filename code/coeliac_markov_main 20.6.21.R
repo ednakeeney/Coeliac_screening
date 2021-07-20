@@ -315,6 +315,48 @@ pCE$spec <- c(0,rep(rep(spec_riskfactor, each=n_sero_tests),6))
   scale_y_continuous(expand = c(0, 0)) 
 
 
+  #table of costs and QALYs
+  format.results<-function(x,n.digits=2)
+  {
+    paste(round(mean(x),digits=n.digits)," (",round(quantile(x,probs=0.025),digits=n.digits),", ",round(quantile(x,probs=0.975),digits=n.digits),")",sep="")
+  }
+  
+  feasible.strategies.qalys <- output$total_qalys[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                    "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                    "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                    "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]
+  feasible.strategies.costs <- output$total_costs[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                     "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                     "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                     "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]
+ feasible.strategies.netbenefit <- output$all_net_benefit[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                            "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                            "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                            "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]
+ feasible.strategies.inetbenefit <- output$all_incremental_net_benefit[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                            "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                            "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                            "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]
+   feasible.strategies.qalys.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  feasible.strategies.costs.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  feasible.strategies.netbenefit.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  feasible.strategies.inetbenefit.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+
+ for (i in 1:13) { 
+   feasible.strategies.qalys.table[,i] <- format.results(feasible.strategies.qalys[i,])
+   feasible.strategies.costs.table[,i] <- format.results(feasible.strategies.costs[i,])
+   feasible.strategies.netbenefit.table[,i] <- format.results(feasible.strategies.netbenefit[i,])
+   feasible.strategies.inetbenefit.table[,i] <- format.results(feasible.strategies.inetbenefit[i,])
+ }
+  
+  table <- data.frame(t(feasible.strategies.costs.table), t(feasible.strategies.qalys.table), t(feasible.strategies.netbenefit.table), t(feasible.strategies.inetbenefit.table))
+  colnames(table) <- c("Costs", "QALYs", "Net benefit £20,000", "Incremental net benefit v no screening")
+  rownames(table) <- c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                       "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                       "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                       "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")
+  
+  
   # Now use the BCEA package to analyse the results
  # pkgs <- c("MASS","Rtools","devtools")
   #repos <- c("https://cran.rstudio.com", "https://www.math.ntnu.no/inla/R/stable") 
@@ -361,7 +403,7 @@ toc()
 m <- bcea(e = t(output$total_qalys), c = t(output$total_costs), ref = 1, interventions = t_names, wtp = 20000)
 m$evi
 # Prevalence of CD (different for adults and children)
-cd_prevalence <- 0.1
+cd_prevalence <- 333767
 # Total population susceptible to CD (i.e. how many adults or children in UK)
 total_population <- 1200000
 # Assume test technology remains relevant for at least 10 years
@@ -369,5 +411,6 @@ technology_horizon <- 10
 discounted_population_size <- sum((1/1.035)^(0:(technology_horizon - 1))) * total_population * cd_prevalence
 population_evpi <- m$evi * discounted_population_size 
 
+info.rank(parameter = colnames(input_parameters), input = input_parameters, m, xlim = c(0,0.5), wtp=30000)
 
 
