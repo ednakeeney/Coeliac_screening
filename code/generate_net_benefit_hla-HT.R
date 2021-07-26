@@ -484,6 +484,7 @@ output$probability_best <- rowMeans(output$ceac_calculation)
 
 
  #cost breakdown
+output$test_costs_applied <- test_costs_applied
   output$test_costs <- colMeans(test_costs_applied) #costs of test and biopsies
   output$fp_costs <- colMeans(false_positive_costs_applied)
   output$diagnosis_costs <- colMeans(diagnosis_costs)

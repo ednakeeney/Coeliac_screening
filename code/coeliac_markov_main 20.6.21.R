@@ -20,8 +20,8 @@ set.seed(14143)
   n_sero_tests <- length(tests)
   
   #pre-test probabilities of coeliac disease 
-  sens_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.99, 0.9999)
-  spec_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.99, 0.9999)
+  sens_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.9999)
+  spec_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.9999)
   combinations <- expand.grid(sens_riskfactor = sens_riskfactor, spec_riskfactor = spec_riskfactor)
   combinations$x <- paste(combinations$sens_riskfactor, combinations$spec_riskfactor)
   combinations_names <- combinations$x
@@ -356,6 +356,20 @@ pCE$spec <- c(0,rep(rep(spec_riskfactor, each=n_sero_tests),6))
                        "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
                        "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")
   
+  write.csv(table, "results/table of results.csv")
+  
+  
+  #cost breakdown
+  feasible.strategies.testcosts <- output$test_costs_applied[,c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                    "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                    "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                    "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")]
+  
+  feasible.strategies.testcosts.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  for (i in 1:13) { 
+    feasible.strategies.testcosts.table[,i] <- format.results(feasible.strategies.testcosts[,i])
+
+  }
   
   # Now use the BCEA package to analyse the results
  # pkgs <- c("MASS","Rtools","devtools")
