@@ -195,6 +195,35 @@ generate_net_benefit <- function(input_parameters) {
   
   }
   
+  biopsy_costs <- array(dim=c(n_samples, n_tests), dimnames=list(NULL, t_names))
+  for (i in 1:n_combinations) {
+    biopsy_costs[, 1] <- 0
+    biopsy_costs[, i+1] <-  ifelse(post_test_probability_IgAEMA[,i] >= 0.9, 0, input_parameters$cost_biopsy)
+    biopsy_costs[, n_combinations+i+1] <-  ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9, 0, input_parameters$cost_biopsy)
+    biopsy_costs[, n_combinations+n_combinations+i+1] <-  ifelse(post_test_probability_IgATTG[,i] >= 0.9, 0, input_parameters$cost_biopsy)
+    biopsy_costs[, n_combinations+n_combinations+ n_combinations+i+1] <- 
+      ifelse(post_test_probability_IgAEMA[,i] >= 0.9,
+             0,
+             ifelse(post_test_probability_IgAEMA[,i] < 0.9 & post_test_probability_HLA[,i] >= 0.9,
+                  0,
+                    (input_parameters$cost_biopsy)))
+    
+    biopsy_costs[, n_combinations + n_combinations+ n_combinations + n_combinations + i + 1] <-  
+      ifelse(post_test_probability_IgATTGplusEMA[,i] >= 0.9,
+             0,
+             ifelse(post_test_probability_IgATTGplusEMA[,i] < 0.9 & post_test_probability_HLA[,i+n_combinations] >= 0.9, 
+                  0, 
+                    input_parameters$cost_biopsy))
+    
+    biopsy_costs[, n_combinations + n_combinations+ n_combinations + n_combinations+ n_combinations+i+1] <-  
+      ifelse(post_test_probability_IgATTG[,i] >= 0.9,
+            0,
+             ifelse(post_test_probability_IgATTG[,i] < 0.9 & post_test_probability_HLA[,i+n_combinations+n_combinations] >= 0.9, 
+                    0, 
+                    input_parameters$cost_biopsy))
+    
+  }
+  
 #Adding disutilities
   
   disutility_biopsy_screen <- array(dim=c(n_samples,n_tests),dimnames=list(NULL, t_names))
@@ -271,8 +300,8 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   #scaling up true positives and false negatives 
   tp <- tp/(tp + fn_all)
   fn <- 1 - tp
-  # tp <- array(1, dim=c(n_samples, n_tests), dimnames = list(NULL, t_names)) #not giving universal costs and QALYs for TP as markov model also includes costs and utilities for fps, biopsy, diagnosis
-  #fn <- array(0, dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
+# tp <- array(0, dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))  
+  #fn <- array(1, dim=c(n_samples, n_tests), dimnames = list(NULL, t_names))
    
   # Build an array to store the cohort vector at each cycle
   # Each cohort vector has n_states elements: probability of being in each state,
@@ -357,25 +386,23 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
       # Combine the cycle_costs and other costs to get total costs
       # Apply the discount factor 
       # (1 in first year, 1.035 in second, 1.035^2 in third, and so on)
-      total_costs[i_test, i_sample] <- test_costs_applied[i_sample, i_test] + fp_costs[i_sample, i_test] + diagnosis_costs[i_sample, i_test] + 
-        cycle_costs[i_test, i_sample, ] %*% disc_vec
+     total_costs[i_test, i_sample] <- test_costs_applied[i_sample, i_test] + fp_costs[i_sample, i_test] + diagnosis_costs[i_sample, i_test] + 
+      cycle_costs[i_test, i_sample, ] %*% disc_vec
+      
+     # total_costs[i_test, i_sample] <-  cycle_costs[i_test, i_sample, ] %*% disc_vec #for checking all FPs/TNs
       
       # Combine the cycle_qalys to get total qalys
       # Apply the discount factor 
       # (1 in first year, 1.035 in second, 1.035^2 in third, and so on)
-      total_qalys[i_test, i_sample] <- (cycle_qalys[i_test, i_sample, ]  - disutility_fp[i_sample, i_test] - biopsy_disutility_applied[i_sample, i_test] - biopsy_Wait_disutility_applied[i_sample, i_test]) %*%
-        disc_vec
+      total_qalys[i_test, i_sample] <- (cycle_qalys[i_test, i_sample, ]  - disutility_fp[i_sample, i_test] - biopsy_disutility_applied[i_sample, i_test] - biopsy_Wait_disutility_applied[i_sample, i_test])  %*% disc_vec
+                                   
+     # total_qalys[i_test, i_sample] <- (cycle_qalys[i_test, i_sample, ] 
+                                        #%*% disc_vec)  #for checking all FPs/TNs
     }
     
   }
 
-  dim(apply(cohort_vectors, c(1, 2, 4), sum))
-  x<-apply(cohort_vectors, c(1, 2, 4), sum)
-  x[1,1,]/30 #total time spent in each state over all cycles
-  apply(x, c(1, 3), mean)/n_cycles
-  apply(x, c(1, 3), quantile, probs = 0.025)
-  
-  
+
   
   
 
@@ -383,6 +410,8 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   ## Analysis of results ######################################################
   #############################################################################
   output <- list()
+  
+ 
   
   #Percentage having biopsy
   sum_IgAEMA <- rep(0, n_combinations)
@@ -450,6 +479,12 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
   # Average effects (in QALY units)
   output$average_effects <- rowMeans(total_qalys)
   
+  #for all TPs/FNs comparison
+  quantile(output$total_costs, 0.025)
+  quantile(output$total_costs, 0.975)
+  quantile(output$total_qalys, 0.025)
+  quantile(output$total_qalys, 0.975)
+  
   output$incremental_costs <-  output$average_costs - output$average_costs["No screening"]
   output$incremental_effects <-  output$average_effects -  output$average_effects["No screening"]
   
@@ -472,6 +507,9 @@ fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
 output$net_benefit<- 20000*output$average_effects - output$average_costs
 output$all_net_benefit <- 20000*total_qalys - total_costs
 
+quantile(output$all_net_benefit, 0.025)
+quantile(output$all_net_benefit, 0.975)
+
 output$ceac_calculation <- array(dim=c(n_tests,n_samples),  
                                  dimnames=list(t_names,NULL))
                                  
@@ -482,18 +520,38 @@ output$ceac_calculation[i_test,i_sample] <- ifelse(output$all_net_benefit[i_test
 
 output$probability_best <- rowMeans(output$ceac_calculation)
 
+#time spent in states
+dim(apply(cohort_vectors, c(1, 2, 4), sum))
+x<-apply(cohort_vectors, c(1, 2, 4), sum)
+x[1,1,]/n_cycles #total time spent in each state over all cycles
+time_in_states <- apply(x, c(1, 3), mean)/n_cycles
+apply(x, c(1, 3), quantile, probs = 0.025)
+
+output$time_in_states <- time_in_states[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                         "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                         "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                       "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]
+
+
+
 
  #cost breakdown
 output$test_costs_applied <- test_costs_applied
   output$test_costs <- colMeans(test_costs_applied) #costs of test and biopsies
-  output$fp_costs <- colMeans(false_positive_costs_applied)
-  output$diagnosis_costs <- colMeans(diagnosis_costs)
+  output$false_positive_costs_applied <- false_positive_costs_applied
+  output$fp_costs <- fp_costs
+  output$diagnosis_costs <- diagnosis_costs
   output$cycle_costs <- rowMeans(cycle_costs)
   
+
   #utility breakdown
   output$cycle_qalys <- rowMeans(cycle_qalys)
-  output$disutility_biopsy <- rowMeans(disutility_biopsy_screen)
+  output$disutility_biopsy <- biopsy_disutility_applied
+  output$disutility_biopsy_wait <- biopsy_Wait_disutility_applied
+  output$disutility_fp <- disutility_fp
  
+  
+  
  # Average incremental net benefit
   #output$average_inb_IgATTGplusIgAEMA_IgAEMA <- mean(output$incremental_net_benefit_IgATTGplusIgAEMA_IgAEMA)
   #output$average_inb_doubletest_IgAEMA <- mean(output$incremental_net_benefit_doubletest_IgAEMA)
@@ -529,7 +587,18 @@ output$test_costs_applied <- test_costs_applied
   
   output$probability_cost_effective <- rowMeans(output$pce_calculation)
   #output$probability_cost_effective_doubletest_IgAEMA <- sum(output$incremental_net_benefit_doubletest_IgAEMA > 0)/n_samples
-  return(output)
+  output$pce_lci <-   output$pce_uci <- array(dim=c(n_tests,n_samples),  
+                                              dimnames=list(t_names,NULL))
+  
+  for (i_sample in 1:n_samples) {
+    for (i_test in 1:n_tests) {
+      output$pce_lci[i_test, i_sample] <- quantile(output$pce_calculation[i_test,], 0.025)
+      output$pce_uci[i_test, i_sample] <- quantile(output$pce_calculation[i_test,], 0.975)
+      
+    }
+  }
+  
+    return(output)
 }
   
   

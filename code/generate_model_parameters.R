@@ -345,20 +345,45 @@ generate_model_parameters <- function(starting_age) {
   }
 
   #################################################################################################################
-  #Iga EMA adults
+ library(car)
+  
+   #Iga EMA adults
   #E(logitSE) coef = 1.993122, SE = 0.4508497
   #E(logitSP) coef = 5.54022, SE = 1.556019
   #Covariance = -0.2689103
+
+   #Sens 87% (77.7–92.8), Spec	 98% (97.4–98.6) Hopper 2008
+  expit <- function(logO) {
+    return(exp(logO)/(1 + exp(logO)))
+  }
+  logit <- function(p) {
+    return(log(p/(1-p)))
+  }
+  
+  sens_igaema_adults <- logit(0.87)
+  sens_igaema_adults_lci <- logit(0.777)
+  sens_igaema_adults_uci <- logit(0.928)
+ sd = (sens_igaema_adults_uci-sens_igaema_adults_lci)/3.92
+ sens_igaema_adults <- rnorm(n=n_samples, sens_igaema_adults, sd=sd)
+ sens_IgAEMA_adults <- expit(sens_igaema_adults)
+ 
+ spec_igaema_adults <- logit(0.98)
+ spec_igaema_adults_lci <- logit(0.974)
+ spec_igaema_adults_uci <- logit(0.986)
+ sd = (spec_igaema_adults_uci-spec_igaema_adults_lci)/3.92
+ spec_igaema_adults <- rnorm(n=n_samples, spec_igaema_adults, sd=sd)
+ spec_IgAEMA_adults <- expit(spec_igaema_adults)
+ 
   
   #random normal values with mean [1.993122, 5.54022] and SEs [0.4508497, 1.556019], and covariance -0.2689103
-  sigma_IgAEMA_adults <- matrix(c((0.4508497^2),-0.2689103,-0.2689103,(1.556019^2)), 2, 2)
-  mu_IgAEMA_adults <- c(1.993122, 5.54022)
-  x_IgAEMA_adults <- rmvnorm(n_samples, mu_IgAEMA_adults, sigma_IgAEMA_adults)
-  head(x_IgAEMA_adults)
-  SensSpec_IgAEMA_adults <- exp(x_IgAEMA_adults)/(1+exp(x_IgAEMA_adults))
-  sens_IgAEMA_adults <- SensSpec_IgAEMA_adults[,1]
-  spec_IgAEMA_adults <- SensSpec_IgAEMA_adults[,2]
-  LR_IgAEMA_adults <- SensSpec_IgAEMA_adults[,1]/ (1 - SensSpec_IgAEMA_adults[,2])
+ # sigma_IgAEMA_adults <- matrix(c((0.4508497^2),-0.2689103,-0.2689103,(1.556019^2)), 2, 2)
+  #mu_IgAEMA_adults <- c(1.993122, 5.54022)
+  #x_IgAEMA_adults <- rmvnorm(n_samples, mu_IgAEMA_adults, sigma_IgAEMA_adults)
+  #head(x_IgAEMA_adults)
+  #SensSpec_IgAEMA_adults <- exp(x_IgAEMA_adults)/(1+exp(x_IgAEMA_adults))
+  #sens_IgAEMA_adults <- SensSpec_IgAEMA_adults[,1]
+  #spec_IgAEMA_adults <- SensSpec_IgAEMA_adults[,2]
+  LR_IgAEMA_adults <- sens_IgAEMA_adults/ (1 - spec_IgAEMA_adults)
   
   post_test_odds_IgAEMA_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
   post_test_probability_IgAEMA_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
@@ -374,15 +399,31 @@ generate_model_parameters <- function(starting_age) {
   #E(logitSP) coef = 2.716697, SE = 0.4927015
   #Covariance = 0.1592634
   
+ # 95.8% (93.7 - 97.2)	94% (91 - 96.1) Wolf 2017
+  
+  sens_igaema_children <- logit(0.958)
+  sens_igaema_children_lci <- logit(0.937)
+  sens_igaema_children_uci <- logit(0.972)
+  sd = (sens_igaema_children_uci-sens_igaema_children_lci)/3.92
+  sens_igaema_children <- rnorm(n=n_samples, sens_igaema_children, sd=sd)
+  sens_IgAEMA_children <- expit(sens_igaema_children)
+  
+  spec_igaema_children <- logit(0.94)
+  spec_igaema_children_lci <- logit(0.91)
+  spec_igaema_children_uci <- logit(0.961)
+  sd = (spec_igaema_children_uci-spec_igaema_children_lci)/3.92
+  spec_igaema_children <- rnorm(n=n_samples, spec_igaema_children, sd=sd)
+  spec_IgAEMA_children <- expit(spec_igaema_children)
+  
   #random normal values with mean [2.839716, 2.716697] and variances [0.3886658, 0.4927015], and covariance 0.1592634
-  sigma <- matrix(c((0.3886658^2),0.1592634,0.1592634,(0.4927015^2)), 2, 2)
-  mu <- c(2.839716, 2.716697)
-  x <- rmvnorm(n_samples, mu, sigma)
-  head(x)
-  SensSpec_IgAEMA_children <- exp(x)/(1+exp(x))
-  sens_IgAEMA_children <- SensSpec_IgAEMA_children[,1]
-  spec_IgAEMA_children <- SensSpec_IgAEMA_children[,2]
-  LR_IgAEMA_children <- SensSpec_IgAEMA_children[,1]/ (1 - SensSpec_IgAEMA_children[,2])
+ # sigma <- matrix(c((0.3886658^2),0.1592634,0.1592634,(0.4927015^2)), 2, 2)
+  #mu <- c(2.839716, 2.716697)
+  #x <- rmvnorm(n_samples, mu, sigma)
+  #head(x)
+  #SensSpec_IgAEMA_children <- exp(x)/(1+exp(x))
+  #sens_IgAEMA_children <- SensSpec_IgAEMA_children[,1]
+  #spec_IgAEMA_children <- SensSpec_IgAEMA_children[,2]
+  LR_IgAEMA_children <- sens_IgAEMA_children/ spec_IgAEMA_children
   
   post_test_odds_IgAEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
   post_test_probability_IgAEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
@@ -407,52 +448,165 @@ generate_model_parameters <- function(starting_age) {
   }
   ##################################################################################################
   
-  #IgATTGplusEMA
+  #IgATTGplusEMA_adults
   #E(logitSE) coef = 1.939019, SE = 0.3723165
   #E(logitSP) coef = 4.252873, SE = 0.5569404
   #Covariance = -0.358947
   
-  #random normal values with mean [1.939019, 4.252873] and variances [0.3723165, 0.5569404], and covariance -0.358947
-  sigma <- matrix(c((0.3723165^2),-0.358947,-0.358947, (0.5569404^2)), 2, 2)
-  mu <- c(1.939019, 4.252873)
-  x <- rmvnorm(n_samples, mu, sigma)
-  head(x)
-  SensSpec_IgATTGplusEMA <- exp(x)/(1+exp(x))
-  sens_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,1]
-  spec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,2]
-  LR_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,1]/ (1 - SensSpec_IgATTGplusEMA[,2])
+  #85.7% (76.2–91.8) 	98.6% (98 –99) Hopper 2008
   
-  post_test_odds_IgATTGplusEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  post_test_probability_IgATTGplusEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTGplusEMA")))
+  sens_igattgplusema_adults <- logit(0.857)
+  sens_igattgplusema_adults_lci <- logit(0.762)
+  sens_igattgplusema_adults_uci <- logit(0.918)
+  sd = (sens_igattgplusema_adults_uci-sens_igattgplusema_adults_lci)/3.92
+  sens_igattgplusema_adults <- rnorm(n=n_samples, sens_igattgplusema_adults, sd=sd)
+  sens_IgATTGplusEMA_adults <- expit(sens_igattgplusema_adults)
+  
+  spec_igattgplusema_adults <- logit(0.986)
+  spec_igattgplusema_adults_lci <- logit(0.98)
+  spec_igattgplusema_adults_uci <- logit(0.99)
+  sd = (spec_igattgplusema_adults_uci-spec_igattgplusema_adults_lci)/3.92
+  spec_igattgplusema_adults <- rnorm(n=n_samples, spec_igattgplusema_adults, sd=sd)
+  spec_IgATTGplusEMA_adults <- expit(spec_igattgplusema_adults)
+  
+  #random normal values with mean [1.939019, 4.252873] and variances [0.3723165, 0.5569404], and covariance -0.358947
+  #sigma <- matrix(c((0.3723165^2),-0.358947,-0.358947, (0.5569404^2)), 2, 2)
+  #mu <- c(1.939019, 4.252873)
+  #x <- rmvnorm(n_samples, mu, sigma)
+  #head(x)
+  #SensSpec_IgATTGplusEMA <- exp(x)/(1+exp(x))
+  #sens_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,1]
+  #spec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,2]
+  LR_IgATTGplusEMA_adults <- sens_IgATTGplusEMA_adults/ (1 - spec_IgATTGplusEMA_adults)
+  
+  post_test_odds_IgATTGplusEMA_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  post_test_probability_IgATTGplusEMA_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTGplusEMA")))
   
   for (i in 1:n_combinations){
-    post_test_odds_IgATTGplusEMA[,i] <- pre_test_odds[,i] * LR_IgATTGplusEMA[1:n_samples]
-    post_test_probability_IgATTGplusEMA[,i] <- post_test_odds_IgATTGplusEMA[,i]/(1 + post_test_odds_IgATTGplusEMA[,i])
+    post_test_odds_IgATTGplusEMA_adults[,i] <- pre_test_odds[,i] * LR_IgATTGplusEMA_adults[1:n_samples]
+    post_test_probability_IgATTGplusEMA_adults[,i] <- post_test_odds_IgATTGplusEMA_adults[,i]/(1 + post_test_odds_IgATTGplusEMA_adults[,i])
   }
+  #IgATTGplusEMA_children
+ 
+  
+  #95.1% (92.9 - 96.8)	94.5% (91.5 - 96.7) Wolf 2017
+  
+  sens_igattgplusema_children<- logit(0.951)
+  sens_igattgplusema_children_lci <- logit(0.929)
+  sens_igattgplusema_children_uci <- logit(0.968)
+  sd = (sens_igattgplusema_children_uci-sens_igattgplusema_children_lci)/3.92
+  sens_igattgplusema_children<- rnorm(n=n_samples, sens_igattgplusema_children, sd=sd)
+  sens_IgATTGplusEMA_children <- expit(sens_igattgplusema_children)
+  
+  spec_igattgplusema_children <- logit(0.945)
+  spec_igattgplusema_children_lci <- logit(0.915)
+  spec_igattgplusema_children_uci <- logit(0.967)
+  sd = (spec_igattgplusema_children_uci-spec_igattgplusema_children_lci)/3.92
+  spec_igattgplusema_children <- rnorm(n=n_samples, spec_igattgplusema_children, sd=sd)
+  spec_IgATTGplusEMA_children <- expit(spec_igattgplusema_children)
+  
+ 
+  LR_IgATTGplusEMA_children <- sens_IgATTGplusEMA_children/ (1 - spec_IgATTGplusEMA_children)
+  
+  post_test_odds_IgATTGplusEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  post_test_probability_IgATTGplusEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTGplusEMA")))
+ 
+   for (i in 1:n_combinations){
+    post_test_odds_IgATTGplusEMA_children[,i] <- pre_test_odds[,i] * LR_IgATTGplusEMA_children[1:n_samples]
+    post_test_probability_IgATTGplusEMA_children[,i] <- post_test_odds_IgATTGplusEMA_children[,i]/(1 + post_test_odds_IgATTGplusEMA_children[,i])
+  }
+  
+  post_test_probability_IgATTGplusEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTGplusEMA")))
+  sens_IgATTGplusEMA <- rep(0, times = n_samples)
+  spec_IgATTGplusEMA <- rep(0, times = n_samples)
+  for(i_sample in 1:n_samples){
+    for (i in 1:n_combinations){
+      post_test_probability_IgATTGplusEMA[i_sample,i] <- ifelse(population == "adults", post_test_probability_IgATTGplusEMA_adults[i_sample,i], post_test_probability_IgATTGplusEMA_children[i_sample,i])
+    }}
+  
+  for(i_sample in 1:n_samples){
+    sens_IgATTGplusEMA[i_sample] <- ifelse(population == "adults", sens_IgATTGplusEMA_adults[i_sample], sens_IgATTGplusEMA_children[i_sample])
+    spec_IgATTGplusEMA[i_sample] <- ifelse(population == "adults", spec_IgATTGplusEMA_adults[i_sample], spec_IgATTGplusEMA_children[i_sample])
+  }
+  
+  
 
   ######################################################################################################################
   
-  #IgATTG
-  #E(logitSE) coef = 2.272053, SE = 0.173953
-  #E(logitSP) coef = 1.940514, se = 0.1290671
-  #Covariance = 0.0019497
-  sigma <- matrix(c((0.173953^2),0.0019497,0.0019497,(0.1290671^2)), 2, 2)
-  mu <- c(2.272053, 1.940514)
-  x <- rmvnorm(n_samples, mu, sigma)
-  head(x)
-  SensSpec_IgATTG <- exp(x)/(1+exp(x))
-  sens_IgATTG <- SensSpec_IgATTG[,1]
-  spec_IgATTG <- SensSpec_IgATTG[,2]
-  LR_IgATTG <- SensSpec_IgATTG[,1]/ (1 - SensSpec_IgATTG[,2])
+  #Iga TTG adults
+
   
-  post_test_odds_IgATTG <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  post_test_probability_IgATTG <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTG")))
+  #90.9% (82.4–94.5) 	90.9% (89.5–92.1) Hopper 2008
+
+  sens_igattg_adults <- logit(0.909)
+  sens_igattg_adults_lci <- logit(0.824)
+  sens_igattg_adults_uci <- logit(0.945)
+  sd = (sens_igattg_adults_uci-sens_igattg_adults_lci)/3.92
+  sens_igattg_adults <- rnorm(n=n_samples, sens_igattg_adults, sd=sd)
+  sens_IgATTG_adults <- expit(sens_igattg_adults)
+  
+  spec_igattg_adults <- logit(0.909)
+  spec_igattg_adults_lci <- logit(0.895)
+  spec_igattg_adults_uci <- logit(0.921)
+  sd = (spec_igattg_adults_uci-spec_igattg_adults_lci)/3.92
+  spec_igattg_adults <- rnorm(n=n_samples, spec_igattg_adults, sd=sd)
+  spec_IgATTG_adults <- expit(spec_igattg_adults)
+  
+  
+  LR_IgATTG_adults <- sens_IgATTG_adults/ (1 - spec_IgATTG_adults)
+  
+  post_test_odds_IgATTG_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  post_test_probability_IgATTG_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
   
   for (i in 1:n_combinations){
-    post_test_odds_IgATTG[,i] <- pre_test_odds[,i] * LR_IgATTG
-    post_test_probability_IgATTG[,i] <- post_test_odds_IgATTG[,i]/(1 + post_test_odds_IgATTG[,i])
+    post_test_odds_IgATTG_adults[,i] <- pre_test_odds[,i] * LR_IgATTG_adults
+    post_test_probability_IgATTG_adults[,i] <- post_test_odds_IgATTG_adults[,i]/(1 + post_test_odds_IgATTG_adults[,i])
   }
+  
+  
+  #Iga TTG children
+  
+  
+  # 97.1% (95.3 -98.3)	89.3% (85.5-92.1)Wolf 2017
+  
+  sens_igaTTG_children <- logit(0.971)
+  sens_igaTTG_children_lci <- logit(0.953)
+  sens_igaTTG_children_uci <- logit(0.983)
+  sd = (sens_igaTTG_children_uci-sens_igaTTG_children_lci)/3.92
+  sens_igaTTG_children <- rnorm(n=n_samples, sens_igaTTG_children, sd=sd)
+  sens_IgATTG_children <- expit(sens_igaTTG_children)
+  
+  spec_igaTTG_children <- logit(0.893)
+  spec_igaTTG_children_lci <- logit(0.855)
+  spec_igaTTG_children_uci <- logit(0.921)
+  sd = (spec_igaTTG_children_uci-spec_igaTTG_children_lci)/3.92
+  spec_igaTTG_children <- rnorm(n=n_samples, spec_igaTTG_children, sd=sd)
+  spec_IgATTG_children <- expit(spec_igaTTG_children)
+  
 
+  LR_IgATTG_children <- sens_IgATTG_children/ spec_IgATTG_children
+  
+  post_test_odds_IgATTG_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  post_test_probability_IgATTG_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
+  
+  for (i in 1:n_combinations){
+    post_test_odds_IgATTG_children[,i] <- pre_test_odds[,i] * LR_IgATTG_children
+    post_test_probability_IgATTG_children[,i] <- post_test_odds_IgATTG_children[,i]/(1 + post_test_odds_IgATTG_children[,i])
+  }
+  
+  
+  post_test_probability_IgATTG <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTG")))
+  sens_IgATTG <- rep(0, times = n_samples)
+  spec_IgATTG <- rep(0, times = n_samples)
+  for(i_sample in 1:n_samples){
+    for (i in 1:n_combinations){
+      post_test_probability_IgATTG[i_sample,i] <- ifelse(population == "adults", post_test_probability_IgATTG_adults[i_sample,i], post_test_probability_IgATTG_children[i_sample,i])
+    }}
+  
+  for(i_sample in 1:n_samples){
+    sens_IgATTG[i_sample] <- ifelse(population == "adults", sens_IgATTG_adults[i_sample], sens_IgATTG_children[i_sample])
+    spec_IgATTG[i_sample] <- ifelse(population == "adults", spec_IgATTG_adults[i_sample], spec_IgATTG_children[i_sample])
+  }
   ######################################################################################################################
   
   #HLA

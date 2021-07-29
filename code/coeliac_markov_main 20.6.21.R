@@ -20,8 +20,8 @@ set.seed(14143)
   n_sero_tests <- length(tests)
   
   #pre-test probabilities of coeliac disease 
-  sens_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.9999)
-  spec_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.9999)
+  sens_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.99, 0.9999)
+  spec_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.99, 0.9999)
   combinations <- expand.grid(sens_riskfactor = sens_riskfactor, spec_riskfactor = spec_riskfactor)
   combinations$x <- paste(combinations$sens_riskfactor, combinations$spec_riskfactor)
   combinations_names <- combinations$x
@@ -49,7 +49,7 @@ set.seed(14143)
   
   # Define simulation parameters
   # This is the number of PSA samples to use
-  n_samples <- 100
+  n_samples <- 1000
  
   perspective <- "NHS" #Options are "NHS" or "NHS+OOP" if out-of-pocket costs for iron supplements and gluten free products are to be included
   
@@ -74,7 +74,8 @@ disutility_fp_diagnosis <- "Yes" #Options are "Yes" or "No". Relates to long ter
   
   #generate results
   output <- generate_net_benefit(input_parameters)
-  output
+
+  
   
   strategies_excluded <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit < 0)) #strategies with ENB less than no screening
   strategies_included <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit > 0)) #strategies with ENB greater than no screening
@@ -104,10 +105,7 @@ disutility_fp_diagnosis <- "Yes" #Options are "Yes" or "No". Relates to long ter
                     "IgATTGplusHLA"))
   
   dev.off()
-  write.csv(data.frame(output$test_costs, output$diagnosis_costs, output$fp_costs, output$cycle_costs, output$average_costs), "results/cost breakdown.csv")
-  write.csv(data.frame(output$cycle_qalys, output$disutility_biopsy), "results/qaly breakdown.csv")
  
-  
   
    #plots of incremental net benefit
  jpeg("results/inbplot.jpeg")
@@ -115,6 +113,7 @@ disutility_fp_diagnosis <- "Yes" #Options are "Yes" or "No". Relates to long ter
   par(mar = c(2, 1, 1, 1))
   
   #IGA EMA
+
   plot(output$incremental_net_benefit[2:7],pch=19, ylim=c(-15000,50000), ylab = "Incremental net benefit", xlab = "sensitivity", main = "IGA EMA", xaxt="n" )
  lines(output$incremental_net_benefit[2:7], lwd=2)
    abline(h=0)
@@ -139,7 +138,7 @@ disutility_fp_diagnosis <- "Yes" #Options are "Yes" or "No". Relates to long ter
   lines(output$inb_uci[26:31], col = 5, lwd=1, lty=5)
 
   #IGA TTG plus EMA
-  plot(output$incremental_net_benefit[38:43],pch=19, ylim=c(-15000,20000), ylab = "Incremental net benefit", main = "IGA TTG plus EMA",xlab = "sensitivity", xaxt="n" )
+  plot(output$incremental_net_benefit[38:43],pch=19, ylim=c(-15000,50000), ylab = "Incremental net benefit", main = "IGA TTG plus EMA",xlab = "sensitivity", xaxt="n" )
   lines(output$incremental_net_benefit[38:43], lwd=2)
   abline(h=0)
   axis(1,                         # Define x-axis manually
@@ -149,9 +148,21 @@ disutility_fp_diagnosis <- "Yes" #Options are "Yes" or "No". Relates to long ter
   lines(output$incremental_net_benefit[50:55], col = 3, lwd = 2, lty = 3)
   lines(output$incremental_net_benefit[56:61], col = 4, lwd = 2, lty = 4)
   lines(output$incremental_net_benefit[62:67], col = 5, lwd = 2, lty = 5)
+  
+  lines(output$inb_lci[38:43], lwd=1)
+  lines(output$inb_lci[44:49], col = 2, lwd=1, lty=2)
+  lines(output$inb_lci[50:55], col = 3, lwd=1, lty=3)
+  lines(output$inb_lci[56:61], col = 4, lwd=1, lty=4)
+  lines(output$inb_lci[62:67], col = 5, lwd=1, lty=5)
+  
+  lines(output$inb_uci[38:43], lwd=1)
+  lines(output$inb_uci[44:49], col = 2, lwd=1, lty=2)
+  lines(output$inb_uci[50:55], col = 3, lwd=1, lty=3)
+  lines(output$inb_uci[56:61], col = 4, lwd=1, lty=4)
+  lines(output$inb_uci[62:67], col = 5, lwd=1, lty=5)
 
   #IGA TTG
-  plot(output$incremental_net_benefit[74:79],pch=19, ylim=c(-15000,20000), ylab = "Incremental net benefit", main = "IGA TTG", xlab = "sensitivity", xaxt="n" )
+  plot(output$incremental_net_benefit[74:79],pch=19, ylim=c(-15000,50000), ylab = "Incremental net benefit", main = "IGA TTG", xlab = "sensitivity", xaxt="n" )
 lines(output$incremental_net_benefit[74:79], lwd = 2)
 abline(h=0)
 axis(1,                         # Define x-axis manually
@@ -161,9 +172,21 @@ axis(1,                         # Define x-axis manually
   lines(output$incremental_net_benefit[86:91], col = 3, lwd = 2, lty = 3)
   lines(output$incremental_net_benefit[92:97], col = 4, lwd = 2, lty = 4)
   lines(output$incremental_net_benefit[98:103], col = 5, lwd = 2, lty = 5)
+  
+  lines(output$inb_lci[74:79], lwd=1)
+  lines(output$inb_lci[80:85], col = 2, lwd=1, lty=2)
+  lines(output$inb_lci[86:91], col = 3, lwd=1, lty=3)
+  lines(output$inb_lci[92:97], col = 4, lwd=1, lty=4)
+  lines(output$inb_lci[98:103], col = 5, lwd=1, lty=5)
+  
+  lines(output$inb_uci[74:79], lwd=1)
+  lines(output$inb_uci[80:85], col = 2, lwd=1, lty=2)
+  lines(output$inb_uci[86:91], col = 3, lwd=1, lty=3)
+  lines(output$inb_uci[92:97], col = 4, lwd=1, lty=4)
+  lines(output$inb_uci[98:103], col = 5, lwd=1, lty=5)
 
 #IgA EMA plus HLA 
-   plot(output$incremental_net_benefit[110:115],pch=19, ylim=c(-15000, 20000),ylab = "Incremental net benefit", main = "IgA EMA plus HLA", xlab = "sensitivity", xaxt="n" )
+   plot(output$incremental_net_benefit[110:115],pch=19, ylim=c(-15000, 50000),ylab = "Incremental net benefit", main = "IgA EMA plus HLA", xlab = "sensitivity", xaxt="n" )
    lines(output$incremental_net_benefit[110:115], lwd = 2)
    abline(h=0)
    axis(1,                         # Define x-axis manually
@@ -173,9 +196,22 @@ axis(1,                         # Define x-axis manually
   lines(output$incremental_net_benefit[122:127], col = 3, lwd = 2, lty = 3)
   lines(output$incremental_net_benefit[128:133], col = 4, lwd = 2, lty = 4)
   lines(output$incremental_net_benefit[134:139], col = 5, lwd = 2, lty = 5)
+  
+  
+  lines(output$inb_lci[110:115], lwd=1)
+  lines(output$inb_lci[116:121], col = 2, lwd=1, lty=2)
+  lines(output$inb_lci[122:127], col = 3, lwd=1, lty=3)
+  lines(output$inb_lci[128:133], col = 4, lwd=1, lty=4)
+  lines(output$inb_lci[134:139], col = 5, lwd=1, lty=5)
+  
+  lines(output$inb_uci[110:115], lwd=1)
+  lines(output$inb_uci[116:121], col = 2, lwd=1, lty=2)
+  lines(output$inb_uci[122:127], col = 3, lwd=1, lty=3)
+  lines(output$inb_uci[128:133], col = 4, lwd=1, lty=4)
+  lines(output$inb_uci[134:139], col = 5, lwd=1, lty=5)
 
 #IgA TTG plus EMA plus HLA
-   plot(output$incremental_net_benefit[146:151],pch=19, ylim=c(-15000, 20000),ylab = "Incremental net benefit", main = "IgATTG plus EMA plus HLA", xlab = "sensitivity", xaxt="n" )
+   plot(output$incremental_net_benefit[146:151],pch=19, ylim=c(-15000, 50000),ylab = "Incremental net benefit", main = "IgATTG plus EMA plus HLA", xlab = "sensitivity", xaxt="n" )
    lines(output$incremental_net_benefit[146:151], lwd = 2)
    abline(h=0)
    axis(1,                         # Define x-axis manually
@@ -185,9 +221,22 @@ axis(1,                         # Define x-axis manually
   lines(output$incremental_net_benefit[158:163], col = 3, lwd = 2, lty = 3)
   lines(output$incremental_net_benefit[164:169], col = 4, lwd = 2, lty = 4)
   lines(output$incremental_net_benefit[170:175], col = 5, lwd = 2, lty = 5)
+  
+  lines(output$inb_lci[146:151], lwd=1)
+  lines(output$inb_lci[152:157], col = 2, lwd=1, lty=2)
+  lines(output$inb_lci[158:163], col = 3, lwd=1, lty=3)
+  lines(output$inb_lci[164:169], col = 4, lwd=1, lty=4)
+  lines(output$inb_lci[170:175], col = 5, lwd=1, lty=5)
+  
+  
+  lines(output$inb_uci[145:151], lwd=1)
+  lines(output$inb_uci[152:157], col = 2, lwd=1, lty=2)
+  lines(output$inb_uci[158:163], col = 3, lwd=1, lty=3)
+  lines(output$inb_uci[164:169], col = 4, lwd=1, lty=4)
+  lines(output$inb_uci[170:175], col = 5, lwd=1, lty=5)
  
   #IgA TTG plus HLA
-  plot(output$incremental_net_benefit[182:187],pch=2, ylim=c(-15000, 20000),ylab = "Incremental net benefit", main = "IgA TTG plus HLA", xlab = "sensitivity", xaxt="n" )
+  plot(output$incremental_net_benefit[182:187],pch=2, ylim=c(-15000, 50000),ylab = "Incremental net benefit", main = "IgA TTG plus HLA", xlab = "sensitivity", xaxt="n" )
   lines(output$incremental_net_benefit[182:187], lwd = 2)
   abline(h=0)
   axis(1,                         # Define x-axis manually
@@ -197,6 +246,18 @@ axis(1,                         # Define x-axis manually
   lines(output$incremental_net_benefit[194:199], col = 3, lwd = 2, lty = 3)
   lines(output$incremental_net_benefit[200:205], col = 4, lwd = 2, lty = 4)
   lines(output$incremental_net_benefit[206:211], col = 5, lwd = 2, lty = 5)
+  
+  lines(output$inb_lci[182:187], lwd=1)
+  lines(output$inb_lci[188:193], col = 2, lwd=1, lty=2)
+  lines(output$inb_lci[194:199], col = 3, lwd=1, lty=3)
+  lines(output$inb_lci[200:205], col = 4, lwd=1, lty=4)
+  lines(output$inb_lci[206:211], col = 5, lwd=1, lty=5)
+  
+  lines(output$inb_uci[182:187], lwd=1)
+  lines(output$inb_uci[188:193], col = 2, lwd=1, lty=2)
+  lines(output$inb_uci[194:199], col = 3, lwd=1, lty=3)
+  lines(output$inb_uci[200:205], col = 4, lwd=1, lty=4)
+  lines(output$inb_uci[206:211], col = 5, lwd=1, lty=5)
 
 dev.off()
 
@@ -283,7 +344,7 @@ axis(1,                         # Define x-axis manually
 lines(output$probability_cost_effective[188:193], col = 2, lwd = 2, lty = 2)
 lines(output$probability_cost_effective[194:199], col = 3, lwd = 2, lty = 3)
 lines(output$probability_cost_effective[200:205], col = 4, lwd = 2, lty = 4)
-lines(output$probability_cost_effectivet[206:211], col = 5, lwd = 2, lty = 5)
+lines(output$probability_cost_effective[206:211], col = 5, lwd = 2, lty = 5)
 
 dev.off()
 
@@ -329,49 +390,128 @@ pCE$spec <- c(0,rep(rep(spec_riskfactor, each=n_sero_tests),6))
                                                      "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
                                                      "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
                                                      "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]
- feasible.strategies.netbenefit <- output$all_net_benefit[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
-                                                            "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
-                                                            "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
-                                                            "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]
+# feasible.strategies.netbenefit <- output$all_net_benefit[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+ #                                                           "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+  #                                                          "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+   #                                                         "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]
  feasible.strategies.inetbenefit <- output$all_incremental_net_benefit[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
                                                             "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
                                                             "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
                                                             "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]
    feasible.strategies.qalys.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
   feasible.strategies.costs.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
-  feasible.strategies.netbenefit.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+ # feasible.strategies.netbenefit.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
   feasible.strategies.inetbenefit.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
 
  for (i in 1:13) { 
-   feasible.strategies.qalys.table[,i] <- format.results(feasible.strategies.qalys[i,])
-   feasible.strategies.costs.table[,i] <- format.results(feasible.strategies.costs[i,])
-   feasible.strategies.netbenefit.table[,i] <- format.results(feasible.strategies.netbenefit[i,])
-   feasible.strategies.inetbenefit.table[,i] <- format.results(feasible.strategies.inetbenefit[i,])
+   feasible.strategies.qalys.table[,i] <- format.results(feasible.strategies.qalys[i,], n.digits = 4)
+   feasible.strategies.costs.table[,i] <- format.results(feasible.strategies.costs[i,], n.digits = 0)
+  # feasible.strategies.netbenefit.table[,i] <- format.results(feasible.strategies.netbenefit[i,], n.digits = 0)
+   feasible.strategies.inetbenefit.table[,i] <- format.results(feasible.strategies.inetbenefit[i,], n.digits = 0)
  }
   
-  table <- data.frame(t(feasible.strategies.costs.table), t(feasible.strategies.qalys.table), t(feasible.strategies.netbenefit.table), t(feasible.strategies.inetbenefit.table))
-  colnames(table) <- c("Costs", "QALYs", "Net benefit £20,000", "Incremental net benefit v no screening")
+  table <- data.frame(t(feasible.strategies.costs.table), t(feasible.strategies.qalys.table), t(feasible.strategies.inetbenefit.table))
+  colnames(table) <- c("Costs", "QALYs", "Incremental net benefit v no screening")
   rownames(table) <- c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
                        "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
                        "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
                        "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")
-  
+  table <-  table[order( table$`Incremental net benefit v no screening`),]
   write.csv(table, "results/table of results.csv")
-  
-  
+ 
+  #for CEAC, if doing in excel. can also do using BCEA
+   write.csv(t(output$total_qalys[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                 "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                 "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                 "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]), "qalys_feasible.csv")
+  write.csv(t(output$total_costs[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                 "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                 "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                 "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]), "costs_feasible.csv")
   #cost breakdown
   feasible.strategies.testcosts <- output$test_costs_applied[,c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
                                                     "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
                                                     "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
                                                     "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")]
-  
-  feasible.strategies.testcosts.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  feasible.strategies.fpcosts <- output$fp_costs[,c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                                "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                                "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                                "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")]
+  feasible.strategies.diagnosiscosts <- output$diagnosis_costs[,c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                                        "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                                        "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                                        "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")]
+ 
+  feasible.strategies.cyclecosts <- output$cycle_costs[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                                  "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                                 "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                                  "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")]
+   feasible.strategies.testcosts.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  feasible.strategies.fpcosts.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  feasible.strategies.diagnosiscosts.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  feasible.strategies.cyclecosts.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
   for (i in 1:13) { 
     feasible.strategies.testcosts.table[,i] <- format.results(feasible.strategies.testcosts[,i])
-
+    feasible.strategies.fpcosts.table[,i] <- format.results(feasible.strategies.fpcosts[,i])
+    feasible.strategies.diagnosiscosts.table[,i] <- format.results(feasible.strategies.diagnosiscosts[,i])
+   feasible.strategies.cyclecosts.table[i] <- format.results(feasible.strategies.cyclecosts[i])
   }
   
-  # Now use the BCEA package to analyse the results
+  cost_breakdown_table <- data.frame(t(feasible.strategies.testcosts.table), t(feasible.strategies.fpcosts.table), t(feasible.strategies.diagnosiscosts.table), t(feasible.strategies.cyclecosts.table))
+  colnames(cost_breakdown_table) <- c("Test costs", "False positive costs", "Diagnosis costs", "Cycle costs")
+  rownames(cost_breakdown_table) <- c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                       "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                       "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                       "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")
+  
+  write.csv(cost_breakdown_table, "results/cost breakdown table.csv")
+ 
+  
+  #utility breakdown
+  feasible.strategies.disutilitybiopsy <- output$disutility_biopsy[,c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                                "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                                "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                                "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")]
+  feasible.strategies.disutilitybiopsywait <- output$disutility_biopsy_wait[,c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                    "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                    "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                    "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")]
+  feasible.strategies.disutilityfp <- output$disutility_fp[,c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                                  "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                                  "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                                  "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")]
+  
+  feasible.strategies.cycleqalys <- output$cycle_qalys[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                                         "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                                         "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                                         "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")]
+  feasible.strategies.disutilitybiopsy.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  feasible.strategies.disutilitybiopsywait.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  feasible.strategies.disutilityfp.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  feasible.strategies.cycleqalys.table <- array(dim=c(1, 13), dimnames = list(NULL, NULL))
+  for (i in 1:13) { 
+    feasible.strategies.disutilitybiopsy.table[,i] <- format.results(feasible.strategies.disutilitybiopsy[,i], n.digits = 4)
+    feasible.strategies.disutilitybiopsywait.table[,i] <- format.results(feasible.strategies.disutilitybiopsywait[,i], n.digits = 4)
+    feasible.strategies.disutilityfp.table[,i] <- format.results(feasible.strategies.disutilityfp[,i], n.digits = 4)
+    feasible.strategies.cycleqalys.table[i] <- format.results(feasible.strategies.cycleqalys[i], n.digits = 4)
+  }
+  
+  qaly_breakdown_table <- data.frame(t(feasible.strategies.cycleqalys.table), t(feasible.strategies.disutilityfp.table), t(feasible.strategies.disutilitybiopsywait.table), t(feasible.strategies.disutilitybiopsy.table))
+  colnames(qaly_breakdown_table) <- c("Cycle QALYs", "Disutility FP", "Disutility waiting for biopsy", "Disutility biopsy")
+  rownames(qaly_breakdown_table) <- c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                      "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                      "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                      "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA")
+  
+  write.csv(qaly_breakdown_table, "results/qaly breakdown table.csv")
+  
+  #time in states
+  
+  time_in_states <- output$time_in_states
+  
+  write.csv(output$time_in_states, "results/time in states.csv")
+  
+   # Now use the BCEA package to analyse the results
  # pkgs <- c("MASS","Rtools","devtools")
   #repos <- c("https://cran.rstudio.com", "https://www.math.ntnu.no/inla/R/stable") 
   #install.packages(pkgs,repos=repos,dependencies = "Depends")
@@ -389,28 +529,29 @@ m_feasible <- bcea(e = t(output$total_qalys[c("No screening", "0.6 0.99 IgATTG",
                                               "0.6 0.99 IgATTG plus HLA", 
                                             "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
                                              "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
-                                           "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]), ref=1, interventions = c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
-                                                                                                                                        "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
-                                                                                                                                       "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
-                                                                                                                                       "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"))
+                                           "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]), ref=1, 
+                   interventions = c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
+                                    "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
+                                  "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
+                                              "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"))
 summary(m_feasible) 
 
 
-eib.plot(m, comparison = NULL, pos =
+eib.plot(m_feasible, comparison = NULL, pos =
            c(1, 0), size = NULL, plot.cri = NULL, graph
          = c("ggplot2"))
-evi.plot(m, graph = c("base", "ggplot2",
+evi.plot(m_feasible, graph = c("base", "ggplot2",
                        "plotly"))
-ceac.plot(m, comparison = NULL,
+ceac.plot(m_feasible, comparison = NULL,
           pos = FALSE, graph = c("ggplot2"))
 par(mfrow = c(1,1))
 mce <- multi.ce(m_feasible)
 ceaf.plot(mce, graph = c("ggplot2"))
-mce.plot(mce, color = c(1:13), graph="ggplot2")
+mce.plot(mce, color = c(1:13)) #CEAC 
 
 ceplane.plot(m_feasible, comparison =
                NULL, pos = c(1, 0), graph = c("ggplot2"), point_colors = c(1:13))
-sim.table(m)
+sim.table(m_feasible)
 toc()
 
 # Calculate population EVPI
@@ -425,6 +566,17 @@ technology_horizon <- 10
 discounted_population_size <- sum((1/1.035)^(0:(technology_horizon - 1))) * total_population * cd_prevalence
 population_evpi <- m$evi * discounted_population_size 
 
-info.rank(parameter = colnames(input_parameters), input = input_parameters, m, xlim = c(0,0.5), wtp=30000)
+#info-rank
+utility_parameters <- data.frame(input_parameters$utility_GFD, input_parameters$utility_undiagnosedCD, input_parameters$disutility_subfertility, 
+                                 input_parameters$disutility_osteoporosis, input_parameters$disutility_NHL, input_parameters$disutility_biopsy, 
+                                 input_parameters$disutility_biopsy_wait, input_parameters$disutility_fp)
+cost_parameters <- data.frame( input_parameters$cost_CDGFD, input_parameters$cost_osteoporosis, input_parameters$cost_undiagnosedCD, 
+                               input_parameters$cost_IDA, input_parameters$cost_biopsy, 
+                               input_parameters$cost_subfertility, input_parameters$cost_NHL,input_parameters$cost_diagnosis,
+                               input_parameters$test_cost_IgAEMA, input_parameters$test_cost_IgATTG, input_parameters$test_cost_HLA)
+info.rank(parameter = colnames(input_parameters), input = input_parameters, m_feasible, xlim = c(0,0.5), wtp=30000)
+info.rank(parameter = colnames(utility_parameters), input = utility_parameters, m_feasible, xlim = c(0,0.5), wtp=30000)
+info.rank(parameter = colnames(cost_parameters), input = cost_parameters, m_feasible, xlim = c(0,0.5), wtp=30000)
+
 
 
