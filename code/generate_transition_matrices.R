@@ -1,6 +1,10 @@
-generate_transition_matrices <- function(input_parameters) {
+generate_transition_matrices <- function(input_parameters, population = NULL) {
  
-   starting_age <- ifelse(population == "adults", 50, 10) #based on mean age in under and over 18s in CPRD cost data
+  if(population == "children") percentage_male <- 0.5
+  if(population == "men") percentage_male <- 1.0
+  if(population == "women") percentage_male <- 0.0
+  
+   starting_age <- ifelse(population == "men" | population == "women", 50, 10) #based on mean age in under and over 18s in CPRD cost data
   n_cycles <- 90 - starting_age
   
   transition_matrices <- array(dim = c(n_samples, n_cycles, n_states, n_states),
@@ -34,7 +38,7 @@ generate_transition_matrices <- function(input_parameters) {
                                                    input_parameters$subfertility_probability_noGFD_40, input_parameters$subfertility_probability_noGFD_50, input_parameters$subfertility_probability_noGFD_60,
                                                    input_parameters$subfertility_probability_noGFD_70, input_parameters$subfertility_probability_noGFD_80, input_parameters$subfertility_probability_noGFD_90)
   lifetables <- read.csv("data/lifetables.csv")
-  percentage_male <- 0.5
+  
   lifetables$Overall <- (percentage_male * lifetables$Males) + ((1-percentage_male) * lifetables$Females)
   death_probability_nocomplications	<- data.frame(lifetables$Age, lifetables$Overall)
   

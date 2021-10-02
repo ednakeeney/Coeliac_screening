@@ -1,23 +1,33 @@
-generate_net_benefit <- function(input_parameters) {
+generate_net_benefit <- function(input_parameters, 
+                                 strategies_of_interest,
+                                 transition_matrices,
+                                 population = NULL) {
   
-  starting_age <- ifelse(population == "adults", 50, 10) #based on mean age in under and over 18s in CPRD cost data
+  starting_age <- ifelse(population == "men" | population == "women", 50, 10) #based on mean age in under and over 18s in CPRD cost data
   n_cycles <- 90 - starting_age
-  
-  transition_matrices <- generate_transition_matrices(input_parameters)
   
   state_qalys <- generate_state_qalys(input_parameters)
   
   state_costs <- generate_state_costs(input_parameters)
   
  
+
   
-  post_test_probability_IgAEMA <- input_parameters %>% select(X0.5.0.5.IgAEMA : X0.9999.0.9999.IgAEMA)
-  post_test_probability_IgATTGplusEMA <- input_parameters %>% select(X0.5.0.5.IgATTGplusEMA : X0.9999.0.9999.IgATTGplusEMA)
-  post_test_probability_IgATTG <- input_parameters %>% select(X0.5.0.5.IgATTG : X0.9999.0.9999.IgATTG)
-  pre_test_probability <- input_parameters %>% select(X0.5.0.5.pre_test_probability : X0.9999.0.9999.pre_test_probability)
-  tp_riskfactor <- input_parameters %>% select(X0.5.0.5.tp_riskfactor : X0.9999.0.9999.tp_riskfactor)
-  fn_riskfactor <- input_parameters %>% select(X0.5.0.5.fn_riskfactor : X0.9999.0.9999.fn_riskfactor)
-  fp_riskfactor <- input_parameters %>% select(X0.5.0.5.fp_riskfactor : X0.9999.0.9999.fp_riskfactor)
+  post_test_probability_IgAEMA  <- input_parameters[, grepl("X0", colnames(input_parameters)) &
+                                                      grepl("IgAEMA", colnames(input_parameters))]
+  post_test_probability_IgATTG <- input_parameters[, grepl("X0", colnames(input_parameters)) &
+                                                     grepl("IgATTG", colnames(input_parameters)) &
+                                                     !grepl("IgATTGplusEMA", colnames(input_parameters))]
+  post_test_probability_IgATTGplusEMA <- input_parameters[, grepl("X0", colnames(input_parameters)) &
+                                                            grepl("IgATTGplusEMA", colnames(input_parameters))]
+  pre_test_probability <- input_parameters[, grepl("X0", colnames(input_parameters)) &
+                                             grepl("pre_test_probability", colnames(input_parameters))]
+  tp_riskfactor  <- input_parameters[, grepl("X0", colnames(input_parameters)) &
+                                       grepl("tp_riskfactor", colnames(input_parameters))]
+  fn_riskfactor  <- input_parameters[, grepl("X0", colnames(input_parameters)) &
+                                       grepl("fn_riskfactor", colnames(input_parameters))]
+  fp_riskfactor  <- input_parameters[, grepl("X0", colnames(input_parameters)) &
+                                       grepl("fp_riskfactor", colnames(input_parameters))]
   pre_test_probability_overall <- input_parameters$pre_test_probability_overall #based on West 2014
   
 
@@ -92,8 +102,8 @@ generate_net_benefit <- function(input_parameters) {
      
       }
    
-   
-   pre_test_probability_HLA <- array(0, dim=c(n_samples, n_combinations*3), dimnames = list(NULL, t_names[2:109]))
+   # Changed every occurence of 109 (which is 36 times 3 plus 1) to general (1 + n_combinations * 3)
+   pre_test_probability_HLA <- array(0, dim=c(n_samples, n_combinations*3), dimnames = list(NULL, t_names[2:(1 + n_combinations * 3)]))
    
    for (i in 1:n_combinations) {
      pre_test_probability_HLA[,i] <- tp_nobiopsy[,i+1] /(tp_nobiopsy[,i+1] + fp_nobiopsy[,i+1])
@@ -102,9 +112,9 @@ generate_net_benefit <- function(input_parameters) {
    }
    
    pre_test_probability_HLA <- replace(pre_test_probability_HLA, pre_test_probability_HLA == 1, 0.99999)
-   pre_test_odds_HLA <- array(0, dim=c(n_samples, n_combinations * 3), dimnames = list(NULL, t_names[2:109]))
-   post_test_odds_HLA <- array(dim=c(n_samples, n_combinations * 3),dimnames=list(NULL, t_names[2:109])) 
-   post_test_probability_HLA <- array(dim=c(n_samples, n_combinations * 3),dimnames=list(NULL, t_names[2:109]))
+   pre_test_odds_HLA <- array(0, dim=c(n_samples, n_combinations * 3), dimnames = list(NULL, t_names[2:(1 + n_combinations * 3)]))
+   post_test_odds_HLA <- array(dim=c(n_samples, n_combinations * 3),dimnames=list(NULL, t_names[2:(1 + n_combinations * 3)])) 
+   post_test_probability_HLA <- array(dim=c(n_samples, n_combinations * 3),dimnames=list(NULL, t_names[2:(1 + n_combinations * 3)]))
      
   
    for (i in 1:(3*n_combinations)){
@@ -143,13 +153,13 @@ generate_net_benefit <- function(input_parameters) {
 
      }
    
- 
-   write.csv(colMeans(post_test_probability_IgAEMA), "results/posttestIgAema.csv")
-   write.csv(colMeans(post_test_probability_IgATTGplusEMA), "results/posttestIgAttgplusema.csv")
-   write.csv(colMeans(post_test_probability_IgATTG), "results/posttestIgAttg.csv")
-   write.csv(colMeans(pre_test_probability_HLA), "results/hlapretest.csv")
-   write.csv(colMeans(post_test_probability_HLA), "results/hlaposttest.csv")
-   write.csv(data.frame(colMeans(tp), colMeans(fn), colMeans(tn), colMeans(fp)), "results/test.csv")
+ # The following can be used for bug checking
+   #write.csv(colMeans(post_test_probability_IgAEMA), "results/posttestIgAema.csv")
+   #write.csv(colMeans(post_test_probability_IgATTGplusEMA), "results/posttestIgAttgplusema.csv")
+   #write.csv(colMeans(post_test_probability_IgATTG), "results/posttestIgAttg.csv")
+   #write.csv(colMeans(pre_test_probability_HLA), "results/hlapretest.csv")
+   #write.csv(colMeans(post_test_probability_HLA), "results/hlaposttest.csv")
+   #write.csv(data.frame(colMeans(tp), colMeans(fn), colMeans(tn), colMeans(fp)), "results/test.csv")
    
   #Adding costs   
   fp_costs <- array(dim = c(n_samples, n_tests),
@@ -527,11 +537,11 @@ x[1,1,]/n_cycles #total time spent in each state over all cycles
 time_in_states <- apply(x, c(1, 3), mean)/n_cycles
 apply(x, c(1, 3), quantile, probs = 0.025)
 
-output$time_in_states <- time_in_states[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
-                                         "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
-                                         "0.99 0.99 IgAEMA", "0.99 0.99 IgATTGplusEMA", "0.99 0.99 IgATTG plus HLA", 
-                                       "0.99 0.99 IgAEMA plus HLA", "0.99 0.99 IgATTGplusEMA plus HLA"),]
-
+if(!is.null(strategies_of_interest)) {
+  output$time_in_states <- time_in_states[strategies_of_interest, ]
+} else {
+  output$time_in_states <- NULL
+}
 
 
 

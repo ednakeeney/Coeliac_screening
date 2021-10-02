@@ -1,6 +1,6 @@
-generate_model_parameters <- function(starting_age) {
+generate_model_parameters <- function(starting_age, population = NULL) {
   
- starting_age <- ifelse(population == "adults", 50, 10) #based on mean age in under and over 18s in CPRD cost data
+ starting_age <- ifelse(population == "men" | population == "women", 50, 10) #based on mean age in under and over 18s in CPRD cost data
  
  # Define the number of cycles
  n_cycles <- 90 - starting_age
@@ -23,11 +23,19 @@ generate_model_parameters <- function(starting_age) {
   
   probability_late_diagnosis <- rep(0, times = n_samples)
   for (i_sample in 1:n_samples) {
-  probability_late_diagnosis[i_sample] <- ifelse(population == "adults", probability_late_diagnosis_adults[i_sample], probability_late_diagnosis_children[i_sample])
+  probability_late_diagnosis[i_sample] <- ifelse(population == "men" | population == "women", probability_late_diagnosis_adults[i_sample], probability_late_diagnosis_children[i_sample])
   }
   
+  # Use the appropriate prevalence
+  prevalence_mixed <- as.data.frame(readxl::read_excel(path = "data/CPRD prevalence.xlsx", sheet = "mixed"))
+  prevalence_men <- as.data.frame(readxl::read_excel(path = "data/CPRD prevalence.xlsx", sheet = "men"))
+  prevalence_women <- as.data.frame(readxl::read_excel(path = "data/CPRD prevalence.xlsx", sheet = "women"))
+  if(population == "children") prevalence = prevalence_mixed
+  if(population == "men") prevalence = prevalence_men
+  if(population == "women") prevalence = prevalence_women
+  # For backward compatibility rename prevalence column names
+  colnames(prevalence) <- gsub(" ", ".", colnames(prevalence))
   
-  prevalence <- read.csv("data/CPRD prevalence.csv")
   
   #Initial cohort at diagnosis - depends on age at diagnosis
   probability_subfertility <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, "Subfertility_r"], shape2 = prevalence[prevalence$Age.categories == starting_age, "N"] - prevalence[prevalence$Age.categories == starting_age, "Subfertility_r"])
@@ -49,7 +57,12 @@ generate_model_parameters <- function(starting_age) {
                                 ,probability_IDA_50 , probability_IDA_60 , probability_IDA_70 , probability_IDA_80 , probability_IDA_90)
   
   # Osteoporosis probabilities On GFD
-  osteoporosis_probability <- read.csv("data/osteoporosis_rate_nice.csv")
+  #osteoporosis_probability <- read.csv("data/osteoporosis_rate_nice.csv")
+  if(population == "children") {
+    osteoporosis_probability <- as.data.frame(readxl::read_excel(path = "data/osteoporosis_rate.xlsx", sheet = "mixed"))
+  } else {
+    osteoporosis_probability <- as.data.frame(readxl::read_excel(path = "data/osteoporosis_rate.xlsx", sheet = population))
+  }
   osteoporosis_probability_GFD_0	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[1]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[1]))
   osteoporosis_probability_GFD_10	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[2]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[2]))
   osteoporosis_probability_GFD_20	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[3]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[3]))
@@ -65,7 +78,12 @@ generate_model_parameters <- function(starting_age) {
                                                  osteoporosis_probability_GFD_70, osteoporosis_probability_GFD_80, osteoporosis_probability_GFD_90)
   
   # Subfertility probabilities on GFD
-  subfertility_probability <- read.csv("data/subfertility_rate_nice.csv")
+  #subfertility_probability <- read.csv("data/subfertility_rate_nice.csv")
+  if(population == "children") {
+    subfertility_probability <- as.data.frame(readxl::read_excel(path = "data/subfertility_rate.xlsx", sheet = "mixed"))
+  } else {
+    subfertility_probability <- as.data.frame(readxl::read_excel(path = "data/subfertility_rate.xlsx", sheet = population))
+  }
   subfertility_probability_GFD_0	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_GFD_alpha[1]), shape2 = as.numeric(subfertility_probability$subfertility_GFD_beta[1]))
   subfertility_probability_GFD_10	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_GFD_alpha[2]), shape2 = as.numeric(subfertility_probability$subfertility_GFD_beta[2]))
   subfertility_probability_GFD_20	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_GFD_alpha[3]), shape2 = as.numeric(subfertility_probability$subfertility_GFD_beta[3]))
@@ -81,12 +99,17 @@ generate_model_parameters <- function(starting_age) {
                                                  subfertility_probability_GFD_70, subfertility_probability_GFD_80, subfertility_probability_GFD_90)
   
   # NHL probabilities on GFD
-  NHL_probability <- read.csv("data/NHL_rate_nice.csv")
+  #NHL_probability <- read.csv("data/NHL_rate_nice.csv")
+  if(population == "children") {
+    NHL_probability <- as.data.frame(readxl::read_excel(path = "data/NHL_rate.xlsx", sheet = "mixed"))
+  } else {
+    NHL_probability <- as.data.frame(readxl::read_excel(path = "data/NHL_rate.xlsx", sheet = population))
+  }
   NHL_probability_GFD_18orless	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_GFD_alpha[1]), shape2 = as.numeric(NHL_probability$NHL_GFD_beta[1]))
   NHL_probability_GFD_18plus	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_GFD_alpha[2]), shape2 = as.numeric(NHL_probability$NHL_GFD_beta[2]))
   NHL_probability_GFD <- rep(0, times = n_samples)
   for (i_sample in 1:n_samples) {
-  NHL_probability_GFD[i_sample] <- ifelse(population == "adults", NHL_probability_GFD_18plus[i_sample], NHL_probability_GFD_18orless[i_sample])
+  NHL_probability_GFD[i_sample] <- ifelse(population == "men" | population == "women", NHL_probability_GFD_18plus[i_sample], NHL_probability_GFD_18orless[i_sample])
   }
   
   # Corresponding probabilities not on GFD
@@ -125,7 +148,7 @@ generate_model_parameters <- function(starting_age) {
   NHL_probability_noGFD_18plus	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_noGFD_alpha[2]), shape2 = as.numeric(NHL_probability$NHL_noGFD_beta[2]))
   NHL_probability_noGFD <- rep(0, times = n_samples)
   for (i_sample in 1:n_samples) {
-    NHL_probability_noGFD[i_sample] <- ifelse(population == "adults", NHL_probability_noGFD_18plus[i_sample], NHL_probability_noGFD_18orless[i_sample])
+    NHL_probability_noGFD[i_sample] <- ifelse(population == "men" | population == "women", NHL_probability_noGFD_18plus[i_sample], NHL_probability_noGFD_18orless[i_sample])
   }
   
   
@@ -150,7 +173,7 @@ generate_model_parameters <- function(starting_age) {
   
   utility_GFD <- rep(0, times = n_samples)
   for (i_sample in 1:n_samples) {
-    utility_GFD[i_sample] <- ifelse(population == "adults", utility_GFD_adults[i_sample], utility_GFD_children[i_sample])
+    utility_GFD[i_sample] <- ifelse(population == "men" | population == "women", utility_GFD_adults[i_sample], utility_GFD_children[i_sample])
   }
   
   utility_undiagnosedCD_adults <-  0.65 
@@ -167,7 +190,7 @@ generate_model_parameters <- function(starting_age) {
   
   utility_undiagnosedCD <- rep(0, times = n_samples)
   for (i_sample in 1:n_samples) {
-    utility_undiagnosedCD[i_sample] <- ifelse(population == "adults", utility_undiagnosedCD_adults[i_sample], utility_undiagnosedCD_children[i_sample])
+    utility_undiagnosedCD[i_sample] <- ifelse(population == "men" | population == "women", utility_undiagnosedCD_adults[i_sample], utility_undiagnosedCD_children[i_sample])
   }
   
   disutility_subfertility <-  0.158 
@@ -203,7 +226,7 @@ generate_model_parameters <- function(starting_age) {
   disutility_biopsy_children <- rtri(n = n_samples, min = 0, max = 0.010, mode = 0.006)
   disutility_biopsy <- rep(0, times = n_samples)
   for (i_sample in 1:n_samples) {
-    disutility_biopsy[i_sample] <- ifelse(population == "adults", disutility_biopsy_adults[i_sample], disutility_biopsy_children[i_sample])
+    disutility_biopsy[i_sample] <- ifelse(population == "men" | population == "women", disutility_biopsy_adults[i_sample], disutility_biopsy_children[i_sample])
   }
   
   disutility_biopsy_wait <- (utility_GFD - utility_undiagnosedCD) * 6/52 
@@ -247,7 +270,7 @@ generate_model_parameters <- function(starting_age) {
   
   cost_undiagnosedCD <- rep(0, times = n_samples)
   for (i_sample in 1:n_samples) {
-    cost_undiagnosedCD[i_sample] <- ifelse(population == "adults", cost_undiagnosedCD_adults[i_sample], cost_undiagnosedCD_children[i_sample])
+    cost_undiagnosedCD[i_sample] <- ifelse(population == "men" | population == "women", cost_undiagnosedCD_adults[i_sample], cost_undiagnosedCD_children[i_sample])
   }
   
   cost_CDGFD_adults <- 757
@@ -264,13 +287,13 @@ generate_model_parameters <- function(starting_age) {
   
   cost_CDGFD <- rep(0, times = n_samples)
   for (i_sample in 1:n_samples) {
-    cost_CDGFD[i_sample] <- ifelse(population == "adults", cost_CDGFD_adults[i_sample], cost_CDGFD_children[i_sample])
+    cost_CDGFD[i_sample] <- ifelse(population == "men" | population == "women", cost_CDGFD_adults[i_sample], cost_CDGFD_children[i_sample])
   }
   
   
   cost_biopsy_adults <- 530
   cost_biopsy_children <- 823
-  cost_biopsy <- ifelse(population == "adults", cost_biopsy_adults, cost_biopsy_children)
+  cost_biopsy <- ifelse(population == "men" | population == "women", cost_biopsy_adults, cost_biopsy_children)
   probability_biopsy <- runif(n = n_samples, min = 0.6, max = 0.8)
   
   cost_subfertility <- 8079.75 
@@ -439,12 +462,12 @@ generate_model_parameters <- function(starting_age) {
   spec_IgAEMA <- rep(0, times = n_samples)
   for(i_sample in 1:n_samples){
   for (i in 1:n_combinations){
-  post_test_probability_IgAEMA[i_sample,i] <- ifelse(population == "adults", post_test_probability_IgAEMA_adults[i_sample,i], post_test_probability_IgAEMA_children[i_sample,i])
+  post_test_probability_IgAEMA[i_sample,i] <- ifelse(population == "men" | population == "women", post_test_probability_IgAEMA_adults[i_sample,i], post_test_probability_IgAEMA_children[i_sample,i])
   }}
 
   for(i_sample in 1:n_samples){
-  sens_IgAEMA[i_sample] <- ifelse(population == "adults", sens_IgAEMA_adults[i_sample], sens_IgAEMA_children[i_sample])
-  spec_IgAEMA[i_sample] <- ifelse(population == "adults", spec_IgAEMA_adults[i_sample], spec_IgAEMA_children[i_sample])
+  sens_IgAEMA[i_sample] <- ifelse(population == "men" | population == "women", sens_IgAEMA_adults[i_sample], sens_IgAEMA_children[i_sample])
+  spec_IgAEMA[i_sample] <- ifelse(population == "men" | population == "women", spec_IgAEMA_adults[i_sample], spec_IgAEMA_children[i_sample])
   }
   ##################################################################################################
   
@@ -521,12 +544,12 @@ generate_model_parameters <- function(starting_age) {
   spec_IgATTGplusEMA <- rep(0, times = n_samples)
   for(i_sample in 1:n_samples){
     for (i in 1:n_combinations){
-      post_test_probability_IgATTGplusEMA[i_sample,i] <- ifelse(population == "adults", post_test_probability_IgATTGplusEMA_adults[i_sample,i], post_test_probability_IgATTGplusEMA_children[i_sample,i])
+      post_test_probability_IgATTGplusEMA[i_sample,i] <- ifelse(population == "men" | population == "women", post_test_probability_IgATTGplusEMA_adults[i_sample,i], post_test_probability_IgATTGplusEMA_children[i_sample,i])
     }}
   
   for(i_sample in 1:n_samples){
-    sens_IgATTGplusEMA[i_sample] <- ifelse(population == "adults", sens_IgATTGplusEMA_adults[i_sample], sens_IgATTGplusEMA_children[i_sample])
-    spec_IgATTGplusEMA[i_sample] <- ifelse(population == "adults", spec_IgATTGplusEMA_adults[i_sample], spec_IgATTGplusEMA_children[i_sample])
+    sens_IgATTGplusEMA[i_sample] <- ifelse(population == "men" | population == "women", sens_IgATTGplusEMA_adults[i_sample], sens_IgATTGplusEMA_children[i_sample])
+    spec_IgATTGplusEMA[i_sample] <- ifelse(population == "men" | population == "women", spec_IgATTGplusEMA_adults[i_sample], spec_IgATTGplusEMA_children[i_sample])
   }
   
   
@@ -600,12 +623,12 @@ generate_model_parameters <- function(starting_age) {
   spec_IgATTG <- rep(0, times = n_samples)
   for(i_sample in 1:n_samples){
     for (i in 1:n_combinations){
-      post_test_probability_IgATTG[i_sample,i] <- ifelse(population == "adults", post_test_probability_IgATTG_adults[i_sample,i], post_test_probability_IgATTG_children[i_sample,i])
+      post_test_probability_IgATTG[i_sample,i] <- ifelse(population == "men" | population == "women", post_test_probability_IgATTG_adults[i_sample,i], post_test_probability_IgATTG_children[i_sample,i])
     }}
   
   for(i_sample in 1:n_samples){
-    sens_IgATTG[i_sample] <- ifelse(population == "adults", sens_IgATTG_adults[i_sample], sens_IgATTG_children[i_sample])
-    spec_IgATTG[i_sample] <- ifelse(population == "adults", spec_IgATTG_adults[i_sample], spec_IgATTG_children[i_sample])
+    sens_IgATTG[i_sample] <- ifelse(population == "men" | population == "women", sens_IgATTG_adults[i_sample], sens_IgATTG_children[i_sample])
+    spec_IgATTG[i_sample] <- ifelse(population == "men" | population == "women", spec_IgATTG_adults[i_sample], spec_IgATTG_children[i_sample])
   }
   ######################################################################################################################
   
@@ -639,4 +662,3 @@ generate_model_parameters <- function(starting_age) {
                    tp_riskfactor, fn_riskfactor, fp_riskfactor, LR_HLA, sens_HLA, spec_HLA))
 }
 
-generate_model_parameters(starting_age)

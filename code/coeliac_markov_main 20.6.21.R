@@ -1,5 +1,15 @@
 # Coeliac disease Markov model
 # Edna Keeney
+
+# TODO: Add subdirectories to results for each subpopulation and the sensitivity
+# TODO: The utility decrement associated with NHL is still applied annually after a person develops NHL. You asked before for this to be a one-off decrement to match the costs but I haven't got around to implementing that. 
+# TODO: Add feasible_strategies based on Martha's report
+# TODO: Switch from line ~380 to Tidyverse style
+# TODO: Add INB to time_in_states (line ~524)
+# TODO: info.rank needs to plot only top parameters (line ~584) as most have zero impact
+# and only include sens/spec for feasible strategies
+# TODO: Check what to do about percentage_male as subfertility should not affect men
+
 library(tictoc)
 library(BCEA)
 library(SimDesign)
@@ -7,8 +17,9 @@ library(BCEA)
 library(dplyr)
 library(EnvStats)
 library(Rmisc)
+library(ggplot2)
 
-setwd("C:/Users/ek14588/Downloads/Coeliac_screening")
+#setwd("C:/Users/ek14588/Downloads/Coeliac_screening")
 
 tic()
 rm(list=ls())
@@ -267,10 +278,10 @@ plot(NULL ,xaxt='n',yaxt='n',bty='n',ylab='',xlab='', xlim=0:1, ylim=0:1)
 legend("topleft", legend =c('Specificity 0.5', '0.6', '0.7',
                             '0.8', '0.9'),
        col = c(1:5), lty = (1:5))
-dev.off
+dev.off()
 
 #plots of probability CE
-jpeg("results/inbplot.jpeg")
+jpeg("results/probce.jpeg")
 par(mfrow=c(3,2))
 par(mar = c(2, 1, 1, 1))
 
@@ -357,6 +368,8 @@ pCE$sens <- c(0,rep(sens_riskfactor, n_sero_tests*6))
 pCE$spec <- c(0,rep(rep(spec_riskfactor, each=n_sero_tests),6))
   
 #heat plot of cost-effectiveness
+# not used
+
   ggplot(data = pCE, aes(x = spec,
              
              y = sens)) +
@@ -381,6 +394,10 @@ pCE$spec <- c(0,rep(rep(spec_riskfactor, each=n_sero_tests),6))
   {
     paste(round(mean(x),digits=n.digits)," (",round(quantile(x,probs=0.025),digits=n.digits),", ",round(quantile(x,probs=0.975),digits=n.digits),")",sep="")
   }
+  
+  # This where specific strategies are selected
+  # Need to update to use results of risk prediction model
+  # Define a feasible_strategies object used to select consistently
   
   feasible.strategies.qalys <- output$total_qalys[c("No screening", "0.6 0.99 IgATTG", "0.6 0.99 IgAEMA", "0.6 0.99 IgATTGplusEMA", "0.6 0.99 IgATTG plus HLA", 
                                                     "0.6 0.99 IgAEMA plus HLA", "0.6 0.99 IgATTGplusEMA plus HLA", "0.99 0.99 IgATTG", 
@@ -567,6 +584,8 @@ discounted_population_size <- sum((1/1.035)^(0:(technology_horizon - 1))) * tota
 population_evpi <- m$evi * discounted_population_size 
 
 #info-rank
+# Need to plot most influential parameters and say the rest have no impact.
+# input_parameters needs to include sens and spec only relevant to feasible_strategies
 utility_parameters <- data.frame(input_parameters$utility_GFD, input_parameters$utility_undiagnosedCD, input_parameters$disutility_subfertility, 
                                  input_parameters$disutility_osteoporosis, input_parameters$disutility_NHL, input_parameters$disutility_biopsy, 
                                  input_parameters$disutility_biopsy_wait, input_parameters$disutility_fp)
@@ -574,9 +593,10 @@ cost_parameters <- data.frame( input_parameters$cost_CDGFD, input_parameters$cos
                                input_parameters$cost_IDA, input_parameters$cost_biopsy, 
                                input_parameters$cost_subfertility, input_parameters$cost_NHL,input_parameters$cost_diagnosis,
                                input_parameters$test_cost_IgAEMA, input_parameters$test_cost_IgATTG, input_parameters$test_cost_HLA)
-info.rank(parameter = colnames(input_parameters), input = input_parameters, m_feasible, xlim = c(0,0.5), wtp=30000)
-info.rank(parameter = colnames(utility_parameters), input = utility_parameters, m_feasible, xlim = c(0,0.5), wtp=30000)
-info.rank(parameter = colnames(cost_parameters), input = cost_parameters, m_feasible, xlim = c(0,0.5), wtp=30000)
+info.rank(parameter = colnames(input_parameters), input = input_parameters, m_feasible, xlim = c(0,0.005), wtp=30000)
+info.rank(parameter = colnames(utility_parameters), input = utility_parameters, m_feasible, xlim = c(0,0.0005), wtp=30000)
+info.rank(parameter = colnames(cost_parameters), input = cost_parameters, m_feasible, xlim = c(0,0.00005), wtp=30000)
+
 
 
 
