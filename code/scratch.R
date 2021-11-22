@@ -1,5 +1,9 @@
-estBetaParams <- function(mu, var) {
-  alpha <- ((1 - mu) / var - 1 / mu) * mu ^ 2
-  beta <- alpha * (1 / mu - 1)
-  return(params = list(alpha = alpha, beta = beta))
-}
+NHL_probability_GFD_18orless
+NHL_probability_GFD_18plus
+NHL_probability_noGFD_18orless
+NHL_probability_noGFD_18plus
+# Remove lines 46-51
+
+# Change to time dependent
+# lines 66-74
+# line 83-84

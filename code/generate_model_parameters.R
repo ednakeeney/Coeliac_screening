@@ -1,6 +1,19 @@
-generate_model_parameters <- function(starting_age, population = NULL) {
+# Utility functions
+expit <- function(logO) {
+  return(exp(logO)/(1 + exp(logO)))
+}
+logit <- function(p) {
+  return(log(p/(1-p)))
+}
+
+generate_model_parameters <- function(starting_age, population = NULL,
+                                      combinations, n_samples,
+                                      hold_constant = c()) {
   
- starting_age <- ifelse(population == "men" | population == "women", 50, 10) #based on mean age in under and over 18s in CPRD cost data
+  # Derived variables
+  n_combinations <- dim(combinations)[1]
+  
+ starting_age <- ifelse(population == "men" | population == "women", 18, 10) # child starting age based on mean age in under 18s in CPRD cost data
  
  # Define the number of cycles
  n_cycles <- 90 - starting_age
@@ -38,11 +51,15 @@ generate_model_parameters <- function(starting_age, population = NULL) {
   
   
   #Initial cohort at diagnosis - depends on age at diagnosis
-  probability_subfertility <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, "Subfertility_r"], shape2 = prevalence[prevalence$Age.categories == starting_age, "N"] - prevalence[prevalence$Age.categories == starting_age, "Subfertility_r"])
-  probability_osteoporosis <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, "Osteoporosis_r"], shape2 = prevalence[prevalence$Age.categories == starting_age, "N"] - prevalence[prevalence$Age.categories == starting_age, "Osteoporosis_r"])
-  probability_NHL <- rbeta(n=n_samples, shape1 = prevalence[prevalence$Age.categories == starting_age, "NHL_r"], shape2 = prevalence[prevalence$Age.categories == starting_age, "N"] - prevalence[prevalence$Age.categories == starting_age, "NHL_r"])
-  probability_nocomplications <- 1 - probability_subfertility - probability_osteoporosis - probability_NHL
+  # e.g. 10 year old starts with 10-20 prevalence and 18 year old starts with 10-20 prevalence. 
+  starting_age_category <- which(prevalence$Age.categories > starting_age)[1] - 1
+  # prevalence$Age.categories == starting_age
+  probability_osteoporosis <- rbeta(n=n_samples, shape1 = prevalence[starting_age_category, "Osteoporosis_r"], shape2 = prevalence[starting_age_category, "N"] - prevalence[starting_age_category, "Osteoporosis_r"])
+  probability_NHL <- rbeta(n=n_samples, shape1 = prevalence[starting_age_category, "NHL_r"], shape2 = prevalence[starting_age_category, "N"] - prevalence[starting_age_category, "NHL_r"])
+  probability_nocomplications <- 1 - probability_osteoporosis - probability_NHL
   
+  # IDA prevalence changes with age of cohort so is age stratified
+  # Prevalence of osteoporosis and NHL are combined with incidence rates to model prevalence changing with age
   probability_IDA_0 <- rbeta(n=n_samples, shape1 = prevalence$IDA_r[1], shape2 = (prevalence$N[1] - prevalence$IDA_r[1]))
   probability_IDA_10 <- rbeta(n=n_samples, shape1 = prevalence$IDA_r[2], shape2 = (prevalence$N[2] - prevalence$IDA_r[2]))
   probability_IDA_20 <- rbeta(n=n_samples, shape1 = prevalence$IDA_r[3], shape2 = (prevalence$N[3] - prevalence$IDA_r[3]))
@@ -57,104 +74,60 @@ generate_model_parameters <- function(starting_age, population = NULL) {
                                 ,probability_IDA_50 , probability_IDA_60 , probability_IDA_70 , probability_IDA_80 , probability_IDA_90)
   
   # Osteoporosis probabilities On GFD
-  #osteoporosis_probability <- read.csv("data/osteoporosis_rate_nice.csv")
   if(population == "children") {
     osteoporosis_probability <- as.data.frame(readxl::read_excel(path = "data/osteoporosis_rate.xlsx", sheet = "mixed"))
   } else {
     osteoporosis_probability <- as.data.frame(readxl::read_excel(path = "data/osteoporosis_rate.xlsx", sheet = population))
   }
-  osteoporosis_probability_GFD_0	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[1]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[1]))
-  osteoporosis_probability_GFD_10	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[2]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[2]))
-  osteoporosis_probability_GFD_20	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[3]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[3]))
-  osteoporosis_probability_GFD_30	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[4]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[4]))
-  osteoporosis_probability_GFD_40	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[5]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[5]))
-  osteoporosis_probability_GFD_50 <- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[6]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[6]))
-  osteoporosis_probability_GFD_60	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[7]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[7]))
-  osteoporosis_probability_GFD_70	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[8]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[8]))
-  osteoporosis_probability_GFD_80 <- 	rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[9]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[9]))
-  osteoporosis_probability_GFD_90 <- 	rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_alpha[10]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_GFD_beta[10]))
-  osteoporosis_probability_GFD_all <- data.frame(osteoporosis_probability_GFD_0, osteoporosis_probability_GFD_10, osteoporosis_probability_GFD_20, osteoporosis_probability_GFD_30,
-                                                 osteoporosis_probability_GFD_40, osteoporosis_probability_GFD_50, osteoporosis_probability_GFD_60,
-                                                 osteoporosis_probability_GFD_70, osteoporosis_probability_GFD_80, osteoporosis_probability_GFD_90)
+  # Add correction for zero rates
+  osteoporosis_probability$Osteoporosis_rate_low[osteoporosis_probability$Osteoporosis_rate_low == 0] <- osteoporosis_probability$Osteoporosis_rate_low[osteoporosis_probability$Osteoporosis_rate_low == 0] + 0.000001
   
-  # Subfertility probabilities on GFD
-  #subfertility_probability <- read.csv("data/subfertility_rate_nice.csv")
-  if(population == "children") {
-    subfertility_probability <- as.data.frame(readxl::read_excel(path = "data/subfertility_rate.xlsx", sheet = "mixed"))
-  } else {
-    subfertility_probability <- as.data.frame(readxl::read_excel(path = "data/subfertility_rate.xlsx", sheet = population))
+  # Log odds ratio for diagnosed CD
+  log_or_osteoporosis_GFD <- rnorm(n_samples, mean = log(1.40), sd = ((log(1.50) - log(1.30))/(2*1.96)))
+  log_or_osteoporosis_noGFD <- rnorm(n_samples, mean = log(2.59), sd = ((log(5.09) - log(1.32))/(2*1.96)))
+
+  # Log rates in general population
+  osteoporosis_lograte <- matrix(NA, nrow = n_samples, ncol = 10)
+  colnames(osteoporosis_lograte) <- paste0("osteoporosis_lograte_", seq(0, 90, 10))
+  for(i_age_category in 1:10) {
+    osteoporosis_lograte[, i_age_category] <- rnorm(n_samples, mean = log(osteoporosis_probability$Osteoporosis_rate[i_age_category]),
+                                                    sd = (log(osteoporosis_probability$Osteoporosis_rate_high[i_age_category]) - log(osteoporosis_probability$Osteoporosis_rate_low[i_age_category]))/(2*1.96))
   }
-  subfertility_probability_GFD_0	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_GFD_alpha[1]), shape2 = as.numeric(subfertility_probability$subfertility_GFD_beta[1]))
-  subfertility_probability_GFD_10	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_GFD_alpha[2]), shape2 = as.numeric(subfertility_probability$subfertility_GFD_beta[2]))
-  subfertility_probability_GFD_20	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_GFD_alpha[3]), shape2 = as.numeric(subfertility_probability$subfertility_GFD_beta[3]))
-  subfertility_probability_GFD_30 <-	rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_GFD_alpha[4]), shape2 = as.numeric(subfertility_probability$subfertility_GFD_beta[4]))
-  subfertility_probability_GFD_40 <- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_GFD_alpha[5]), shape2 = as.numeric(subfertility_probability$subfertility_GFD_beta[5]))
-  subfertility_probability_GFD_50 <- 0
-  subfertility_probability_GFD_60	<- 0
-  subfertility_probability_GFD_70	<- 0
-  subfertility_probability_GFD_80 <- 0
-  subfertility_probability_GFD_90 <- 0 
-  subfertility_probability_GFD_all <- data.frame(subfertility_probability_GFD_0, subfertility_probability_GFD_10, subfertility_probability_GFD_20, subfertility_probability_GFD_30,
-                                                 subfertility_probability_GFD_40, subfertility_probability_GFD_50, subfertility_probability_GFD_60,
-                                                 subfertility_probability_GFD_70, subfertility_probability_GFD_80, subfertility_probability_GFD_90)
   
-  # NHL probabilities on GFD
-  #NHL_probability <- read.csv("data/NHL_rate_nice.csv")
+  
   if(population == "children") {
     NHL_probability <- as.data.frame(readxl::read_excel(path = "data/NHL_rate.xlsx", sheet = "mixed"))
   } else {
-    NHL_probability <- as.data.frame(readxl::read_excel(path = "data/NHL_rate.xlsx", sheet = population))
+      NHL_probability <- as.data.frame(readxl::read_excel(path = "data/NHL_rate.xlsx", sheet = population))
   }
-  NHL_probability_GFD_18orless	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_GFD_alpha[1]), shape2 = as.numeric(NHL_probability$NHL_GFD_beta[1]))
-  NHL_probability_GFD_18plus	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_GFD_alpha[2]), shape2 = as.numeric(NHL_probability$NHL_GFD_beta[2]))
-  NHL_probability_GFD <- rep(0, times = n_samples)
-  for (i_sample in 1:n_samples) {
-  NHL_probability_GFD[i_sample] <- ifelse(population == "men" | population == "women", NHL_probability_GFD_18plus[i_sample], NHL_probability_GFD_18orless[i_sample])
-  }
+  # Ensure no rates are zero
+  NHL_probability$NHL_rate_low[NHL_probability$NHL_rate_low == 0] <- 0.000001
   
-  # Corresponding probabilities not on GFD
-  osteoporosis_probability_noGFD_0	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[1]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[1]))
-  osteoporosis_probability_noGFD_10	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[2]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[2]))
-  osteoporosis_probability_noGFD_20	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[3]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[3]))
-  osteoporosis_probability_noGFD_30	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[4]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[4]))
-  osteoporosis_probability_noGFD_40	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[5]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[5]))
-  osteoporosis_probability_noGFD_50 <- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[6]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[6]))
-  osteoporosis_probability_noGFD_60	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[7]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[7]))
-  osteoporosis_probability_noGFD_70	<- rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[8]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[8]))
-  osteoporosis_probability_noGFD_80 <- 	rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[9]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[9]))
-  osteoporosis_probability_noGFD_90 <- 	rbeta(n=n_samples, shape1 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_alpha[10]), shape2 = as.numeric(osteoporosis_probability$Osteoporosis_noGFD_beta[10]))
-  osteoporosis_probability_noGFD_all <- data.frame(osteoporosis_probability_noGFD_0, osteoporosis_probability_noGFD_10, osteoporosis_probability_noGFD_20, osteoporosis_probability_noGFD_30,
-                                                   osteoporosis_probability_noGFD_40, osteoporosis_probability_noGFD_50, osteoporosis_probability_noGFD_60,
-                                                   osteoporosis_probability_noGFD_70, osteoporosis_probability_noGFD_80, osteoporosis_probability_noGFD_90)
+  # Log incidence ratios for NHL
+  log_rr_NHL_GFD <- rnorm(n_samples, mean = log(3.28), sd = (log(6.28) - log(1.49))/(2*1.96))
+  log_rr_NHL_noGFD <- rnorm(n_samples, mean = log(4.7), sd = (log(7.3) - log(2.9))/(2*1.96))
+  # NHL probabilities on GFD
+  NHL_lograte <- as.data.frame(matrix(NA, nrow = n_samples, ncol = dim(NHL_probability)[1]))
+  colnames(NHL_lograte) <- c("NHL_lograte_18orless", "NHL_lograte_18plus")
   
-  
-  
-  subfertility_probability_noGFD_0	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_noGFD_alpha[1]), shape2 = as.numeric(subfertility_probability$subfertility_noGFD_beta[1]))
-  subfertility_probability_noGFD_10	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_noGFD_alpha[2]), shape2 = as.numeric(subfertility_probability$subfertility_noGFD_beta[2]))
-  subfertility_probability_noGFD_20	<- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_noGFD_alpha[3]), shape2 = as.numeric(subfertility_probability$subfertility_noGFD_beta[3]))
-  subfertility_probability_noGFD_30 <-	rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_noGFD_alpha[4]), shape2 = as.numeric(subfertility_probability$subfertility_noGFD_beta[4]))
-  subfertility_probability_noGFD_40 <- rbeta(n=n_samples, shape1 = as.numeric(subfertility_probability$subfertility_noGFD_alpha[5]), shape2 = as.numeric(subfertility_probability$subfertility_noGFD_beta[5]))
-  subfertility_probability_noGFD_50 <- 0
-  subfertility_probability_noGFD_60	<- 0
-  subfertility_probability_noGFD_70	<- 0
-  subfertility_probability_noGFD_80 <- 0
-  subfertility_probability_noGFD_90 <- 0 
-  subfertility_probability_noGFD_all <- data.frame(subfertility_probability_noGFD_0, subfertility_probability_noGFD_10, subfertility_probability_noGFD_20, subfertility_probability_noGFD_30,
-                                                   subfertility_probability_noGFD_40, subfertility_probability_noGFD_50, subfertility_probability_noGFD_60,
-                                                   subfertility_probability_noGFD_70, subfertility_probability_noGFD_80, subfertility_probability_noGFD_90)
-  
-  
-  NHL_probability_noGFD_18orless	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_noGFD_alpha[1]), shape2 = as.numeric(NHL_probability$NHL_noGFD_beta[1]))
-  NHL_probability_noGFD_18plus	<- rbeta(n=n_samples, shape1 = as.numeric(NHL_probability$NHL_noGFD_alpha[2]), shape2 = as.numeric(NHL_probability$NHL_noGFD_beta[2]))
-  NHL_probability_noGFD <- rep(0, times = n_samples)
-  for (i_sample in 1:n_samples) {
-    NHL_probability_noGFD[i_sample] <- ifelse(population == "men" | population == "women", NHL_probability_noGFD_18plus[i_sample], NHL_probability_noGFD_18orless[i_sample])
+  for(i_age_category in 1:2) {
+    NHL_lograte[, i_age_category] <- rnorm(n_samples, mean = log(NHL_probability$NHL_rate[i_age_category]),
+                                                    sd = (log(NHL_probability$NHL_rate_high[i_age_category]) - log(NHL_probability$NHL_rate_low[i_age_category]))/(2*1.96))
   }
   
   
-  death_hazard_NHL <- rnorm(n = n_samples, mean = exp(-2.092), sd = 0.006378) #do I exponentiate the sd?
-  death_probability_NHL <-	1-exp(-death_hazard_NHL) 
-
+  
+  death_log_hazard_NHL <- rnorm(n = n_samples, mean = exp(-2.092), sd = 0.006378)
+  death_probability_NHL <-	1-exp(-exp(death_log_hazard_NHL))
+  
+  # HR 3.5 (95% CI: 3.28–3.74)
+  death_log_hr_osteoporosis_male <- rnorm(n = n_samples, mean = log(3.5),
+                                          sd = (log(3.74) - log(3.28))/(2*1.96))
+  # 2.4 (95% CI: 2.31–2.50)
+  death_log_hr_osteoporosis_female <- rnorm(n = n_samples, mean = log(2.4),
+                                          sd = (log(2.50) - log(2.31))/(2*1.96))
+  
+  
   #############################################################################
   ## Utilities ################################################################
   #############################################################################
@@ -193,11 +166,7 @@ generate_model_parameters <- function(starting_age, population = NULL) {
     utility_undiagnosedCD[i_sample] <- ifelse(population == "men" | population == "women", utility_undiagnosedCD_adults[i_sample], utility_undiagnosedCD_children[i_sample])
   }
   
-  disutility_subfertility <-  0.158 
-  disutility_subfertility_se <- (0.173 - 0.143)/3.92
-  disutility_subfertility_alpha <- (disutility_subfertility ^ 2 * (1 - disutility_subfertility)/disutility_subfertility_se ^ 2) - disutility_subfertility
-  disutility_subfertility_beta <- (disutility_subfertility_alpha/disutility_subfertility) - disutility_subfertility_alpha
-  disutility_subfertility <- rbeta(n = n_samples, shape1 = disutility_subfertility_alpha, shape2 = disutility_subfertility_beta)
+  
   
   probability_hipfracture <- 0.00196
   probability_vertebralfracture <- 0.00071
@@ -230,8 +199,9 @@ generate_model_parameters <- function(starting_age, population = NULL) {
   }
   
   disutility_biopsy_wait <- (utility_GFD - utility_undiagnosedCD) * 6/52 
- 
-   disutility_fp <- ifelse(disutility_fp_diagnosis == "Yes", 0.009, 0) #from NICE guideline
+
+  disutility_fp_temp <-rnorm(n_samples, mean = -8.3, sd = 3.83) * rnorm(n_samples, mean = 0.0011, sd = 0.0002) 
+   disutility_fp <- (disutility_fp_diagnosis == "Yes") * disutility_fp_temp + 0 # NICE guidelines 2015
   #############################################################################
   ## Costs ####################################################################
   #############################################################################
@@ -254,7 +224,7 @@ generate_model_parameters <- function(starting_age, population = NULL) {
   cost_osteoporosis <- (probability_hipfracture * cost_hipfracture) + (probability_wristfracture * cost_wristfracture) + (probability_vertebralfracture * cost_vertebralfracture)
   
   cost_IDA <- if(perspective == "NHS") 0 else 17.89
-  cost_gfp <- if(perspective == "NHS") 0 else 100
+  cost_gfp <- if(perspective == "NHS") 0 else 0 # Not used
   
   cost_undiagnosedCD_adults <- 421
   cost_undiagnosedCD_se_adults <- 3.34
@@ -296,12 +266,6 @@ generate_model_parameters <- function(starting_age, population = NULL) {
   cost_biopsy <- ifelse(population == "men" | population == "women", cost_biopsy_adults, cost_biopsy_children)
   probability_biopsy <- runif(n = n_samples, min = 0.6, max = 0.8)
   
-  cost_subfertility <- 8079.75 
-  cost_subfertility_se <- (8742.96 - 7432.11)/3.92
-  cost_subfertility_alpha <- (cost_subfertility/cost_subfertility_se)^2
-  cost_subfertility_beta <- (cost_subfertility_se^2)/cost_subfertility
-  cost_subfertility <- rgamma(n = n_samples, shape = cost_subfertility_alpha, scale = cost_subfertility_beta)
-  
   cost_NHL <- 18396
   cost_NHL_sd <- sqrt(271) * ((18415 - 18377)/3.92)
   cost_NHL_location <- log(cost_NHL^2 / sqrt(cost_NHL_sd^2 + cost_NHL^2))
@@ -336,52 +300,27 @@ generate_model_parameters <- function(starting_age, population = NULL) {
   test_cost_HLA <- rgamma(n = n_samples, shape = test_cost_HLA_alpha, scale = test_cost_HLA_beta)
   
   #capital_cost_double_test <- 0.44 #based on NICE guideline capital cost for IgATTG + IgAEMA inflated to 2021 prices
+
   #############################################################################
   ## Accuracy of tests ########################################################
   #############################################################################
-  sens_biopsy <- 1 #assumption to be varied in sensitivity analysis
-  spec_biopsy <- 1 #assumption to be varied in sensitivity analysis
+  sens_biopsy <- 1 # Assumed perfectly accurate
+  spec_biopsy <- 1 # Assumed perfectly accurate
 
   
   pre_test_probability_overall <- rbeta(n = n_samples, shape1 = 10872, shape2 = 4519128) #based on West 2014
-  tp_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, paste(combinations_names, "tp_riskfactor")))
-    fn_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, paste(combinations_names, "fn_riskfactor")))
-      fp_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, paste(combinations_names, "fp_riskfactor")))
-        tn_riskfactor <- array(dim=c(n_samples, n_combinations), dimnames = list(NULL, paste(combinations_names, "tn_riskfactor")))
   
-  for (i in 1:n_combinations) {
-    tp_riskfactor[,i] <- pre_test_probability_overall * combinations$sens_riskfactor[i]
-    fn_riskfactor[,i] <- pre_test_probability_overall - tp_riskfactor[,i]  
-    tn_riskfactor[,i] <- (1 - pre_test_probability_overall) * combinations$spec_riskfactor[i]
-    fp_riskfactor[,i] <- (1 - pre_test_probability_overall) - tn_riskfactor[,i]
-  }
-  
- write.csv(data.frame(tp_riskfactor[1,], fn_riskfactor[1,], tn_riskfactor[1,], fp_riskfactor[1,]), "risk_factor.csv")
-  pre_test_probability <- tp_riskfactor/(tp_riskfactor+fp_riskfactor)
-  colnames(pre_test_probability) <- paste(combinations_names, "pre_test_probability")
-  write.csv(colMeans(pre_test_probability), "pretestprob.csv")
-  
-  pre_test_odds <- array(0, dim=c(n_samples, n_combinations), dimnames = list(NULL, combinations_names))
-  
-  for (i in 1:n_combinations){
-    pre_test_odds[,i] <- pre_test_probability[,i]/(1 - pre_test_probability[,i])
-  }
+
 
   #################################################################################################################
- library(car)
-  
+ 
    #Iga EMA adults
   #E(logitSE) coef = 1.993122, SE = 0.4508497
   #E(logitSP) coef = 5.54022, SE = 1.556019
   #Covariance = -0.2689103
 
    #Sens 87% (77.7–92.8), Spec	 98% (97.4–98.6) Hopper 2008
-  expit <- function(logO) {
-    return(exp(logO)/(1 + exp(logO)))
-  }
-  logit <- function(p) {
-    return(log(p/(1-p)))
-  }
+
   
   sens_igaema_adults <- logit(0.87)
   sens_igaema_adults_lci <- logit(0.777)
@@ -398,24 +337,7 @@ generate_model_parameters <- function(starting_age, population = NULL) {
  spec_IgAEMA_adults <- expit(spec_igaema_adults)
  
   
-  #random normal values with mean [1.993122, 5.54022] and SEs [0.4508497, 1.556019], and covariance -0.2689103
- # sigma_IgAEMA_adults <- matrix(c((0.4508497^2),-0.2689103,-0.2689103,(1.556019^2)), 2, 2)
-  #mu_IgAEMA_adults <- c(1.993122, 5.54022)
-  #x_IgAEMA_adults <- rmvnorm(n_samples, mu_IgAEMA_adults, sigma_IgAEMA_adults)
-  #head(x_IgAEMA_adults)
-  #SensSpec_IgAEMA_adults <- exp(x_IgAEMA_adults)/(1+exp(x_IgAEMA_adults))
-  #sens_IgAEMA_adults <- SensSpec_IgAEMA_adults[,1]
-  #spec_IgAEMA_adults <- SensSpec_IgAEMA_adults[,2]
-  LR_IgAEMA_adults <- sens_IgAEMA_adults/ (1 - spec_IgAEMA_adults)
-  
-  post_test_odds_IgAEMA_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  post_test_probability_IgAEMA_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  
-  for (i in 1:n_combinations){
-  post_test_odds_IgAEMA_adults[,i] <- pre_test_odds[,i] * LR_IgAEMA_adults
-  post_test_probability_IgAEMA_adults[,i] <- post_test_odds_IgAEMA_adults[,i]/(1 + post_test_odds_IgAEMA_adults[,i])
-  }
-  
+
  
   #Iga EMA children
   #E(logitSE) coef = 2.839716, SE = 0.3886658
@@ -446,29 +368,9 @@ generate_model_parameters <- function(starting_age, population = NULL) {
   #SensSpec_IgAEMA_children <- exp(x)/(1+exp(x))
   #sens_IgAEMA_children <- SensSpec_IgAEMA_children[,1]
   #spec_IgAEMA_children <- SensSpec_IgAEMA_children[,2]
-  LR_IgAEMA_children <- sens_IgAEMA_children/ spec_IgAEMA_children
   
-  post_test_odds_IgAEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  post_test_probability_IgAEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  
-  for (i in 1:n_combinations){
-    post_test_odds_IgAEMA_children[,i] <- pre_test_odds[,i] * LR_IgAEMA_children
-    post_test_probability_IgAEMA_children[,i] <- post_test_odds_IgAEMA_children[,i]/(1 + post_test_odds_IgAEMA_children[,i])
-  }
 
   
-  post_test_probability_IgAEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgAEMA")))
-  sens_IgAEMA <- rep(0, times = n_samples)
-  spec_IgAEMA <- rep(0, times = n_samples)
-  for(i_sample in 1:n_samples){
-  for (i in 1:n_combinations){
-  post_test_probability_IgAEMA[i_sample,i] <- ifelse(population == "men" | population == "women", post_test_probability_IgAEMA_adults[i_sample,i], post_test_probability_IgAEMA_children[i_sample,i])
-  }}
-
-  for(i_sample in 1:n_samples){
-  sens_IgAEMA[i_sample] <- ifelse(population == "men" | population == "women", sens_IgAEMA_adults[i_sample], sens_IgAEMA_children[i_sample])
-  spec_IgAEMA[i_sample] <- ifelse(population == "men" | population == "women", spec_IgAEMA_adults[i_sample], spec_IgAEMA_children[i_sample])
-  }
   ##################################################################################################
   
   #IgATTGplusEMA_adults
@@ -500,15 +402,7 @@ generate_model_parameters <- function(starting_age, population = NULL) {
   #SensSpec_IgATTGplusEMA <- exp(x)/(1+exp(x))
   #sens_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,1]
   #spec_IgATTGplusEMA <- SensSpec_IgATTGplusEMA[,2]
-  LR_IgATTGplusEMA_adults <- sens_IgATTGplusEMA_adults/ (1 - spec_IgATTGplusEMA_adults)
   
-  post_test_odds_IgATTGplusEMA_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  post_test_probability_IgATTGplusEMA_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTGplusEMA")))
-  
-  for (i in 1:n_combinations){
-    post_test_odds_IgATTGplusEMA_adults[,i] <- pre_test_odds[,i] * LR_IgATTGplusEMA_adults[1:n_samples]
-    post_test_probability_IgATTGplusEMA_adults[,i] <- post_test_odds_IgATTGplusEMA_adults[,i]/(1 + post_test_odds_IgATTGplusEMA_adults[,i])
-  }
   #IgATTGplusEMA_children
  
   
@@ -529,29 +423,6 @@ generate_model_parameters <- function(starting_age, population = NULL) {
   spec_IgATTGplusEMA_children <- expit(spec_igattgplusema_children)
   
  
-  LR_IgATTGplusEMA_children <- sens_IgATTGplusEMA_children/ (1 - spec_IgATTGplusEMA_children)
-  
-  post_test_odds_IgATTGplusEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  post_test_probability_IgATTGplusEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTGplusEMA")))
- 
-   for (i in 1:n_combinations){
-    post_test_odds_IgATTGplusEMA_children[,i] <- pre_test_odds[,i] * LR_IgATTGplusEMA_children[1:n_samples]
-    post_test_probability_IgATTGplusEMA_children[,i] <- post_test_odds_IgATTGplusEMA_children[,i]/(1 + post_test_odds_IgATTGplusEMA_children[,i])
-  }
-  
-  post_test_probability_IgATTGplusEMA <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTGplusEMA")))
-  sens_IgATTGplusEMA <- rep(0, times = n_samples)
-  spec_IgATTGplusEMA <- rep(0, times = n_samples)
-  for(i_sample in 1:n_samples){
-    for (i in 1:n_combinations){
-      post_test_probability_IgATTGplusEMA[i_sample,i] <- ifelse(population == "men" | population == "women", post_test_probability_IgATTGplusEMA_adults[i_sample,i], post_test_probability_IgATTGplusEMA_children[i_sample,i])
-    }}
-  
-  for(i_sample in 1:n_samples){
-    sens_IgATTGplusEMA[i_sample] <- ifelse(population == "men" | population == "women", sens_IgATTGplusEMA_adults[i_sample], sens_IgATTGplusEMA_children[i_sample])
-    spec_IgATTGplusEMA[i_sample] <- ifelse(population == "men" | population == "women", spec_IgATTGplusEMA_adults[i_sample], spec_IgATTGplusEMA_children[i_sample])
-  }
-  
   
 
   ######################################################################################################################
@@ -576,16 +447,6 @@ generate_model_parameters <- function(starting_age, population = NULL) {
   spec_IgATTG_adults <- expit(spec_igattg_adults)
   
   
-  LR_IgATTG_adults <- sens_IgATTG_adults/ (1 - spec_IgATTG_adults)
-  
-  post_test_odds_IgATTG_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  post_test_probability_IgATTG_adults <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  
-  for (i in 1:n_combinations){
-    post_test_odds_IgATTG_adults[,i] <- pre_test_odds[,i] * LR_IgATTG_adults
-    post_test_probability_IgATTG_adults[,i] <- post_test_odds_IgATTG_adults[,i]/(1 + post_test_odds_IgATTG_adults[,i])
-  }
-  
   
   #Iga TTG children
   
@@ -607,58 +468,40 @@ generate_model_parameters <- function(starting_age, population = NULL) {
   spec_IgATTG_children <- expit(spec_igaTTG_children)
   
 
-  LR_IgATTG_children <- sens_IgATTG_children/ spec_IgATTG_children
-  
-  post_test_odds_IgATTG_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  post_test_probability_IgATTG_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
-  
-  for (i in 1:n_combinations){
-    post_test_odds_IgATTG_children[,i] <- pre_test_odds[,i] * LR_IgATTG_children
-    post_test_probability_IgATTG_children[,i] <- post_test_odds_IgATTG_children[,i]/(1 + post_test_odds_IgATTG_children[,i])
-  }
-  
-  
-  post_test_probability_IgATTG <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTG")))
-  sens_IgATTG <- rep(0, times = n_samples)
-  spec_IgATTG <- rep(0, times = n_samples)
-  for(i_sample in 1:n_samples){
-    for (i in 1:n_combinations){
-      post_test_probability_IgATTG[i_sample,i] <- ifelse(population == "men" | population == "women", post_test_probability_IgATTG_adults[i_sample,i], post_test_probability_IgATTG_children[i_sample,i])
-    }}
-  
-  for(i_sample in 1:n_samples){
-    sens_IgATTG[i_sample] <- ifelse(population == "men" | population == "women", sens_IgATTG_adults[i_sample], sens_IgATTG_children[i_sample])
-    spec_IgATTG[i_sample] <- ifelse(population == "men" | population == "women", spec_IgATTG_adults[i_sample], spec_IgATTG_children[i_sample])
-  }
   ######################################################################################################################
   
   #HLA
-  #E(logitSE) coef = 3.145430687, SE = 0.704324701
-  #E(logitSP) coef = 0.568258353, 0.169650745
-
-  #Covariance = -0.526523769
-
-  
-  #random normal values with mean [3.145430687, 0.568258353] and variances [0.704324701, 0.169650745], and covariance -0.526523769
-  sigma_HLA <- matrix(c((0.704324701^2),(-0.526523769*0.704324701*0.169650745),(-0.526523769*0.704324701*0.169650745),(0.169650745^2)), 2, 2)
-  mu_HLA <- c(3.145430687, 0.568258353)
+  # Sent by Martha Elwenspoek on 3rd November 2021
+  # sens		  spec    	log_sens	log_spec	log_sens_se	log_spec_se	corrmean
+  # 0.992431	0.556197	4.876031	0.225742	1.663271	  0.110675  	-0.60621
+  mu_HLA <- c(4.876031, 0.22572)
+  sigma_HLA <- matrix(c(1.663271^2, rep(1.663271 * 0.110675 * (-0.60621), 2), 0.110675^2), nrow = 2)
   x_HLA <- rmvnorm(n_samples, mu_HLA, sigma_HLA)
-  head(x_HLA)
-  SensSpec_HLA <- exp(x_HLA)/(1+exp(x_HLA))
+  SensSpec_HLA <- expit(x_HLA)
   sens_HLA <- SensSpec_HLA[,1]
   spec_HLA <- SensSpec_HLA[,2]
-  LR_HLA <- SensSpec_HLA[,1]/ (1 - SensSpec_HLA[,2])
-
   
   
-  return(data.frame(probability_late_diagnosis, probability_subfertility, probability_osteoporosis, probability_NHL, probability_nocomplications,
-                    osteoporosis_probability_GFD_all, subfertility_probability_GFD_all, NHL_probability_GFD, osteoporosis_probability_noGFD_all, subfertility_probability_noGFD_all,
-                    NHL_probability_noGFD, death_probability_NHL, 
-                    utility_GFD, utility_undiagnosedCD, disutility_subfertility, disutility_osteoporosis, disutility_NHL, disutility_biopsy, disutility_biopsy_wait, disutility_fp,
+  
+  input_parameters_temp <- data.frame(probability_late_diagnosis, probability_osteoporosis, probability_NHL, probability_nocomplications,
+                    osteoporosis_lograte, log_or_osteoporosis_GFD, log_or_osteoporosis_noGFD,
+                    NHL_lograte, log_rr_NHL_GFD, log_rr_NHL_noGFD,
+                    death_probability_NHL, death_log_hr_osteoporosis_male, death_log_hr_osteoporosis_female,
+                    utility_GFD, utility_undiagnosedCD, disutility_osteoporosis, disutility_NHL, disutility_biopsy, disutility_biopsy_wait, disutility_fp,
                     cost_CDGFD, cost_osteoporosis, cost_undiagnosedCD, cost_IDA, cost_biopsy, probability_biopsy,
-                    cost_subfertility, cost_NHL, probability_IDA, cost_diagnosis, test_cost_IgAEMA, test_cost_IgATTG, test_cost_HLA, 
-                    sens_IgATTGplusEMA, spec_IgATTGplusEMA, sens_IgAEMA, spec_IgAEMA, sens_IgATTG, spec_IgATTG, cost_gfp, sens_biopsy, spec_biopsy, 
-                    post_test_probability_IgAEMA, post_test_probability_IgATTGplusEMA, post_test_probability_IgATTG, pre_test_probability, pre_test_probability_overall,
-                   tp_riskfactor, fn_riskfactor, fp_riskfactor, LR_HLA, sens_HLA, spec_HLA))
+                    cost_NHL, probability_IDA, cost_diagnosis, test_cost_IgAEMA, test_cost_IgATTG, test_cost_HLA, 
+                    sens_IgATTGplusEMA_adults, spec_IgATTGplusEMA_adults, sens_IgAEMA_adults, 
+                    spec_IgAEMA_adults, sens_IgATTG_adults, spec_IgATTG_adults, 
+                    sens_IgATTGplusEMA_children, spec_IgATTGplusEMA_children, sens_IgAEMA_children, 
+                    spec_IgAEMA_children, sens_IgATTG_children, spec_IgATTG_children, 
+                    cost_gfp, sens_biopsy, spec_biopsy, 
+                     sens_HLA, spec_HLA,
+                    pre_test_probability_overall)
+  
+  if(length(hold_constant) != 0) {
+    input_parameters_temp[, hold_constant] <- input_parameters_temp[1, hold_constant]
+  }
+  
+  return(input_parameters_temp)
 }
 
