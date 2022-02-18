@@ -3,7 +3,7 @@ generate_net_benefit <- function(input_parameters,
                                  transition_matrices,
                                  combinations,
                                  population = NULL) {
-
+   
   # Derived descriptions of inputs
   n_combinations <- dim(combinations)[1]
   n_samples <- dim(input_parameters)[1]
