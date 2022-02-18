@@ -124,17 +124,30 @@ generate_transition_matrices <- function(input_parameters, population = NULL) {
   
   n_ages <- 90 - starting_age
   
+  # NHL and osteoporosis death probabilities very high so instead of assuming no competing risks we assume
+  # it reduces all other transitions (e.g., the 33% who do not die of NHL are divided among remaining probabilities)
+  # This avoids negative probabilities of remaining in the same state
+  death_state_index <- which(state_names == "Death")
   for (i_age in 1:n_ages){
     transition_matrices[, i_age, "CD GFD no complications", "Death"] <- death_probability_nocomplications[starting_age + i_age, 2]
     transition_matrices[, i_age, "CD GFD osteoporosis", "Death"] <- death_probability_osteoporosis$Overall[, starting_age + i_age]
+    transition_matrices[, i_age, "CD GFD osteoporosis", -death_state_index] <-  transition_matrices[, i_age, "CD GFD osteoporosis", -death_state_index] * (1 - death_probability_osteoporosis$Overall[, starting_age + i_age])
     transition_matrices[, i_age, "Undiagnosed CD no complications", "Death"] <- death_probability_nocomplications[starting_age + i_age, 2]
     transition_matrices[, i_age, "Undiagnosed CD osteoporosis", "Death"] <- death_probability_osteoporosis$Overall[, starting_age + i_age]
+    transition_matrices[, i_age, "Undiagnosed CD osteoporosis", -death_state_index] <- transition_matrices[, i_age, "Undiagnosed CD osteoporosis", -death_state_index] * (1 - death_probability_osteoporosis$Overall[, starting_age + i_age])
   }
-  
 
-  
+  # Probabilities of death form NHL
   transition_matrices[, , "CD GFD NHL", "Death"] <- 
     transition_matrices[, , "Undiagnosed CD NHL", "Death"] <- input_parameters$death_probability_NHL
+  
+  # Multiply other transitions to prevent probabilities exceeding 1  
+  for(i_sample in 1:n_samples) {
+    transition_matrices[i_sample, , "Undiagnosed CD NHL", -death_state_index] <- 
+      transition_matrices[i_sample, , "Undiagnosed CD NHL", -death_state_index] * (1 - input_parameters$death_probability_NHL[i_sample])
+    transition_matrices[i_sample, , "CD GFD NHL", -death_state_index] <- 
+      transition_matrices[i_sample, , "CD GFD NHL", -death_state_index] * (1 - input_parameters$death_probability_NHL[i_sample])
+  }
   
   
   for(i_state in 1:length(state_names)) {
@@ -145,9 +158,10 @@ generate_transition_matrices <- function(input_parameters, population = NULL) {
 
   transition_matrices[, , , ] [is.na(transition_matrices[, , , ] )] <- 0
   
-  rowSums (transition_matrices[1, 4, , ], na.rm = FALSE, dims = 1)
-  return(transition_matrices[, , , ])
+  # Check that rows sum to 1
+  # rowSums (transition_matrices[1, 4, , ], na.rm = FALSE, dims = 1)
   
+  return(transition_matrices[, , , ])
 }
   
 
