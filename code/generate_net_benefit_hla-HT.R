@@ -660,7 +660,7 @@ generate_net_benefit <- function(input_parameters,
          # i.e. pi_j = pi_(j-1)*P
          cohort_vectors[i_test, i_sample, i_cycle, ] <-
            cohort_vectors[i_test, i_sample, i_cycle-1, ] %*%
-           transition_matrices_sample[i_cycle, , ]
+           transition_matrices_sample[i_cycle - 1, , ]
        }
        
        cohort_vectors_tr_sample <- cohort_vectors[i_test, i_sample, , ]
