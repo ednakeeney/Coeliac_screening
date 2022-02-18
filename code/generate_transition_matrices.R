@@ -57,29 +57,25 @@ generate_transition_matrices <- function(input_parameters, population = NULL) {
   }
   
   lifetables <- read.csv("data/lifetables.csv")
+  # Lifetables are rates so must be converted to probabilities
+  lifetables$Males_lograte <- log(lifetables$Males)
+  lifetables$Females_lograte <- log(lifetables$Females)
+  lifetables$Males <- 1 - exp(-lifetables$Males)
+  lifetables$Females <- 1 - exp(-lifetables$Females)
   
   lifetables$Overall <- (percentage_male * lifetables$Males) + ((1-percentage_male) * lifetables$Females)
   death_probability_nocomplications	<- data.frame(lifetables$Age, lifetables$Overall)
   
-  # Need to return to this code to ensure hazard ratios of death osteo implemented correctly
-  # Currently results in probabilities above 1 for high ages.
-  # And rows and columns are mixed up. 
-  #death_probability_osteoporosis <-	list()
-  # Rows are samples, Columns are ages
-  #death_probability_osteoporosis$Males <- as.data.frame(t(matrix(rep(lifetables$Males, n_samples), ncol = n_samples)))
-  #death_probability_osteoporosis$Males <- death_probability_osteoporosis$Males * exp(input_parameters$death_log_hr_osteoporosis_male)   
-  #death_probability_osteoporosis$Females <- as.data.frame(t(matrix(rep(lifetables$Females, n_samples), ncol = n_samples)))
-  #death_probability_osteoporosis$Females <- death_probability_osteoporosis$Females * exp(input_parameters$death_log_hr_osteoporosis_female)   
-  #death_probability_osteoporosis$Overall <- (percentage_male * death_probability_osteoporosis$Males) + ((1-percentage_male) * death_probability_osteoporosis$Females)
-  #colnames(death_probability_osteoporosis$Overall) <- lifetables$Age
-  #death_probability_osteoporosis <- death_probability_osteoporosis$Overall
   
-  death_probability_osteoporosis <-	lifetables
-  death_probability_osteoporosis$Males <- death_probability_osteoporosis$Males * 3.5 # exp(input_parameters$death_log_hr_osteoporosis_male)   
-  death_probability_osteoporosis$Females <- death_probability_osteoporosis$Females * 2.4 # exp(input_parameters$death_log_hr_osteoporosis_female)   
+  # Combine on log scale
+  # Rows are for samples, columns are for ages
+  #1-exp(-exp(1.25 + lifetables$Males_lograte))
+  death_probability_osteoporosis <- list()
+  death_probability_osteoporosis$Males <- 1 - exp(-exp(matrix(rep(input_parameters$death_log_hr_osteoporosis_male, length(lifetables$Males_lograte)) +   rep(lifetables$Males_lograte, each = n_samples), nrow = n_samples)))
+  death_probability_osteoporosis$Females <- 1 - exp(-exp(matrix(rep(input_parameters$death_log_hr_osteoporosis_female, length(lifetables$Females_lograte)) +   rep(lifetables$Females_lograte, each = n_samples), nrow = n_samples)))
+  colnames(death_probability_osteoporosis$Males) <- colnames(death_probability_osteoporosis$Females) <- lifetables$Age
+  
   death_probability_osteoporosis$Overall <- (percentage_male * death_probability_osteoporosis$Males) + ((1-percentage_male) * death_probability_osteoporosis$Females)
-  death_probability_osteoporosis	<- data.frame(death_probability_osteoporosis$Age, death_probability_osteoporosis$Overall)
-  
   
 
   # NHL probabilities will change depending on starting age
@@ -130,9 +126,9 @@ generate_transition_matrices <- function(input_parameters, population = NULL) {
   
   for (i_age in 1:n_ages){
     transition_matrices[, i_age, "CD GFD no complications", "Death"] <- death_probability_nocomplications[starting_age + i_age, 2]
-    transition_matrices[, i_age, "CD GFD osteoporosis", "Death"] <- death_probability_osteoporosis[starting_age + i_age, 2]
+    transition_matrices[, i_age, "CD GFD osteoporosis", "Death"] <- death_probability_osteoporosis$Overall[, starting_age + i_age]
     transition_matrices[, i_age, "Undiagnosed CD no complications", "Death"] <- death_probability_nocomplications[starting_age + i_age, 2]
-    transition_matrices[, i_age, "Undiagnosed CD osteoporosis", "Death"] <- death_probability_osteoporosis[starting_age + i_age, 2]
+    transition_matrices[, i_age, "Undiagnosed CD osteoporosis", "Death"] <- death_probability_osteoporosis$Overall[, starting_age + i_age]
   }
   
 
