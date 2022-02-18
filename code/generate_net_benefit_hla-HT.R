@@ -686,7 +686,7 @@ generate_net_benefit <- function(input_parameters,
        # Combine the cycle_qalys to get total qalys
        # Apply the discount factor 
        # (1 in first year, 1.035 in second, 1.035^2 in third, and so on)
-       total_qalys[i_test, i_sample] <- (cycle_qalys[i_test, i_sample, ]  - disutility_fp[i_sample, i_test] - biopsy_disutility_applied[i_sample, i_test] - biopsy_Wait_disutility_applied[i_sample, i_test])  %*% disc_vec
+       total_qalys[i_test, i_sample] <- (cycle_qalys[i_test, i_sample, ]) %*% disc_vec  - disutility_fp[i_sample, i_test] - biopsy_disutility_applied[i_sample, i_test] - biopsy_Wait_disutility_applied[i_sample, i_test] 
        
        # total_qalys[i_test, i_sample] <- (cycle_qalys[i_test, i_sample, ] 
        #%*% disc_vec)  #for checking all FPs/TNs
