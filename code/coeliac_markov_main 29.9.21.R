@@ -55,7 +55,7 @@ tests <- c("IgAEMA", "IgATTGplusEMA", "IgATTG",
            "HLA plus IgAEMA", "HLA plus IgATTGplusEMA", "HLA plus IgATTG")
 n_sero_tests <- length(tests)
 
-for(population in populations[c(2)]) {
+for(population in populations) {
   print(population)
   #pre-test probabilities of coeliac disease 
   sens_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.9999)

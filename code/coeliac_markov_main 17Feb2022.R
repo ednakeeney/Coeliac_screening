@@ -7,6 +7,8 @@
 # TODO: info.rank needs to plot only top parameters (line ~584) as most have zero impact
 # and only include sens/spec for feasible strategies
 
+# Used C++, lapply and vectorisation to optimise generate_net_benefit. Decreased runtime by ~50%
+
 library(tictoc)
 library(BCEA)
 library(SimDesign)
@@ -20,10 +22,9 @@ library(car)
 
 #setwd("C:/Users/ek14588/Downloads/Coeliac_screening")
 
-tic()
+
 rm(list=ls())
-set.seed(14143)
-  
+
 # Define simulation parameters
 # This is the number of PSA samples to use
 n_samples <- 1000
@@ -31,13 +32,16 @@ n_samples <- 1000
 perspective <- "NHS" #Options are "NHS" or "NHS+OOP" if out-of-pocket costs for iron supplements and gluten free products are to be included
 
 # Set to FALSE if don't want to run MLMC
-run_mlmc_evppi <- TRUE
+run_mlmc_evppi <- FALSE
 #########################################################################################################################
 source("code/generate_state_costs.R")
 source("code/generate_state_qalys.R")
 source("code/generate_model_parameters.R")
 source("code/generate_transition_matrices.R")
+source("code/convert_transition_matrices_to_df.R")
+source("code/convert_cohort_vectors_to_df.R")
 source("code/generate_net_benefit_hla-HT.R")
+source("code/generate_net_benefit_cpp.R")
 
 # MLMC scripts
 source("code/mlmc.R")
@@ -55,7 +59,10 @@ tests <- c("IgAEMA", "IgATTGplusEMA", "IgATTG",
            "HLA plus IgAEMA", "HLA plus IgATTGplusEMA", "HLA plus IgATTG")
 n_sero_tests <- length(tests)
 
-for(population in populations[c(2)]) {
+for(population in populations) {
+  # Set the seed for each population run to be the same
+  set.seed(14143)
+  
   print(population)
   #pre-test probabilities of coeliac disease 
   sens_riskfactor <- c(0.5, 0.6, 0.7, 0.8, 0.9, 0.9999)
@@ -77,13 +84,13 @@ for(population in populations[c(2)]) {
   risk_percentages <- c("1%", "1.5%", "2%", "5%", "10%", "20%")
   
   # Specify the strategies of interest based on prediction modelling and exloratory economic modelling
-  # Only use "IgAEMA" and "IgAEMA plus HLA"
-  tests_of_interest <- c("IgATTG", "IgAEMA plus HLA")
+  # Only use "IgAEMA" and "IgAEMA plus HLA" and "HLA plus IgATTG" 
+  tests_of_interest <- c("IgATTG", "IgAEMA plus HLA", "HLA plus IgATTG")
   
   strategies_of_interest <- c("No screening",paste0(rep(paste0(new_combinations$sens_riskfactor, " ", new_combinations$spec_riskfactor), 2), 
                                                     " ", rep(tests_of_interest, each = dim(new_combinations)[1])))
   strategies_of_interest <- unique(strategies_of_interest)
-  names(strategies_of_interest) <- c("No screening", paste(rep(risk_percentages, 2), rep(tests_of_interest, each = 5)))
+  names(strategies_of_interest) <- c("No screening", paste(rep(risk_percentages, 2), rep(tests_of_interest, each = length(risk_percentages))))
   
   
   # Table explaining the strategies
@@ -133,17 +140,29 @@ for(population in populations[c(2)]) {
   
   transition_matrices <- generate_transition_matrices(input_parameters, population = population)
   
+  
   #generate results
-  output <- generate_net_benefit(input_parameters, strategies_of_interest, 
+  #system.time({
+  #output <- generate_net_benefit(input_parameters, strategies_of_interest, 
+  #                               transition_matrices,
+  #                               combinations = combinations,
+  #                               population = population)
+  #})
+  #system.time({
+  output <- generate_net_benefit_cpp(input_parameters, strategies_of_interest, 
                                  transition_matrices,
                                  combinations = combinations,
                                  population = population)
+  #})
   
-  
+  # When updating, did a check that the optimised and unoptimised results agreed
+  #rowMeans(output$total_costs)[1:10]
+  #rowMeans(output$total_qalys)[1:10]
+  #rowMeans(output_cpp$total_costs)[1:10]
+  #rowMeans(output_cpp$total_qalys)[1:10]
   
   strategies_excluded <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit < 0)) #strategies with ENB less than no screening
   strategies_included <- names(subset(output$incremental_net_benefit,output$incremental_net_benefit > 0)) #strategies with ENB greater than no screening
-  
   
   
   # Simple graphical comparison of biospy proportions
@@ -275,9 +294,9 @@ for(population in populations[c(2)]) {
   #table of costs and QALYs
   format_results<-function(x, n_digits = 2)
   {
-    paste(round(mean(x),digits = n_digits), " (",
-          round(quantile(x, probs = 0.025), digits = n_digits), ", ", 
-          round(quantile(x, probs = 0.975), digits = n_digits),")",sep="")
+    paste(round(mean(x, na.rm = TRUE),digits = n_digits), " (",
+          round(quantile(x, probs = 0.025, na.rm = TRUE), digits = n_digits), ", ", 
+          round(quantile(x, probs = 0.975, na.rm = TRUE), digits = n_digits),")",sep="")
   }
   
   # This where specific strategies are selected
@@ -291,7 +310,7 @@ for(population in populations[c(2)]) {
   strategies_of_interest_inetbenefit_table <- array(dim=c(1, length(strategies_of_interest)), dimnames = list(NULL, NULL))
   
   for (i in 1:length(strategies_of_interest)) { 
-    strategies_of_interest_qalys_table[, i] <- format_results(strategies_of_interest_qalys[i, ], n_digits = 4)
+    strategies_of_interest_qalys_table[, i] <- format_results(strategies_of_interest_qalys[i, ], n_digits = 2)
     strategies_of_interest_costs_table[, i] <- format_results(strategies_of_interest_costs[i, ], n_digits = 0)
     # strategies_of_interest_netbenefit_table[, i] <- format_results(strategies_of_interest_netbenefit[i, ], n_digits = 0)
     strategies_of_interest_inetbenefit_table[, i] <- format_results(strategies_of_interest_inetbenefit[i, ], n_digits = 0)
@@ -377,8 +396,8 @@ for(population in populations[c(2)]) {
   #devtools::install_github("giabaio/BCEA")
   
   
-  m <- bcea(e = t(output$total_qalys), c = t(output$total_costs), ref = 1, interventions = t_names)
-  summary(m)
+  #m <- bcea(e = t(output$total_qalys), c = t(output$total_costs), ref = 1, interventions = t_names)
+  #summary(m)
   
   m_of_interest <- bcea(e = t(output$total_qalys[strategies_of_interest, ]), 
                         c = t(output$total_costs[strategies_of_interest, ]), ref = 1, 
@@ -386,31 +405,19 @@ for(population in populations[c(2)]) {
   summary(m_of_interest) 
   
   
-  eib.plot(m_of_interest, comparison = NULL, pos =
-             c(1, 0), size = NULL, plot.cri = NULL, graph
-           = c("ggplot2"))
-  evi.plot(m_of_interest, graph = c("base", "ggplot2",
-                                    "plotly"))
-  ceac.plot(m_of_interest, comparison = NULL,
-            pos = FALSE, graph = c("ggplot2"))
-  par(mfrow = c(1,1))
+
   mce <- multi.ce(m_of_interest)
-  ceaf.plot(mce, graph = c("ggplot2"))
-  
+ 
   pdf(file = paste0("results/", population, "/", population, "_ceac_of_interest.pdf"))
-  mce.plot(mce, color = c(1:13), graph = c("base"), pos = "topright",
-           cex.main = 0.2) #CEAC 
+  ceac.plot(mce, graph = c("base"), pos = "topright",
+           cex.main = 0.2,
+           line = list(colors = c(1:length(strategies_of_interest)))) #CEAC 
   dev.off()
   
-  ceplane.plot(m_of_interest, comparison =
-                 NULL, pos = c(1, 0), graph = c("ggplot2"), point_colors = c(1:13))
-  sim.table(m_of_interest)
-  toc()
   
   
   # Calculate population EVPI
-  m <- bcea(e = t(output$total_qalys), c = t(output$total_costs), ref = 1, interventions = t_names, wtp = 20000)
-  m$evi
+
   # Prevalence of CD (different for adults and children)
   cd_prevalence <- 0.01
   # Total population susceptible to CD (i.e. how many adults or children in UK)
@@ -424,7 +431,9 @@ for(population in populations[c(2)]) {
   # Assume test technology remains relevant for at least 10 years
   technology_horizon <- 10
   discounted_population_size <- sum((1/1.035)^(0:(technology_horizon - 1))) * total_population 
-  population_evpi <- m$evi * discounted_population_size 
+  # Use EVPI in only strategies of interest because in practice the others (similar tests or theoretical risk
+  # strategies are not real options)
+  population_evpi <- m_of_interest$evi[201] * discounted_population_size 
   
   evpi_table <- matrix(NA, nrow = 8, ncol = 2)
   colnames(evpi_table) <- c("Per person", "Population")
@@ -432,8 +441,9 @@ for(population in populations[c(2)]) {
                             "evpi",
                             "Utilities and disutilities", "Rates of osteoporosis and NHL",
                             "GFD effect", "Test accuracies", "Probability of late diagnosis")
+  # Again the EVPI considering only the strategies of interest (this is less than total)
   evpi_table[1:3, "Per person"] <- c(total_population, discounted_population_size,
-                                  m$evi)
+                                  m_of_interest$evi[201])
   evpi_table[3, "Population"] <- population_evpi
   write.csv(evpi_table, paste0("results/", population, "/", population, "_evpi_summary.csv"))
   
@@ -444,15 +454,23 @@ for(population in populations[c(2)]) {
   if(population == "children")input_parameters_info_rank <- input_parameters[, -which(grepl("_adult", colnames(input_parameters)))]
   if(population != "children")input_parameters_info_rank <- input_parameters[, -which(grepl("_children", colnames(input_parameters)))]
   
+  
+  # If adults don't need log rates in 0-10 age categories
+  
+  input_parameters_info_rank <- input_parameters_info_rank[, -which(grepl( "probability_IDA_0", colnames(input_parameters_info_rank)) | grepl("osteoporosis_lograte_0", colnames(input_parameters_info_rank)))]
   # Remove parameters that are fixed at 1 (sens/spec biopsy) or 0 (some costs)
-  input_parameters_info_rank <- input_parameters_info_rank[-which(colSums(input_parameters_info_rank == 1) == n_samples)]
-  input_parameters_info_rank <- input_parameters_info_rank[-which(colSums(input_parameters_info_rank == 0) == n_samples)]
+  input_parameters_info_rank <- input_parameters_info_rank[, -which(colSums(input_parameters_info_rank == 1) == n_samples)]
+  input_parameters_info_rank <- input_parameters_info_rank[, -which(colSums(input_parameters_info_rank == 0) == n_samples)]
   # Remove probability of no complications as it is functional
   input_parameters_info_rank <- input_parameters_info_rank[, -which(colnames(input_parameters_info_rank) == "probability_nocomplications")]
   print("Conducting info rank analysis")
+  
   # Need to plot most influential parameters and say the rest have no impact.
+  # A bug in BCEA meant we had to omit disutility_biopsy_wait
+  input_parameters_info_rank <-  input_parameters_info_rank[, -which(colnames(input_parameters_info_rank) == "disutility_biopsy_wait")]
+  coeliac_inp <- createInputs(colnames(input_parameters_info_rank), input = input_parameters_info_rank)
   pdf(paste0("results/", population, "/", population, "_info_rank.pdf"))
-  info.rank(parameter = colnames(input_parameters_info_rank), input = input_parameters_info_rank, 
+  info.rank(inp = coeliac_inp, 
             m_of_interest, xlim = c(0,1), wtp = 20000, howManyPars = 10)
   dev.off()
   
@@ -460,6 +478,7 @@ for(population in populations[c(2)]) {
   # This is time consuming (takes about 5 hours per population)
   if(run_mlmc_evppi) {
     source("code/evppi_mlmc_3.R")  
+    source("code/evppi_gam_gp_1.R")
   }
 } # End loop over populations
 

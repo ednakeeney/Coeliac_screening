@@ -20,7 +20,7 @@ generate_NetB <- function(n_samples, input_parameters_mlmc) {
   transition_matrices_mlmc <- generate_transition_matrices(input_parameters_mlmc, population = population)
   
   # Generate net benefit for strategies of interest
-  output <- generate_net_benefit(input_parameters_mlmc, strategies_of_interest, 
+  output <- generate_net_benefit_cpp(input_parameters_mlmc, strategies_of_interest, 
                                  transition_matrices_mlmc,
                                  combinations = combinations,
                                  population = population)
