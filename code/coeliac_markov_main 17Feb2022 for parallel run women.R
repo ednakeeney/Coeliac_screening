@@ -60,6 +60,7 @@ tests <- c("IgAEMA", "IgATTGplusEMA", "IgATTG",
 n_sero_tests <- length(tests)
 
 population <- "women"
+{
 #for(population in populations) {
   # Set the seed for each population run to be the same
   set.seed(14143)
