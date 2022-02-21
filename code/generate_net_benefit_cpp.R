@@ -64,7 +64,7 @@ generate_net_benefit_cpp <- function(input_parameters,
   }
   
   #write.csv(data.frame(tp_riskfactor[1,], fn_riskfactor[1,], tn_riskfactor[1,], fp_riskfactor[1,]), "risk_factor.csv")
-  #pre_test_probability <- tp_riskfactor/(tp_riskfactor+fp_riskfactor)
+  pre_test_probability <- tp_riskfactor/(tp_riskfactor+fp_riskfactor)
   #colnames(pre_test_probability) <- paste(combinations_names, "pre_test_probability")
   #write.csv(colMeans(pre_test_probability), "pretestprob.csv")
   
