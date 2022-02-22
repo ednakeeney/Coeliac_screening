@@ -60,7 +60,7 @@ tests <- c("IgAEMA", "IgATTGplusEMA", "IgATTG",
 n_sero_tests <- length(tests)
 
 population <- "men"
-{
+
   # Set the seed for each population run to be the same
   set.seed(14143)
   
@@ -468,8 +468,8 @@ population <- "men"
   
   # Need to plot most influential parameters and say the rest have no impact.
   # A bug in BCEA meant we had to omit disutility_biopsy_wait
-  input_parameters_info_rank <-  input_parameters_info_rank[, -which(colnames(input_parameters_info_rank) == "disutility_biopsy_wait")]
-  coeliac_inp <- createInputs(colnames(input_parameters_info_rank), input = input_parameters_info_rank)
+  #input_parameters_info_rank <-  input_parameters_info_rank[, -which(colnames(input_parameters_info_rank) == "disutility_biopsy_wait")]
+  coeliac_inp <- createInputs( input = input_parameters_info_rank) #colnames(input_parameters_info_rank))#,
   pdf(paste0("results/", population, "/", population, "_info_rank.pdf"))
   info.rank(inp = coeliac_inp, 
             m_of_interest, xlim = c(0,1), wtp = 20000, howManyPars = 10)
@@ -481,7 +481,7 @@ population <- "men"
     source("code/evppi_mlmc_3.R")  
     source("code/evppi_gam_gp_1.R")
   }
-} # End loop over populations
+ # End loop over populations
 
 
 
