@@ -19,6 +19,8 @@ library(Rmisc)
 library(ggplot2)
 library(readxl)
 library(car)
+library(triangle)
+library(mvtnorm)
 
 #setwd("C:/Users/ek14588/Downloads/Coeliac_screening")
 

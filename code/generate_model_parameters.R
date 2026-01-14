@@ -191,8 +191,8 @@ generate_model_parameters <- function(starting_age, population = NULL,
 
   disutility_NHL <- runif(n = n_samples, min = 0.036, max = 0.136) 
   
-  disutility_biopsy_adults <- rtri(n = n_samples, min = 0, max = 0.005, mode = 0.003)
-  disutility_biopsy_children <- rtri(n = n_samples, min = 0, max = 0.010, mode = 0.006)
+  disutility_biopsy_adults <- rtriangle(n = n_samples, a = 0, b = 0.005, c = 0.003)
+  disutility_biopsy_children <- rtriangle(n = n_samples, a = 0, b = 0.010, c = 0.006)
   disutility_biopsy <- rep(0, times = n_samples)
   for (i_sample in 1:n_samples) {
     disutility_biopsy[i_sample] <- ifelse(population == "men" | population == "women", disutility_biopsy_adults[i_sample], disutility_biopsy_children[i_sample])

@@ -86,7 +86,7 @@ generate_net_benefit_cpp <- function(input_parameters,
     post_test_probability_IgAEMA_adults[,i] <- post_test_odds_IgAEMA_adults[,i]/(1 + post_test_odds_IgAEMA_adults[,i])
   }
   
-  LR_IgAEMA_children <- sens_IgAEMA_children/ spec_IgAEMA_children
+  LR_IgAEMA_children <- sens_IgAEMA_children/ (1 - spec_IgAEMA_children)
   
   post_test_odds_IgAEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
   post_test_probability_IgAEMA_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
@@ -163,7 +163,7 @@ generate_net_benefit_cpp <- function(input_parameters,
     post_test_probability_IgATTG_adults[,i] <- post_test_odds_IgATTG_adults[,i]/(1 + post_test_odds_IgATTG_adults[,i])
   }
   
-  LR_IgATTG_children <- sens_IgATTG_children/ spec_IgATTG_children
+  LR_IgATTG_children <- sens_IgATTG_children/ (1 - spec_IgATTG_children)
   
   post_test_odds_IgATTG_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
   post_test_probability_IgATTG_children <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, combinations_names))
@@ -188,13 +188,13 @@ generate_net_benefit_cpp <- function(input_parameters,
   }
   
   # Likelihood ratios
-  LR_IgATTG <- sens_IgATTG/spec_IgATTG
-  LR_IgAEMA <- sens_IgAEMA/spec_IgAEMA
-  LR_IgATTGplusEMA <- sens_IgATTGplusEMA/spec_IgATTGplusEMA
+  LR_IgATTG <- sens_IgATTG/(1 - spec_IgATTG)
+  LR_IgAEMA <- sens_IgAEMA/(1 - spec_IgAEMA)
+  LR_IgATTGplusEMA <- sens_IgATTGplusEMA/(1 - spec_IgATTGplusEMA)
   
   # HLA
   
-  LR_HLA <-  sens_HLA / spec_HLA
+  LR_HLA <-  sens_HLA / (1 - spec_HLA)
   post_test_odds_HLAalone  <- post_test_probability_HLAalone <- array(dim=c(n_samples, n_combinations),dimnames=list(NULL, paste(combinations_names, "IgATTG")))
   for (i in 1:n_combinations){
     post_test_odds_HLAalone[,i] <- pre_test_odds[,i] * LR_HLA
@@ -595,8 +595,7 @@ generate_net_benefit_cpp <- function(input_parameters,
    
    
    fn_riskfactor_table <- fn_riskfactor_table * 1/(fp+tp)
-   fn_all <- fn + fn_riskfactor_table
-   
+   fn_all <- fn * (tp_riskfactor_table + fp_riskfactor_table) + fn_riskfactor_table
    
    #scaling up true positives and false negatives 
    tp <- tp/(tp + fn_all)
